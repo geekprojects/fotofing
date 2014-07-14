@@ -13,7 +13,7 @@ class Photo
 
  public:
     Photo(std::string id, Surface* thumbnail);
-    ~Photo();
+    virtual ~Photo();
 
     std::string getId() { return m_id; }
     Surface* getThumbnail() { return m_thumbnail; }

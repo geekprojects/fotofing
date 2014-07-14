@@ -14,12 +14,13 @@ int main(int argc, char** argv)
 
 
     Index* index = new Index();
-    index->scanDirectory("/data/home/ian/Pictures/2014/07/05");
-    //index->scanDirectory("test");
+    //index->scanDirectory("/data/home/ian/Pictures/2014/07/05");
+    //index->scanDirectory("/data/home/ian/Pictures/flickr/Syria and Lebanon");
+    index->scanDirectory("test");
 
     MainWindow mainWindow(index);
 
-app->run(mainWindow);
+    app->run(mainWindow);
 
     delete index;
 

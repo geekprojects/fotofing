@@ -11,6 +11,10 @@ Photo::Photo(string id, Surface* thumbnail)
 
 Photo::~Photo()
 {
+    if (m_thumbnail != NULL)
+    {
+        delete m_thumbnail;
+    }
 }
 
 

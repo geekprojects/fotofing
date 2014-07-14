@@ -21,6 +21,7 @@ Index::Index()
     photosTable.name = "photos";
     photosTable.columns.insert(Column("pid", true)); // Photo ID
     photosTable.columns.insert(Column("thumbnail", true)); // Image Blob
+    photosTable.columns.insert(Column("timestamp", true)); // Image Blob
     schema.push_back(photosTable);
 
     Table filesTable;
@@ -29,9 +30,22 @@ Index::Index()
     filesTable.columns.insert(Column("pid")); // Photo ID
     schema.push_back(filesTable);
 
+    Table tagsTable;
+    tagsTable.name = "tags";
+    tagsTable.columns.insert(Column("pid"));
+    tagsTable.columns.insert(Column("tag"));
+    schema.push_back(tagsTable);
+
     m_db = new Database();
     m_db->open();
-    m_db->checkSchema(schema);
+
+    bool created;
+    created = m_db->checkSchema(schema);
+
+    if (created)
+    {
+        m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS tags_uni_idx ON tags (pid, tag)");
+    }
 }
 
 Index::~Index()
@@ -106,13 +120,18 @@ bool Index::scanDirectory(string dir)
                     // New fingerprint!
                     printf("New fingerprint!\n");
 
+                    // Extract details from the file
                     File f(path);
+                    set<string> tags;
+                    time_t timestamp;
+                    f.getTags(tags, &timestamp);
+                    printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
                     Surface* thumbnail = f.generateThumbnail();
 
                     uint8_t* thumbData = NULL;
                     unsigned long thumbLength = 0;
                     thumbnail->saveJPEG(&thumbData, &thumbLength);
-printf("Index::scanDirectory: thumbData=%p, thumbLength=%lu\n", thumbData, thumbLength);
+                    printf("Index::scanDirectory: thumbData=%p, thumbLength=%lu\n", thumbData, thumbLength);
 
                     int res;
                     sqlite3_stmt* stmt;
@@ -136,6 +155,8 @@ printf("Index::scanDirectory: thumbData=%p, thumbLength=%lu\n", thumbData, thumb
                     }
 
                     free(thumbData);
+
+saveTags(fp, tags);
                 }
 
                 args.clear();
@@ -150,43 +171,117 @@ printf("Index::scanDirectory: thumbData=%p, thumbLength=%lu\n", thumbData, thumb
     return true;
 }
 
-vector<Photo> Index::getPhotos()
+bool Index::saveTags(string pid, set<string> tags)
 {
-vector<Photo> results;
+    set<string> parentTags;
+    set<string>::iterator it;
+
+    // Extract all the parent tags
+    for (it = tags.begin(); it != tags.end(); it++)
+    {
+        string tag = *it;
+        printf("Index::saveTags: tag: %s\n", it->c_str());
+        size_t pos = tag.npos;
+        while (true)
+        {
+            pos = tag.rfind('/', pos);
+            if (pos != tag.npos)
+            {
+                string parent = tag.substr(0, pos);
+                if (parent.length() > 0)
+                {
+                    parentTags.insert(parent);
+                }
+                printf("Index::saveTags: parent tag: %s\n", parent.c_str());
+                pos--;
+                if (pos <= 0)
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    for (it = parentTags.begin(); it != parentTags.end(); it++)
+    {
+        tags.insert(*it);
+    }
+
+    for (it = tags.begin(); it != tags.end(); it++)
+    {
+        string tag = *it;
+        printf("Index::saveTags: final tag: %s\n", it->c_str());
+
+        string query = "INSERT INTO tags (pid, tag) VALUES (?, ?)";
+        vector<string> args;
+        args.push_back(pid);
+        args.push_back(tag);
+        m_db->execute(query, args);
+    }
+
+    return true;
+}
+
+set<string> Index::getAllTags()
+{
+    set<string> tags;
+
+    // This nasty query returns all leaf tags,
+    // ie there are no child tags for them
+    //ResultSet rs = m_db->executeQuery("SELECT DISTINCT tag FROM tags t WHERE NOT EXISTS (SELECT 1 FROM tags t2 WHERE SUBSTR(t2.tag, 1, length(t.tag) + 1) = t.tag || '/')");
+    ResultSet rs = m_db->executeQuery("SELECT DISTINCT tag FROM tags");
+    vector<Row>::iterator it;
+
+    for (it = rs.rows.begin(); it != rs.rows.end(); it++)
+    {
+        tags.insert(it->getValue("tag"));
+    }
+
+    return tags;
+}
+
+vector<Photo*> Index::getPhotos()
+{
+    vector<Photo*> results;
     sqlite3_stmt* stmt;
     string SELECT_PHOTOS_SQL = "SELECT pid, thumbnail FROM photos";
     sqlite3_prepare_v2(m_db->getDB(), SELECT_PHOTOS_SQL.c_str(), SELECT_PHOTOS_SQL.length(), &stmt, NULL);
 
     while (true)
-{
-int s;
-s = sqlite3_step(stmt);
-if (s == SQLITE_ROW)
-{
-const unsigned char* pid;
-pid = sqlite3_column_text(stmt, 0);
-const void* thumbnailData;
-uint32_t thumbnailBytes;
-thumbnailData = sqlite3_column_blob(stmt, 1);
-thumbnailBytes = sqlite3_column_bytes(stmt, 1);
+    {
+        int s;
+        s = sqlite3_step(stmt);
+        if (s == SQLITE_ROW)
+        {
+            const unsigned char* pid;
+            pid = sqlite3_column_text(stmt, 0);
+            const void* thumbnailData;
+            uint32_t thumbnailBytes;
+            thumbnailData = sqlite3_column_blob(stmt, 1);
+            thumbnailBytes = sqlite3_column_bytes(stmt, 1);
 
-Surface* thumbnail = Surface::loadJPEG((uint8_t*)thumbnailData, thumbnailBytes);
+            Surface* thumbnail = Surface::loadJPEG((uint8_t*)thumbnailData, thumbnailBytes);
 
-        Photo p(string((char*)pid), thumbnail);
-        results.push_back(p);
-}
-else if (s == SQLITE_DONE)
-{
-break;
-}
-else
-{
-printf("Index::getPhotos: Failed to retrieve photos: %d\n", s);
-break;
-}
+            Photo* p = new Photo(string((char*)pid), thumbnail);
+            results.push_back(p);
+        }
+        else if (s == SQLITE_DONE)
+        {
+            break;
+        }
+        else
+        {
+            printf("Index::getPhotos: Failed to retrieve photos: %d\n", s);
+            break;
+        }
     }
     sqlite3_finalize(stmt);
 
     return results;
 }
+
 

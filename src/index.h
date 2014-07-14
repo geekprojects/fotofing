@@ -2,6 +2,7 @@
 #define __FOTOFIND_INDEX_H_
 
 #include <vector>
+#include <string>
 
 #include "database.h"
 #include "photo.h"
@@ -17,7 +18,10 @@ class Index
 
     bool scanDirectory(std::string dir);
 
-    std::vector<Photo> getPhotos();
+    bool saveTags(std::string pid, std::set<std::string> tags);
+    std::set<std::string> getAllTags();
+
+    std::vector<Photo*> getPhotos();
 };
 
 #endif

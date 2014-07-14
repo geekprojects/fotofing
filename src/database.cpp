@@ -55,6 +55,7 @@ bool Database::close()
 
 bool Database::checkSchema(vector<Table> schema)
 {
+    bool created = false;
     set<string> tables = getTables();
     set<string>::iterator it;
 
@@ -83,10 +84,11 @@ bool Database::checkSchema(vector<Table> schema)
             printf("Database::checkSchema:  -> %s\n", createSql.c_str());
 
             execute(createSql);
+created = true;
         }
     }
 
-    return true;
+    return created;
 }
 
 ResultSet Database::executeQuery(string query)
@@ -156,6 +158,7 @@ ResultSet Database::executeQuery(string query, vector<string> args)
         else
         {
             printf("Database::open: Error: %s\n", sqlite3_errmsg(m_db));
+            break;
         }
     }
     sqlite3_finalize(stmt);

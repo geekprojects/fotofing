@@ -4,7 +4,7 @@ SRCS=main.cpp mainwindow.cpp index.cpp photo.cpp file.cpp fingerprint.cpp databa
 OBJS=$(SRCS:.cpp=.o)
 
 all: $(OBJS)
-	gcc $(OBJS) -o $(TGT) -lstdc++ -lbeyond -lm -lsqlite3 `pkg-config gtkmm-3.0 --libs`
+	gcc $(OBJS) -o $(TGT) -lstdc++ -lbeyond -lm -lsqlite3 `pkg-config gtkmm-3.0 --libs` -lexiv2
 
 clean:
 	rm -f $(OBJS) $(TGT)
