@@ -1,6 +1,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <dirent.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -28,6 +29,10 @@ string fingerprint(string path)
     }
 
     Surface* surface = Surface::loadJPEG(path.c_str());
+    if (surface == NULL)
+    {
+        return "";
+    }
 
     float stepX = (float)surface->getWidth() / (float)FINGERPRINT_DIVIDE;
     float stepY = (float)surface->getHeight() / (float)FINGERPRINT_DIVIDE;
@@ -90,6 +95,7 @@ string fingerprint(string path)
 #endif
     SHA1Context sha;
     uint8_t digest[20];
+    memset(digest, 0, 20);
     int err;
 
     err = SHA1Reset(&sha);
