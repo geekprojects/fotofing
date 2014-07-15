@@ -6,6 +6,8 @@
 #include <vector>
 #include <string>
 
+#include <stdint.h>
+
 #include <sqlite3.h>
 
 struct Column
@@ -61,6 +63,25 @@ struct ResultSet
     std::vector<Row> rows;
 };
 
+class Database;
+
+class PreparedStatement
+{
+ private:
+    Database* m_db;
+    sqlite3_stmt* m_stmt;
+
+ public:
+    PreparedStatement(Database* db, sqlite3_stmt* stmt);
+    ~PreparedStatement();
+
+    bool bindString(int i, std::string str);
+    bool bindInt64(int i, int64_t v);
+
+    bool execute();
+    bool reset();
+};
+
 class Database
 {
  private:
@@ -75,6 +96,8 @@ class Database
     bool close();
 
     bool checkSchema(std::vector<Table> schema);
+
+    PreparedStatement* prepareStatement(std::string sql);
 
     ResultSet executeQuery(std::string query);
     ResultSet executeQuery(std::string query, std::vector<std::string> args);

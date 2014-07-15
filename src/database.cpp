@@ -91,6 +91,24 @@ created = true;
     return created;
 }
 
+PreparedStatement* Database::prepareStatement(string sql)
+{
+    PreparedStatement* ps;
+    int res;
+
+    sqlite3_stmt* stmt;
+    res = sqlite3_prepare_v2(m_db, sql.c_str(), sql.length(), &stmt, NULL);
+    if (res)
+    {
+        printf("Database::preparedStatement: prepare res=%d\n", res);
+        return NULL;
+    }
+
+    ps = new PreparedStatement(this, stmt);
+
+    return ps;
+}
+
 ResultSet Database::executeQuery(string query)
 {
     vector<string> noargs;
@@ -144,6 +162,10 @@ ResultSet Database::executeQuery(string query, vector<string> args)
 
                 const unsigned char* value;
                 value = sqlite3_column_text(stmt, 0);
+                if (value == NULL)
+                {
+                    value = (const unsigned char*)"";
+                }
                 row.columns.insert(make_pair(string(name), string((char*)value)));
 #if 0
                 printf("Database::executeQuery: %s=%s\n", name, value);
@@ -223,3 +245,49 @@ set<string> Database::getTables()
     }
     return tables;
 }
+
+PreparedStatement::PreparedStatement(Database* db, sqlite3_stmt* stmt)
+{
+    m_db = db;
+    m_stmt = stmt;
+}
+
+PreparedStatement::~PreparedStatement()
+{
+    sqlite3_finalize(m_stmt);
+}
+
+bool PreparedStatement::bindString(int i, string str)
+{
+    sqlite3_bind_text(m_stmt, i, str.c_str(), str.length(), SQLITE_TRANSIENT);
+    return true;
+}
+
+bool PreparedStatement::bindInt64(int i, int64_t value)
+{
+    sqlite3_bind_int64(m_stmt, i, value);
+    return true;
+}
+
+bool PreparedStatement::execute()
+{
+    int res;
+    res = sqlite3_step(m_stmt);
+
+    if (res != SQLITE_DONE)
+    {
+        printf("PreparedStatement::execute: Unexpected result: res=%d\n", res);
+        return false;
+    }
+    sqlite3_reset(m_stmt);
+
+    return false;
+}
+
+
+bool PreparedStatement::reset()
+{
+    sqlite3_reset(m_stmt);
+    return true;
+}
+
