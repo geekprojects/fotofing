@@ -19,9 +19,9 @@ Index::Index()
 
     Table photosTable;
     photosTable.name = "photos";
-    photosTable.columns.insert(Column("pid", true)); // Photo ID
-    photosTable.columns.insert(Column("thumbnail", true)); // Image Blob
-    photosTable.columns.insert(Column("timestamp", true)); // Image Blob
+    photosTable.columns.insert(Column("pid", true)); // Thumbnail
+    photosTable.columns.insert(Column("thumbnail")); // Image Blob
+    photosTable.columns.insert(Column("timestamp")); // Timestamp
     schema.push_back(photosTable);
 
     Table filesTable;
@@ -131,19 +131,20 @@ bool Index::scanDirectory(string dir)
                     uint8_t* thumbData = NULL;
                     unsigned long thumbLength = 0;
                     thumbnail->saveJPEG(&thumbData, &thumbLength);
-                    printf("Index::scanDirectory: thumbData=%p, thumbLength=%lu\n", thumbData, thumbLength);
 
                     int res;
                     sqlite3_stmt* stmt;
-                    string insertPhoto = "INSERT INTO photos (pid, thumbnail) VALUES (?, ?)";
+                    string insertPhoto = "INSERT INTO photos (pid, thumbnail, timestamp) VALUES (?, ?, ?)";
                     res = sqlite3_prepare_v2(m_db->getDB(), insertPhoto.c_str(), insertPhoto.length(), &stmt, NULL);
                     if (res)
                     {
+                        printf("Database::open: Error: %s\n", sqlite3_errmsg(m_db->getDB()));
                         printf("Index::scanDirectory: Failed to prepare statement: %d\n", res);
                         return false;
                     }
                     sqlite3_bind_text(stmt, 1, fp.c_str(), fp.length(), SQLITE_TRANSIENT);
                     sqlite3_bind_blob(stmt, 2, thumbData, thumbLength, SQLITE_TRANSIENT);
+                    sqlite3_bind_int64(stmt, 3, timestamp);
 
                     res = sqlite3_step(stmt);
                     printf("Index::scanDirectory: res=%d\n", res);
@@ -156,7 +157,7 @@ bool Index::scanDirectory(string dir)
 
                     free(thumbData);
 
-saveTags(fp, tags);
+                    saveTags(fp, tags);
                 }
 
                 args.clear();
@@ -165,7 +166,6 @@ saveTags(fp, tags);
                 m_db->execute("INSERT INTO files (path, pid) VALUES (?, ?)", args);
             }
         }
-
     }
     closedir(fd);
     return true;
@@ -180,7 +180,6 @@ bool Index::saveTags(string pid, set<string> tags)
     for (it = tags.begin(); it != tags.end(); it++)
     {
         string tag = *it;
-        printf("Index::saveTags: tag: %s\n", it->c_str());
         size_t pos = tag.npos;
         while (true)
         {
@@ -192,7 +191,6 @@ bool Index::saveTags(string pid, set<string> tags)
                 {
                     parentTags.insert(parent);
                 }
-                printf("Index::saveTags: parent tag: %s\n", parent.c_str());
                 pos--;
                 if (pos <= 0)
                 {
@@ -211,17 +209,16 @@ bool Index::saveTags(string pid, set<string> tags)
         tags.insert(*it);
     }
 
+    PreparedStatement* ps = m_db->prepareStatement("INSERT INTO tags (pid, tag) VALUES (?, ?)");
+
     for (it = tags.begin(); it != tags.end(); it++)
     {
         string tag = *it;
-        printf("Index::saveTags: final tag: %s\n", it->c_str());
-
-        string query = "INSERT INTO tags (pid, tag) VALUES (?, ?)";
-        vector<string> args;
-        args.push_back(pid);
-        args.push_back(tag);
-        m_db->execute(query, args);
+        ps->bindString(1, pid);
+        ps->bindString(2, tag);
+        ps->execute();
     }
+    delete ps;
 
     return true;
 }
@@ -248,7 +245,7 @@ vector<Photo*> Index::getPhotos()
 {
     vector<Photo*> results;
     sqlite3_stmt* stmt;
-    string SELECT_PHOTOS_SQL = "SELECT pid, thumbnail FROM photos";
+    string SELECT_PHOTOS_SQL = "SELECT pid, thumbnail, timestamp FROM photos";
     sqlite3_prepare_v2(m_db->getDB(), SELECT_PHOTOS_SQL.c_str(), SELECT_PHOTOS_SQL.length(), &stmt, NULL);
 
     while (true)
@@ -258,15 +255,18 @@ vector<Photo*> Index::getPhotos()
         if (s == SQLITE_ROW)
         {
             const unsigned char* pid;
-            pid = sqlite3_column_text(stmt, 0);
             const void* thumbnailData;
             uint32_t thumbnailBytes;
+            int64_t timestamp;
+
+            pid = sqlite3_column_text(stmt, 0);
             thumbnailData = sqlite3_column_blob(stmt, 1);
             thumbnailBytes = sqlite3_column_bytes(stmt, 1);
+            timestamp = sqlite3_column_int64(stmt, 2);
 
             Surface* thumbnail = Surface::loadJPEG((uint8_t*)thumbnailData, thumbnailBytes);
 
-            Photo* p = new Photo(string((char*)pid), thumbnail);
+            Photo* p = new Photo(string((char*)pid), thumbnail, timestamp);
             results.push_back(p);
         }
         else if (s == SQLITE_DONE)
