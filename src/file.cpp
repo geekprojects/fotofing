@@ -95,6 +95,8 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
     string make = getTagValue(exifData, "Image", 0x010f, "Unknown");
     string model = getTagValue(exifData, "Image", 0x0110, "Unknown");
 
+    // Remove the make from the start of the model, if it's there
+    // (It is with Canon)
     if (model.find(make) == 0)
     {
         model = model.substr(make.length());
@@ -108,17 +110,19 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
     printf("Camera Tag: %s\n", cameraTag.c_str());
     tags.insert(cameraTag);
 
+    // Lens details
     string lensMake = getTagValue(exifData, "Photo", 0xa433, "Unknown");
     string lensModel = getTagValue(exifData, "Photo", 0xa434, "Unknown");
     string lensTag = "Hardware/Lens/" + lensMake + "/" + lensModel;
     printf("Lens: %s\n", lensTag.c_str());
     tags.insert(lensTag);
 
+    // Extract the timestamp
     string datetime = getTagValue(exifData, "Image", 0x0132);
     printf("datetime=%s\n", datetime.c_str());
     struct tm tm;
     strptime(datetime.c_str(), "%Y:%m:%d %H:%M%S", &tm);
-    //*timestamp = mktime(&tm);
+    *timestamp = mktime(&tm);
     tm.tm_year += 1900;
     char datetimetag[128];
     sprintf(datetimetag, "Date/%d/%02d/%02d", tm.tm_year, tm.tm_mon, tm.tm_mday);
