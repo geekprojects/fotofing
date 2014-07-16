@@ -269,6 +269,31 @@ bool PreparedStatement::bindInt64(int i, int64_t value)
     return true;
 }
 
+int PreparedStatement::getInt(int i)
+{
+   return sqlite3_column_int(m_stmt, i);
+}
+
+int64_t PreparedStatement::getInt64(int i)
+{
+   return sqlite3_column_int64(m_stmt, i);
+}
+
+string PreparedStatement::getString(int i)
+{
+   const void* str;
+   str = sqlite3_column_text(m_stmt, i);
+   return string((char*)str);
+}
+
+bool PreparedStatement::getBlob(int i, const void** data, uint32_t* length)
+{
+    *data = sqlite3_column_blob(m_stmt, i);
+    *length = sqlite3_column_bytes(m_stmt, i);
+   return true;
+}
+
+
 bool PreparedStatement::execute()
 {
     int res;
@@ -284,6 +309,29 @@ bool PreparedStatement::execute()
     return false;
 }
 
+bool PreparedStatement::executeQuery()
+{
+    // There's not actually anything to do
+    return true;
+}
+
+bool PreparedStatement::step()
+{
+    int res;
+    res = sqlite3_step(m_stmt);
+
+    if (res == SQLITE_ROW)
+    {
+        return true;
+    }
+    else if (res == SQLITE_DONE)
+    {
+        return false;
+    }
+
+    printf("PreparedStatement::executeQuery: Unexpected result: res=%d\n", res);
+    return false;
+}
 
 bool PreparedStatement::reset()
 {

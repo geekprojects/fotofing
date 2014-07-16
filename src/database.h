@@ -78,8 +78,16 @@ class PreparedStatement
     bool bindString(int i, std::string str);
     bool bindInt64(int i, int64_t v);
 
+    int getInt(int i);
+    int64_t getInt64(int i);
+    std::string getString(int i);
+    bool getBlob(int i, const void** data, uint32_t* length);
+
     bool execute();
     bool reset();
+
+    bool executeQuery();
+    bool step();
 };
 
 class Database
