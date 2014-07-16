@@ -125,6 +125,9 @@ bool Index::scanDirectory(string dir)
                     set<string> tags;
                     time_t timestamp;
                     f.getTags(tags, &timestamp);
+
+                    tags.insert("Fotofing/Visible");
+
                     printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
                     Surface* thumbnail = f.generateThumbnail();
 
@@ -227,9 +230,6 @@ set<string> Index::getAllTags()
 {
     set<string> tags;
 
-    // This nasty query returns all leaf tags,
-    // ie there are no child tags for them
-    //ResultSet rs = m_db->executeQuery("SELECT DISTINCT tag FROM tags t WHERE NOT EXISTS (SELECT 1 FROM tags t2 WHERE SUBSTR(t2.tag, 1, length(t.tag) + 1) = t.tag || '/')");
     ResultSet rs = m_db->executeQuery("SELECT DISTINCT tag FROM tags");
     vector<Row>::iterator it;
 
@@ -241,47 +241,87 @@ set<string> Index::getAllTags()
     return tags;
 }
 
+static Photo* createPhoto(PreparedStatement* ps)
+{
+     string pid;
+     const void* thumbnailData;
+     uint32_t thumbnailBytes;
+     int64_t timestamp;
+
+     pid = ps->getString(0);
+     ps->getBlob(1, &thumbnailData, &thumbnailBytes);
+     timestamp = ps->getInt64(2);
+
+     Surface* thumbnail = Surface::loadJPEG(
+         (uint8_t*)thumbnailData,
+         thumbnailBytes);
+
+     Photo* p = new Photo(pid, thumbnail, timestamp);
+     return p;
+}
+
 vector<Photo*> Index::getPhotos()
 {
     vector<Photo*> results;
-    sqlite3_stmt* stmt;
-    string SELECT_PHOTOS_SQL = "SELECT pid, thumbnail, timestamp FROM photos";
-    sqlite3_prepare_v2(m_db->getDB(), SELECT_PHOTOS_SQL.c_str(), SELECT_PHOTOS_SQL.length(), &stmt, NULL);
+    PreparedStatement* ps = m_db->prepareStatement(
+        "SELECT pid, thumbnail, timestamp FROM photos");
 
-    while (true)
+    ps->executeQuery();
+
+    while (ps->step())
     {
-        int s;
-        s = sqlite3_step(stmt);
-        if (s == SQLITE_ROW)
-        {
-            const unsigned char* pid;
-            const void* thumbnailData;
-            uint32_t thumbnailBytes;
-            int64_t timestamp;
-
-            pid = sqlite3_column_text(stmt, 0);
-            thumbnailData = sqlite3_column_blob(stmt, 1);
-            thumbnailBytes = sqlite3_column_bytes(stmt, 1);
-            timestamp = sqlite3_column_int64(stmt, 2);
-
-            Surface* thumbnail = Surface::loadJPEG((uint8_t*)thumbnailData, thumbnailBytes);
-
-            Photo* p = new Photo(string((char*)pid), thumbnail, timestamp);
-            results.push_back(p);
-        }
-        else if (s == SQLITE_DONE)
-        {
-            break;
-        }
-        else
-        {
-            printf("Index::getPhotos: Failed to retrieve photos: %d\n", s);
-            break;
-        }
+        Photo* p = createPhoto(ps);
+        results.push_back(p);
     }
-    sqlite3_finalize(stmt);
+    delete ps;
 
     return results;
 }
+
+vector<Photo*> Index::getPhotos(vector<string> tags)
+{
+    if (tags.size() == 0)
+    {
+        return getPhotos();
+    }
+
+    vector<Photo*> results;
+    string sql = "";
+    sql += "SELECT pid, thumbnail, timestamp FROM photos";
+    sql += " WHERE";
+    bool addAnd = false;
+    vector<string>::iterator it;
+    for (it = tags.begin(); it != tags.end(); it++)
+    {
+        if (addAnd)
+        {
+            sql += " AND";
+        }
+        addAnd = true;
+        sql += " pid IN (SELECT pid FROM tags WHERE tag = ?)";
+    }
+
+    printf("Index::getPhotos: sql=%s\n", sql.c_str());
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+
+    int i = 1;
+    for (it = tags.begin(); it != tags.end(); it++)
+    {
+        ps->bindString(i, *it);
+        i++;
+    }
+
+    ps->executeQuery();
+
+    while (ps->step())
+    {
+        Photo* p = createPhoto(ps);
+        results.push_back(p);
+    }
+    delete ps;
+
+    return results;
+}
+
 
 

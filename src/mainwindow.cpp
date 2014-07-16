@@ -4,7 +4,8 @@
 
 using namespace std;
 
-MainWindow::MainWindow(Index* index)
+MainWindow::MainWindow(Index* index) :
+    m_tagSearchButton("Search")
 {
     m_index = index;
 
@@ -20,20 +21,31 @@ MainWindow::MainWindow(Index* index)
     m_treeViewTags.set_model(m_tagTreeStore);
     m_treeViewTags.set_rules_hint();
 
-    Glib::RefPtr<Gtk::TreeSelection> refTreeSelection = m_treeViewTags.get_selection();
-    refTreeSelection->set_mode(Gtk::SELECTION_MULTIPLE);
+    m_refTreeSelection = m_treeViewTags.get_selection();
+    m_refTreeSelection->set_mode(Gtk::SELECTION_MULTIPLE);
 
     // Tag tree: Column
-    int cols_count = m_treeViewTags.append_column("Tag", m_tagColumns.tag);
+    int cols_count = m_treeViewTags.append_column("Tag", m_tagColumns.tagText);
     Gtk::TreeViewColumn* pColumn = m_treeViewTags.get_column(cols_count-1);
     Gtk::CellRenderer* pRenderer = pColumn->get_first_cell();
     pRenderer->property_xalign().set_value(0.0);
     pColumn->set_clickable();
 
+    // Add signal handler
+    m_treeViewTags.signal_row_activated().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onTagRowActivate));
+    m_tagSearchButton.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onTagSearchClicked));
+
     // Tag Tree: Add it
     m_scrolledWindowTags.add(m_treeViewTags);
-    m_hBox.pack_start(m_scrolledWindowTags, Gtk::PACK_SHRINK);
+    m_tagBox.pack_start(m_scrolledWindowTags, Gtk::PACK_EXPAND_WIDGET);
+    m_tagBox.pack_start(m_tagSearchButton, Gtk::PACK_SHRINK);
+    m_hBox.pack_start(m_tagBox, Gtk::PACK_SHRINK);
 
+    // Thumbnail View
     m_model = Gtk::ListStore::create(m_photoColumns);
     //m_model->set_sort_column(Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID, Gtk::SORT_ASCENDING);
 
@@ -54,8 +66,6 @@ MainWindow::MainWindow(Index* index)
     m_vBox.pack_start(m_statusBar, Gtk::PACK_SHRINK);
     add(m_vBox);
 
-    //m_iconView.set_columns(-1);
-
     show_all();
 
     updateTags();
@@ -71,7 +81,23 @@ void MainWindow::update()
 {
     m_model->clear();
 
+    vector<Tag*> tags = getSelectedTags();
     vector<Photo*> photos = m_index->getPhotos();
+    if (tags.size() > 0)
+    {
+        vector<string> tagStrings;
+        vector<Tag*>::iterator it;
+        for (it = tags.begin(); it != tags.end(); it++)
+        {
+            tagStrings.push_back((*it)->getTagName());
+        }
+        photos = m_index->getPhotos(tagStrings);
+    }
+    else
+    {
+        photos = m_index->getPhotos();
+    }
+
     vector<Photo*>::iterator it;
     for (it = photos.begin(); it != photos.end(); it++)
     {
@@ -99,6 +125,37 @@ void MainWindow::update()
     }
 }
 
+void MainWindow::onTagRowActivate(
+    const Gtk::TreeModel::Path& path,
+    Gtk::TreeViewColumn* column)
+{
+    update();
+}
+
+void MainWindow::onTagSearchClicked()
+{
+    update();
+}
+
+vector<Tag*> MainWindow::getSelectedTags()
+{
+    vector<Tag*> tags;
+
+    vector<Gtk::TreeModel::Path> selected;
+    selected = m_refTreeSelection->get_selected_rows();
+
+    vector<Gtk::TreeModel::Path>::iterator it;
+    for (it = selected.begin(); it != selected.end(); it++)
+    {
+        Gtk::TreeModel::Path path = *it;
+        Gtk::TreeModel::iterator rowit = m_tagTreeStore->get_iter(path);
+        Gtk::TreeRow row = *rowit;
+        Tag* tag = row[m_tagColumns.tag];
+        tags.push_back(tag);
+    }
+    return tags;
+}
+
 void MainWindow::treeify(Tag* parent, string remainder, int level)
 {
     int i;
@@ -115,8 +172,6 @@ void MainWindow::treeify(Tag* parent, string remainder, int level)
         part = remainder.substr(0, pos);
     }
 
-    printf("treeify: -> %s%s\n", spaces.c_str(), part.c_str());
-
     Tag* tag;
 
     std::map<std::string,Tag*>::iterator it;
@@ -129,6 +184,7 @@ void MainWindow::treeify(Tag* parent, string remainder, int level)
     else
     {
         tag = new Tag();
+        tag->parent = parent;
         tag->name = part;
         parent->children.insert(make_pair(part, tag));
         if (parent->treeRow == NULL)
@@ -139,7 +195,8 @@ void MainWindow::treeify(Tag* parent, string remainder, int level)
         {
             tag->treeRow = *(m_tagTreeStore->append(parent->treeRow.children()));
         }
-        tag->treeRow[m_tagColumns.tag] = part;
+        tag->treeRow[m_tagColumns.tagText] = part;
+        tag->treeRow[m_tagColumns.tag] = tag;
     }
 
     if (pos != remainder.npos)
@@ -150,7 +207,7 @@ void MainWindow::treeify(Tag* parent, string remainder, int level)
 
 void MainWindow::freeTags()
 {
-printf("MainWindow::freeTags: Here!\n");
+    printf("MainWindow::freeTags: Here!\n");
 }
 
 void MainWindow::updateTags()
@@ -159,7 +216,7 @@ void MainWindow::updateTags()
     tags = m_index->getAllTags();
 
     m_tagRoot = new Tag();
-    m_tagRoot->name = "ROOT";
+    m_tagRoot->name = "";
 
     set<string>::iterator it1;
     for (it1 = tags.begin(); it1 != tags.end(); it1++)
