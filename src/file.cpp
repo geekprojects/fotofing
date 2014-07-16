@@ -125,7 +125,7 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
     *timestamp = mktime(&tm);
     tm.tm_year += 1900;
     char datetimetag[128];
-    sprintf(datetimetag, "Date/%d/%02d/%02d", tm.tm_year, tm.tm_mon, tm.tm_mday);
+    sprintf(datetimetag, "Date/%d/%02d/%02d", tm.tm_year, tm.tm_mon + 1, tm.tm_mday);
     printf("Date Tag: %s\n", datetimetag);
     tags.insert(string(datetimetag));
 
