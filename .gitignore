@@ -1,0 +1,11 @@
+# Objects and archives
+*.o
+*.lo
+*.Po
+*.Plo
+*.a
+*.la
+*.so*
+
+fotofing.db
+
