@@ -20,6 +20,7 @@ class Index
 
     bool saveTags(std::string pid, std::set<std::string> tags);
     std::set<std::string> getAllTags();
+    std::set<std::string> getTags(std::string pid);
 
     std::vector<Photo*> getPhotos(std::vector<std::string> tags);
     std::vector<Photo*> getPhotos();

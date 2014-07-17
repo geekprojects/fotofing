@@ -48,15 +48,40 @@ class PhotoModelColumns : public Gtk::TreeModelColumnRecord
   public:
 
     Gtk::TreeModelColumn<Glib::ustring> display_name;
-    Gtk::TreeModelColumn< Glib::RefPtr<Gdk::Pixbuf> > pixbuf;
+    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > pixbuf;
+    Gtk::TreeModelColumn<Photo*> photo;
 
     PhotoModelColumns()
     {
         add(display_name);
         add(pixbuf);
+        add(photo);
     }
 };
 
+class PhotoPropColumns : public Gtk::TreeModelColumnRecord
+{
+  public:
+    Gtk::TreeModelColumn<Glib::ustring> property;
+    Gtk::TreeModelColumn<Glib::ustring> value;
+
+    PhotoPropColumns()
+    {
+        add(property);
+        add(value);
+    }
+};
+
+class PhotoTagColumns : public Gtk::TreeModelColumnRecord
+{
+  public:
+    Gtk::TreeModelColumn<Glib::ustring> tag;
+
+    PhotoTagColumns()
+    {
+        add(tag);
+    }
+};
 
 class MainWindow : public Gtk::Window
 {
@@ -81,12 +106,37 @@ class MainWindow : public Gtk::Window
     Gtk::TreeView m_treeViewTags;
     Glib::RefPtr<Gtk::TreeStore> m_tagTreeStore;
     Glib::RefPtr<Gtk::TreeSelection> m_refTreeSelection;
+    Gtk::Frame m_tagFrame;
+
+    void onTagRowActivate(
+        const Gtk::TreeModel::Path& path,
+        Gtk::TreeViewColumn* column);
+    void onTagSearchClicked();
 
     // Thumbnail View
     const PhotoModelColumns m_photoColumns;
     Gtk::ScrolledWindow m_scrolledWindowIcons;
     Gtk::IconView m_iconView;
     Glib::RefPtr<Gtk::ListStore> m_model;
+
+    void onIconViewItemActivated(const Gtk::TreeModel::Path& path);
+
+    // Photo detail panel
+    Gtk::Paned m_photoDetailPane;
+
+    // Photo properties
+    Gtk::ScrolledWindow m_photoPropScrollWindow;
+    Gtk::TreeView m_photoPropTreeView;
+    Glib::RefPtr<Gtk::ListStore> m_photoPropListStore;
+    const PhotoPropColumns m_photoPropColumns;
+    Gtk::Frame m_photoPropFrame;
+
+    // Photo tags
+    Gtk::ScrolledWindow m_photoTagScrollWindow;
+    Gtk::TreeView m_photoTagTreeView;
+    Glib::RefPtr<Gtk::ListStore> m_photoTagListStore;
+    const PhotoTagColumns m_photoTagColumns;
+    Gtk::Frame m_photoTagFrame;
 
     Gtk::Statusbar m_statusBar;
 
@@ -95,9 +145,6 @@ class MainWindow : public Gtk::Window
 
     void freeTags();
     void freeThumbnails();
-
-    void onTagRowActivate(const Gtk::TreeModel::Path& path, Gtk::TreeViewColumn* column);
-    void onTagSearchClicked();
 
  public:
     MainWindow(Index* index);

@@ -241,6 +241,58 @@ set<string> Index::getAllTags()
     return tags;
 }
 
+set<string> Index::getTags(string pid)
+{
+    set<string> tags;
+
+    PreparedStatement* ps = m_db->prepareStatement(
+        "SELECT tag FROM tags WHERE pid=?");
+
+    ps->bindString(1, pid);
+    ps->executeQuery();
+
+    while (ps->step())
+    {
+        tags.insert(ps->getString(0));
+    }
+    delete ps;
+
+    // Only return leaf tags (ie those without children)
+    set<string>::iterator it1;
+    bool foundChild = true;
+    while (foundChild)
+    {
+        for (it1 = tags.begin(); it1 != tags.end(); it1++)
+        {
+            string tag1 = *it1;
+            string tag1slash = tag1 + "/";
+
+            foundChild = false;
+            set<string>::iterator it2;
+            for (it2 = tags.begin(); it2 != tags.end(); it2++)
+            {
+                string tag2 = *it2;
+                if (tag2.length() > tag1.length())
+                {
+                    string tag2start = tag2.substr(0, tag1slash.length());
+                    if (tag2start == tag1slash)
+                    {
+                        foundChild = true;
+                        break;
+                    }
+                }
+            }
+            if (foundChild)
+            {
+                tags.erase(it1);
+                break;
+            }
+        }
+    }
+
+    return tags;
+}
+
 static Photo* createPhoto(PreparedStatement* ps)
 {
      string pid;
