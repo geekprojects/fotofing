@@ -12,8 +12,9 @@ string GET_TABLES_SQL = "SELECT name FROM sqlite_master WHERE type='table'";
 
 Database::Database()
 {
-    m_open = false;
     m_db = NULL;
+    m_open = false;
+    m_inTransaction = 0;
 }
 
 Database::~Database()
@@ -50,6 +51,32 @@ bool Database::close()
         return true;
     }
     sqlite3_close(m_db);
+    return true;
+}
+
+bool Database::startTransaction()
+{
+    m_inTransaction++;
+    if (m_inTransaction > 1)
+    {
+        return true;
+    }
+    char* errmsg;
+    sqlite3_exec(m_db, "BEGIN TRANSACTION", NULL, NULL, &errmsg);
+    return true;
+}
+
+bool Database::endTransaction()
+{
+    m_inTransaction--;
+    if (m_inTransaction > 0)
+    {
+        return true;
+
+    }
+    char* errmsg;
+    sqlite3_exec(m_db, "COMMIT", NULL, NULL, &errmsg);
+m_inTransaction = false;
     return true;
 }
 

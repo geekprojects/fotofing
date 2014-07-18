@@ -93,8 +93,9 @@ class PreparedStatement
 class Database
 {
  private:
-    bool m_open;
     sqlite3* m_db;
+    bool m_open;
+    int m_inTransaction;
 
  public:
     Database();
@@ -102,6 +103,9 @@ class Database
 
     bool open();
     bool close();
+
+    bool startTransaction();
+    bool endTransaction();
 
     bool checkSchema(std::vector<Table> schema);
 
