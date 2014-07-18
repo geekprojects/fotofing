@@ -10,6 +10,8 @@ class File
 {
  private:
     std::string m_path;
+    Surface* m_thumbnail;
+    std::string m_fingerprint;
 
  public:
     File(std::string path);
@@ -17,7 +19,10 @@ class File
 
     std::string getPath() { return m_path; }
 
-    Surface* generateThumbnail();
+    bool scan();
+
+    Surface* getThumbnail() { return m_thumbnail; }
+    std::string getFingerprint() { return m_fingerprint; }
     bool getTags(std::set<std::string>& tags, time_t* timestamp);
 };
 

@@ -1,6 +1,6 @@
 
 TGT=fotofing
-SRCS=main.cpp mainwindow.cpp index.cpp photo.cpp file.cpp fingerprint.cpp database.cpp sha1.cpp
+SRCS=main.cpp mainwindow.cpp index.cpp photo.cpp file.cpp database.cpp sha1.cpp
 OBJS=$(SRCS:.cpp=.o)
 
 all: $(OBJS)

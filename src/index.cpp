@@ -101,27 +101,25 @@ bool Index::scanDirectory(string dir)
             args.push_back(path);
             ResultSet rs;
             rs = m_db->executeQuery("SELECT * FROM files WHERE path=?", args);
-            printf("Matching files: %lu\n", rs.rows.size());
             if (rs.rows.size() == 0)
             {
+                File f(path);
+                f.scan();
+
                 // File hasn't been seen before
                 string fp;
-                fp = fingerprint(path);
+                fp = f.getFingerprint();
                 printf("%s: %-32s\n", fp.c_str(), path.c_str());
 
                 // See if we've seen this fingerprint before
                 args.clear();
                 args.push_back(fp);
                 rs = m_db->executeQuery("SELECT * FROM photos WHERE pid=?", args);
-                printf("Matching PIDs: %lu\n", rs.rows.size());
 
+                m_db->startTransaction();
                 if (rs.rows.size() == 0)
                 {
-                    // New fingerprint!
-                    printf("New fingerprint!\n");
-
                     // Extract details from the file
-                    File f(path);
                     set<string> tags;
                     time_t timestamp;
                     f.getTags(tags, &timestamp);
@@ -129,7 +127,7 @@ bool Index::scanDirectory(string dir)
                     tags.insert("Fotofing/Visible");
 
                     printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
-                    Surface* thumbnail = f.generateThumbnail();
+                    Surface* thumbnail = f.getThumbnail();
 
                     uint8_t* thumbData = NULL;
                     unsigned long thumbLength = 0;
@@ -150,7 +148,7 @@ bool Index::scanDirectory(string dir)
                     sqlite3_bind_int64(stmt, 3, timestamp);
 
                     res = sqlite3_step(stmt);
-                    printf("Index::scanDirectory: res=%d\n", res);
+                    //printf("Index::scanDirectory: res=%d\n", res);
                     sqlite3_finalize(stmt);
                     if (res != SQLITE_DONE)
                     {
@@ -167,6 +165,7 @@ bool Index::scanDirectory(string dir)
                 args.push_back(path);
                 args.push_back(fp);
                 m_db->execute("INSERT INTO files (path, pid) VALUES (?, ?)", args);
+                m_db->endTransaction();
             }
         }
     }
@@ -214,6 +213,7 @@ bool Index::saveTags(string pid, set<string> tags)
 
     PreparedStatement* ps = m_db->prepareStatement("INSERT INTO tags (pid, tag) VALUES (?, ?)");
 
+    m_db->startTransaction();
     for (it = tags.begin(); it != tags.end(); it++)
     {
         string tag = *it;
@@ -221,6 +221,8 @@ bool Index::saveTags(string pid, set<string> tags)
         ps->bindString(2, tag);
         ps->execute();
     }
+    m_db->endTransaction();
+
     delete ps;
 
     return true;
@@ -353,7 +355,9 @@ vector<Photo*> Index::getPhotos(vector<string> tags)
         sql += " pid IN (SELECT pid FROM tags WHERE tag = ?)";
     }
 
+#if 0
     printf("Index::getPhotos: sql=%s\n", sql.c_str());
+#endif
     PreparedStatement* ps = m_db->prepareStatement(sql);
 
     int i = 1;
