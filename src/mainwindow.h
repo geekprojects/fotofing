@@ -10,6 +10,20 @@
 
 struct Tag
 {
+    Tag()
+    {
+        parent = NULL;
+    }
+
+    ~Tag()
+    {
+        std::map<std::string, Tag*>::iterator it;
+        for (it = children.begin(); it != children.end(); it++)
+        {
+            delete it->second;
+        }
+    }
+
     Tag* parent;
     std::string name;
     std::map<std::string, Tag*> children;
@@ -92,7 +106,8 @@ class MainWindow : public Gtk::Window
     Gtk::VBox m_vBox;
     Gtk::HBox m_hBox;
 
-    // Toolbar
+    // Toolbar and Menu
+    Gtk::MenuBar m_menuBar;
     Gtk::Toolbar m_toolbar;
     Gtk::ToolButton m_toolbarTag;
 
@@ -114,6 +129,7 @@ class MainWindow : public Gtk::Window
     void onTagSearchClicked();
 
     // Thumbnail View
+    std::vector<Photo*> m_photos;
     const PhotoModelColumns m_photoColumns;
     Gtk::ScrolledWindow m_scrolledWindowIcons;
     Gtk::IconView m_iconView;
@@ -140,10 +156,13 @@ class MainWindow : public Gtk::Window
 
     Gtk::Statusbar m_statusBar;
 
+    void createMenu();
+
     std::vector<Tag*> getSelectedTags();
     void treeify(Tag* parent, std::string remainder, int level);
 
     void freeTags();
+    void freePhotos();
     void freeThumbnails();
 
  public:

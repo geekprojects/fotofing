@@ -94,10 +94,13 @@ MainWindow::MainWindow(Index* index) :
 
     m_hBox.pack_start(m_photoDetailPane, Gtk::PACK_SHRINK);
 
+    m_vBox.pack_start(m_menuBar, Gtk::PACK_SHRINK);
     m_vBox.pack_start(m_toolbar, Gtk::PACK_SHRINK);
     m_vBox.pack_start(m_hBox, Gtk::PACK_EXPAND_WIDGET);
     m_vBox.pack_start(m_statusBar, Gtk::PACK_SHRINK);
     add(m_vBox);
+
+    createMenu();
 
     show_all();
 
@@ -107,15 +110,39 @@ MainWindow::MainWindow(Index* index) :
 
 MainWindow::~MainWindow()
 {
-    freeTags();
+    delete m_tagRoot;
+    freePhotos();
+}
+
+void MainWindow::createMenu()
+{
+
+    Gtk::MenuItem* fileMenuItem = Gtk::manage(new Gtk::MenuItem("_File", true));
+    Gtk::Menu* fileMenu = Gtk::manage(new Gtk::Menu());
+    fileMenu->append(*(Gtk::manage(new Gtk::MenuItem("_Import Index...", true))));
+    fileMenuItem->set_submenu(*fileMenu);
+    m_menuBar.append(*fileMenuItem);
+
+    Gtk::MenuItem* editMenuItem = Gtk::manage(new Gtk::MenuItem("_Edit", true));
+    Gtk::Menu* editMenu = Gtk::manage(new Gtk::Menu());
+    editMenu->append(*(Gtk::manage(new Gtk::MenuItem("_Preferences", true))));
+    editMenuItem->set_submenu(*editMenu);
+    m_menuBar.append(*editMenuItem);
+
+    Gtk::MenuItem* helpMenuItem = Gtk::manage(new Gtk::MenuItem("_Help", true));
+    Gtk::Menu* helpMenu = Gtk::manage(new Gtk::Menu());
+    helpMenu->append(*(Gtk::manage(new Gtk::MenuItem("_About", true))));
+    helpMenuItem->set_submenu(*helpMenu);
+    m_menuBar.append(*helpMenuItem);
 }
 
 void MainWindow::update()
 {
     m_model->clear();
 
+    freePhotos();
+
     vector<Tag*> tags = getSelectedTags();
-    vector<Photo*> photos = m_index->getPhotos();
     if (tags.size() > 0)
     {
         vector<string> tagStrings;
@@ -124,15 +151,15 @@ void MainWindow::update()
         {
             tagStrings.push_back((*it)->getTagName());
         }
-        photos = m_index->getPhotos(tagStrings);
+        m_photos = m_index->getPhotos(tagStrings);
     }
     else
     {
-        photos = m_index->getPhotos();
+        m_photos = m_index->getPhotos();
     }
 
     vector<Photo*>::iterator it;
-    for (it = photos.begin(); it != photos.end(); it++)
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
     {
         Gtk::TreeModel::iterator iter = m_model->append();
         Gtk::TreeModel::Row row = *iter;
@@ -293,7 +320,16 @@ void MainWindow::treeify(Tag* parent, string remainder, int level)
 
 void MainWindow::freeTags()
 {
-    printf("MainWindow::freeTags: Here!\n");
+}
+
+void MainWindow::freePhotos()
+{
+    vector<Photo*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        delete *it;
+    }
+    m_photos.clear();
 }
 
 void MainWindow::updateTags()
