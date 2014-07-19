@@ -190,6 +190,14 @@ static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, stri
     return value;
 }
 
+static time_t tm2time(const struct tm *src)
+{
+    struct tm tmp;
+
+    tmp = *src;
+    return timegm(&tmp) - src->tm_gmtoff;
+}
+
 bool File::getTags(set<string>& tags, time_t* timestamp)
 {
     // Derive tags from the EXIF data
@@ -228,13 +236,20 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
     string datetime = getTagValue(exifData, "Image", 0x0132);
     printf("datetime=%s\n", datetime.c_str());
     struct tm tm;
+    memset(&tm, 0, sizeof(tm));
     strptime(datetime.c_str(), "%Y:%m:%d %H:%M%S", &tm);
-    *timestamp = mktime(&tm);
-    tm.tm_year += 1900;
     char datetimetag[128];
-    sprintf(datetimetag, "Date/%d/%02d/%02d", tm.tm_year, tm.tm_mon + 1, tm.tm_mday);
+    sprintf(
+        datetimetag,
+        "Date/%d/%02d/%02d",
+        tm.tm_year + 1900,
+        tm.tm_mon + 1,
+        tm.tm_mday);
     printf("Date Tag: %s\n", datetimetag);
     tags.insert(string(datetimetag));
+
+    *timestamp = tm2time(&tm);
+    printf("Timestamp : %lu\n", *timestamp);
 
     return true;
 }
