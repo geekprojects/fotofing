@@ -106,10 +106,24 @@ class MainWindow : public Gtk::Window
     Gtk::VBox m_vBox;
     Gtk::HBox m_hBox;
 
+    Glib::RefPtr<Gtk::Builder> m_refBuilder;
+
     // Toolbar and Menu
-    Gtk::MenuBar m_menuBar;
+    Gtk::HBox m_toolbarBox;
     Gtk::Toolbar m_toolbar;
     Gtk::ToolButton m_toolbarTag;
+    Gtk::ToolButton m_toolbarTagEvent;
+    Gtk::ToolButton m_toolbarHide;
+
+    time_t m_fromDate;
+    time_t m_toDate;
+    Gtk::Button m_fromDateButton;
+    Gtk::Button m_toDateButton;
+    Gtk::Label m_dateSeparator;
+
+    void onFromDateClicked();
+    void onToDateClicked();
+    void updateDateButtons();
 
     // Tag VBox
     Gtk::VBox m_tagBox;
@@ -156,7 +170,10 @@ class MainWindow : public Gtk::Window
 
     Gtk::Statusbar m_statusBar;
 
-    void createMenu();
+    Gtk::AboutDialog m_aboutDialog;
+
+    void createAbout();
+    Gtk::MenuBar* createMenu();
 
     std::vector<Tag*> getSelectedTags();
     void treeify(Tag* parent, std::string remainder, int level);
@@ -171,6 +188,9 @@ class MainWindow : public Gtk::Window
 
     void update();
     void updateTags();
+
+    void openAbout();
+    void closeAbout(int responseId);
 };
 
 #endif

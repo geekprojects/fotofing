@@ -2,10 +2,15 @@
 
 #include "mainwindow.h"
 #include "detaildialog.h"
+#include "calendarpopup.h"
+#include "utils.h"
+
+#include <gtkmm/aboutdialog.h>
 
 using namespace std;
 
 MainWindow::MainWindow(Index* index) :
+    m_dateSeparator("-"),
     m_tagSearchButton("Search"),
     m_photoDetailPane(Gtk::ORIENTATION_VERTICAL)
 {
@@ -16,7 +21,34 @@ MainWindow::MainWindow(Index* index) :
 
     // Toolbar
     m_toolbarTag.set_icon_name("tag-new");
+    m_toolbarTag.set_tooltip_text("Add Tag");
     m_toolbar.append(m_toolbarTag);
+
+    m_toolbarTagEvent.set_icon_name("appointment-new");
+    m_toolbarTagEvent.set_tooltip_text("Add Event Tag");
+    m_toolbar.append(m_toolbarTagEvent);
+
+    m_toolbar.append(*(Gtk::manage(new Gtk::SeparatorToolItem)));
+
+    m_toolbarHide.set_icon_name("edit-delete");
+    m_toolbarHide.set_tooltip_text("Hide");
+    m_toolbar.append(m_toolbarHide);
+
+    m_fromDate = 0;
+    m_toDate = time(NULL);
+    m_fromDateButton.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onFromDateClicked));
+    m_toDateButton.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onToDateClicked));
+    updateDateButtons();
+
+    m_toolbarBox.pack_start(m_toolbar, Gtk::PACK_EXPAND_WIDGET);
+    m_toolbarBox.pack_start(m_fromDateButton, Gtk::PACK_SHRINK);
+    m_toolbarBox.pack_start(m_dateSeparator, Gtk::PACK_SHRINK);
+    m_toolbarBox.pack_start(m_toDateButton, Gtk::PACK_SHRINK);
+
 
     // Tag tree
     m_tagTreeStore = Gtk::TreeStore::create(m_tagColumns);
@@ -37,6 +69,7 @@ MainWindow::MainWindow(Index* index) :
     m_treeViewTags.signal_row_activated().connect(sigc::mem_fun(
         *this,
         &MainWindow::onTagRowActivate));
+    m_tagSearchButton.set_tooltip_text("Search for selected tags");
     m_tagSearchButton.signal_clicked().connect(sigc::mem_fun(
         *this,
         &MainWindow::onTagSearchClicked));
@@ -94,13 +127,14 @@ MainWindow::MainWindow(Index* index) :
 
     m_hBox.pack_start(m_photoDetailPane, Gtk::PACK_SHRINK);
 
-    m_vBox.pack_start(m_menuBar, Gtk::PACK_SHRINK);
-    m_vBox.pack_start(m_toolbar, Gtk::PACK_SHRINK);
+    Gtk::MenuBar* menuBar = createMenu();
+    m_vBox.pack_start(*menuBar, Gtk::PACK_SHRINK);
+    m_vBox.pack_start(m_toolbarBox, Gtk::PACK_SHRINK);
     m_vBox.pack_start(m_hBox, Gtk::PACK_EXPAND_WIDGET);
     m_vBox.pack_start(m_statusBar, Gtk::PACK_SHRINK);
     add(m_vBox);
 
-    createMenu();
+createAbout();
 
     show_all();
 
@@ -114,26 +148,59 @@ MainWindow::~MainWindow()
     freePhotos();
 }
 
-void MainWindow::createMenu()
+Gtk::MenuBar* MainWindow::createMenu()
 {
 
-    Gtk::MenuItem* fileMenuItem = Gtk::manage(new Gtk::MenuItem("_File", true));
-    Gtk::Menu* fileMenu = Gtk::manage(new Gtk::Menu());
-    fileMenu->append(*(Gtk::manage(new Gtk::MenuItem("_Import Index...", true))));
-    fileMenuItem->set_submenu(*fileMenu);
-    m_menuBar.append(*fileMenuItem);
+    Glib::RefPtr<Gio::SimpleActionGroup> actionGroup;
+    actionGroup = Gio::SimpleActionGroup::create();
 
-    Gtk::MenuItem* editMenuItem = Gtk::manage(new Gtk::MenuItem("_Edit", true));
-    Gtk::Menu* editMenu = Gtk::manage(new Gtk::Menu());
-    editMenu->append(*(Gtk::manage(new Gtk::MenuItem("_Preferences", true))));
-    editMenuItem->set_submenu(*editMenu);
-    m_menuBar.append(*editMenuItem);
+    actionGroup->add_action(
+        "about",
+        sigc::mem_fun(*this, &MainWindow::openAbout));
 
-    Gtk::MenuItem* helpMenuItem = Gtk::manage(new Gtk::MenuItem("_Help", true));
-    Gtk::Menu* helpMenu = Gtk::manage(new Gtk::Menu());
-    helpMenu->append(*(Gtk::manage(new Gtk::MenuItem("_About", true))));
-    helpMenuItem->set_submenu(*helpMenu);
-    m_menuBar.append(*helpMenuItem);
+    insert_action_group("fotofing", actionGroup);
+
+    m_refBuilder = Gtk::Builder::create();
+
+    Glib::ustring ui_info =
+        "<interface>"
+        "  <menu id='main-menu'>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_File</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>_Import Index</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.importindex</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_Edit</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>Preferences</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.preferences</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_Help</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>About</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.about</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "  </menu>"
+        "</interface>";
+
+    m_refBuilder->add_from_string(ui_info);
+
+    Glib::RefPtr<Glib::Object> object = m_refBuilder->get_object("main-menu");
+    Glib::RefPtr<Gio::Menu> gmenu = Glib::RefPtr<Gio::Menu>::cast_dynamic(object);
+
+    return Gtk::manage(new Gtk::MenuBar(gmenu));
 }
 
 void MainWindow::update()
@@ -186,6 +253,35 @@ void MainWindow::update()
         //delete photo;
     }
 }
+
+void MainWindow::onFromDateClicked()
+{
+    CalendarPopup* cp = new CalendarPopup(*this, m_fromDate);
+    cp->run();
+
+    m_fromDate = cp->getTime();
+    delete cp;
+
+    updateDateButtons();
+}
+
+void MainWindow::onToDateClicked()
+{
+    CalendarPopup* cp = new CalendarPopup(*this, m_toDate);
+    cp->run();
+
+    m_toDate = cp->getTime();
+    delete cp;
+
+    updateDateButtons();
+}
+
+void MainWindow::updateDateButtons()
+{
+    m_fromDateButton.set_label(timeToString(m_fromDate));
+    m_toDateButton.set_label(timeToString(m_toDate));
+}
+
 
 void MainWindow::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
 {
@@ -345,6 +441,42 @@ void MainWindow::updateTags()
     {
         string tag = *it1;
         treeify(m_tagRoot, tag, 0);
+    }
+}
+
+void MainWindow::createAbout()
+{
+    m_aboutDialog.set_transient_for(*this);
+    m_aboutDialog.set_program_name("Fotofing");
+    m_aboutDialog.set_version("0.0.1");
+    m_aboutDialog.set_copyright("GeekProjects");
+    m_aboutDialog.set_comments("Photo Tagging and Management");
+    m_aboutDialog.set_license_type(Gtk::LICENSE_GPL_3_0);
+    m_aboutDialog.set_website("http://geekprojects.com");
+    m_aboutDialog.set_website_label("GeekProjects.com");
+
+    std::vector<Glib::ustring> authors;
+    authors.push_back("Ian Parker <ian@geekprojects.com>");
+    m_aboutDialog.set_authors(authors);
+
+    m_aboutDialog.signal_response().connect(
+        sigc::mem_fun(*this, &MainWindow::closeAbout) );
+
+}
+
+void MainWindow::openAbout()
+{
+    printf("MainWindow::openAbout: here!\n");
+    m_aboutDialog.show();
+    m_aboutDialog.present();
+}
+
+void MainWindow::closeAbout(int responseId)
+{
+    if ((responseId == Gtk::RESPONSE_CLOSE) ||
+        (responseId == Gtk::RESPONSE_CANCEL) )
+    {
+        m_aboutDialog.hide();
     }
 }
 
