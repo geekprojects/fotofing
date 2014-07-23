@@ -150,8 +150,9 @@ class MainWindow : public Gtk::Window
     Glib::RefPtr<Gtk::ListStore> m_model;
 
     void onIconViewItemActivated(const Gtk::TreeModel::Path& path);
+    void onIconViewSelectionChanged();
 
-    // Photo detail panel
+    /* *** Photo detail panel *** */
     Gtk::Paned m_photoDetailPane;
 
     // Photo properties
@@ -168,6 +169,10 @@ class MainWindow : public Gtk::Window
     const PhotoTagColumns m_photoTagColumns;
     Gtk::Frame m_photoTagFrame;
 
+    Photo* getPhotoFromPath(Gtk::TreePath path);
+    void displayDetails(Photo* photo);
+
+    /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
     Gtk::Statusbar m_statusBar;
     Gtk::ProgressBar m_progressBar;

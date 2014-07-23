@@ -95,10 +95,14 @@ MainWindow::MainWindow(Index* index) :
     m_iconView.set_item_width(10);
     m_iconView.grab_focus();
 
-    m_iconView.set_activate_on_single_click(true);
+    m_iconView.set_activate_on_single_click(false);
     m_iconView.signal_item_activated().connect(sigc::mem_fun(
         *this,
         &MainWindow::onIconViewItemActivated));
+    m_iconView.signal_selection_changed().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onIconViewSelectionChanged));
+
 
     m_scrolledWindowIcons.add(m_iconView);
     m_hBox.pack_start(m_scrolledWindowIcons, Gtk::PACK_EXPAND_WIDGET);
@@ -316,52 +320,80 @@ void MainWindow::updateDateButtons()
 
 void MainWindow::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
 {
+    Photo* photo = getPhotoFromPath(path);
+    displayDetails(photo);
 
+    vector<File*> files = m_index->getFiles(photo->getId());
+    if (files.size() > 0)
+    {
+        // TODO: Make this configurable!
+        string cmd = string("/usr/bin/qiv -fm ") + files.at(0)->getPath();
+        printf("MainWindow::onIconViewItemActivated: cmd=%s\n", cmd.c_str());
+        int res;
+        res = system(cmd.c_str());
+        printf("MainWindow::onIconViewItemActivated: res=%d\n", res);
+    }
+}
+
+void MainWindow::onIconViewSelectionChanged()
+{
+    vector<Gtk::TreePath> selected = m_iconView.get_selected_items();
+    if (selected.size() > 0)
+    {
+        displayDetails(getPhotoFromPath(selected.at(0)));
+    }
+}
+
+Photo* MainWindow::getPhotoFromPath(Gtk::TreePath path)
+{
     Gtk::TreeModel::iterator iter = m_model->get_iter(path);
-    if(iter)
+    if (iter)
     {
         Gtk::TreeModel::Row row = *iter;
-        Glib::ustring name = row[m_photoColumns.display_name];
-        Photo* photo = row[m_photoColumns.photo];
+        return row[m_photoColumns.photo];
+    }
+    return NULL;
+}
 
-        m_photoPropListStore->clear();
-        Gtk::TreeRow propRow;
-        propRow = *(m_photoPropListStore->append());
-        propRow[m_photoPropColumns.property] = "Id";
-        propRow[m_photoPropColumns.value] = photo->getId();
+void MainWindow::displayDetails(Photo* photo)
+{
+    m_photoPropListStore->clear();
+    Gtk::TreeRow propRow;
+    propRow = *(m_photoPropListStore->append());
+    propRow[m_photoPropColumns.property] = "Id";
+    propRow[m_photoPropColumns.value] = photo->getId();
 
-        time_t ts = photo->getTimestamp();
-        struct tm tm;
-        localtime_r(&ts, &tm);
+    time_t ts = photo->getTimestamp();
+    struct tm tm;
+    localtime_r(&ts, &tm);
 
-        char tsbuf[64];
-        strftime(tsbuf, 64, "%x", &tm);
-        propRow = *(m_photoPropListStore->append());
-        propRow[m_photoPropColumns.property] = "Date";
-        propRow[m_photoPropColumns.value] = string(tsbuf);
+    char tsbuf[64];
+    strftime(tsbuf, 64, "%x", &tm);
+    propRow = *(m_photoPropListStore->append());
+    propRow[m_photoPropColumns.property] = "Date";
+    propRow[m_photoPropColumns.value] = string(tsbuf);
 
-        strftime(tsbuf, 64, "%X", &tm);
-        propRow = *(m_photoPropListStore->append());
-        propRow[m_photoPropColumns.property] = "Time";
-        propRow[m_photoPropColumns.value] = string(tsbuf);
+    strftime(tsbuf, 64, "%X", &tm);
+    propRow = *(m_photoPropListStore->append());
+    propRow[m_photoPropColumns.property] = "Time";
+    propRow[m_photoPropColumns.value] = string(tsbuf);
 
-        // Tags
-        m_photoTagListStore->clear();
-        set<string> tags = photo->getTags();
-        if (tags.size() == 0)
-        {
-            // Only do this if we haven't already retrieved the tags
-            tags = m_index->getTags(photo->getId());
-            photo->setTags(tags);
-        }
+    // Tags
+    m_photoTagListStore->clear();
+    set<string> tags = photo->getTags();
+    if (tags.size() == 0)
+    {
+        // Only do this if we haven't already retrieved the tags
+        tags = m_index->getTags(photo->getId());
+        photo->setTags(tags);
+    }
 
-        set<string>::iterator tagIt;
-        for (tagIt = tags.begin(); tagIt != tags.end(); tagIt++)
-        {
-            Gtk::TreeRow tagRow;
-            tagRow = *(m_photoTagListStore->append());
-            tagRow[m_photoTagColumns.tag] = *tagIt;
-        }
+    set<string>::iterator tagIt;
+    for (tagIt = tags.begin(); tagIt != tags.end(); tagIt++)
+    {
+        Gtk::TreeRow tagRow;
+        tagRow = *(m_photoTagListStore->append());
+        tagRow[m_photoTagColumns.tag] = *tagIt;
     }
 }
 
