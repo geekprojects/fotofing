@@ -2,6 +2,7 @@
 #include <exiv2/exiv2.hpp>
 
 #include "file.h"
+#include "utils.h"
 #include "sha1.h"
 
 using namespace std;
@@ -188,14 +189,6 @@ static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, stri
         value = it->toString();
     }
     return value;
-}
-
-static time_t tm2time(const struct tm *src)
-{
-    struct tm tmp;
-
-    tmp = *src;
-    return timegm(&tmp) - src->tm_gmtoff;
 }
 
 bool File::getTags(set<string>& tags, time_t* timestamp)
