@@ -417,5 +417,24 @@ vector<Photo*> Index::getPhotos(vector<string> tags, time_t* fromDate, time_t* t
     return results;
 }
 
+vector<File*> Index::getFiles(string pid)
+{
+    vector<File*> files;
+
+    PreparedStatement* ps;
+    ps = m_db->prepareStatement("SELECT path FROM files WHERE pid=?");
+    ps->bindString(1, pid);
+
+    ps->executeQuery();
+
+    while (ps->step())
+    {
+        string path = ps->getString(0);
+        File* f = new File(path);
+        files.push_back(f);
+    }
+
+    return files;
+}
 
 

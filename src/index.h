@@ -8,6 +8,7 @@
 
 #include "database.h"
 #include "photo.h"
+#include "file.h"
 
 class Index
 {
@@ -26,6 +27,8 @@ class Index
 
     std::vector<Photo*> getPhotos(std::vector<std::string> tags, time_t* from, time_t* to);
     std::vector<Photo*> getPhotos(time_t* from, time_t* to);
+
+    std::vector<File*> getFiles(std::string pid);
 };
 
 #endif
