@@ -318,7 +318,7 @@ vector<Photo*> Index::getPhotos()
 {
     vector<Photo*> results;
     PreparedStatement* ps = m_db->prepareStatement(
-        "SELECT pid, thumbnail, timestamp FROM photos");
+        "SELECT pid, thumbnail, timestamp FROM photos ORDER BY timestamp ASC");
 
     ps->executeQuery();
 
@@ -354,6 +354,7 @@ vector<Photo*> Index::getPhotos(vector<string> tags)
         addAnd = true;
         sql += " pid IN (SELECT pid FROM tags WHERE tag = ?)";
     }
+    sql += " ORDER BY timestamp ASC";
 
 #if 0
     printf("Index::getPhotos: sql=%s\n", sql.c_str());
