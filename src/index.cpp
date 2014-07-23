@@ -314,40 +314,51 @@ static Photo* createPhoto(PreparedStatement* ps)
      return p;
 }
 
-vector<Photo*> Index::getPhotos()
+vector<Photo*> Index::getPhotos(time_t* fromDate, time_t* toDate)
 {
-    vector<Photo*> results;
-    PreparedStatement* ps = m_db->prepareStatement(
-        "SELECT pid, thumbnail, timestamp FROM photos ORDER BY timestamp ASC");
-
-    ps->executeQuery();
-
-    while (ps->step())
-    {
-        Photo* p = createPhoto(ps);
-        results.push_back(p);
-    }
-    delete ps;
-
-    return results;
+    vector<string> noTags;
+    return getPhotos(noTags, fromDate, toDate);
 }
 
-vector<Photo*> Index::getPhotos(vector<string> tags)
+vector<Photo*> Index::getPhotos(vector<string> tags, time_t* fromDate, time_t* toDate)
 {
-    if (tags.size() == 0)
-    {
-        return getPhotos();
-    }
-
     vector<Photo*> results;
     string sql = "";
     sql += "SELECT pid, thumbnail, timestamp FROM photos";
-    sql += " WHERE";
+
     bool addAnd = false;
+
+    if (fromDate != NULL && (*fromDate) != 0)
+    {
+        if (!addAnd)
+        {
+            sql += " WHERE";
+        }
+        addAnd = true;
+        sql += " timestamp >= ?";
+    }
+    if (toDate != NULL && (*toDate) != 0)
+    {
+        if (!addAnd)
+        {
+            sql += " WHERE";
+        }
+        else
+        {
+            sql += " AND";
+        }
+        addAnd = true;
+        sql += " timestamp <= ?";
+    }
+
     vector<string>::iterator it;
     for (it = tags.begin(); it != tags.end(); it++)
     {
-        if (addAnd)
+        if (!addAnd)
+        {
+            sql += " WHERE";
+        }
+        else
         {
             sql += " AND";
         }
@@ -356,12 +367,26 @@ vector<Photo*> Index::getPhotos(vector<string> tags)
     }
     sql += " ORDER BY timestamp ASC";
 
-#if 0
+#if 1
     printf("Index::getPhotos: sql=%s\n", sql.c_str());
 #endif
+
     PreparedStatement* ps = m_db->prepareStatement(sql);
+    if (ps == NULL)
+    {
+        return results;
+    }
 
     int i = 1;
+    if (fromDate != NULL && (*fromDate) != 0)
+    {
+        ps->bindInt64(i++, *fromDate);
+    }
+    if (toDate != NULL && (*toDate) != 0)
+    {
+        // TODO: This needs to round up to the end of the day!
+        ps->bindInt64(i++, *toDate);
+    }
     for (it = tags.begin(); it != tags.end(); it++)
     {
         ps->bindString(i, *it);
@@ -370,9 +395,21 @@ vector<Photo*> Index::getPhotos(vector<string> tags)
 
     ps->executeQuery();
 
+    *fromDate = time(NULL);
+    *toDate = 0;
+
     while (ps->step())
     {
         Photo* p = createPhoto(ps);
+        time_t t = p->getTimestamp();
+        if (t < *fromDate)
+        {
+            *fromDate = t;
+        }
+        if (t > *toDate)
+        {
+            *toDate = t;
+        }
         results.push_back(p);
     }
     delete ps;

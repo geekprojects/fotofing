@@ -168,7 +168,11 @@ class MainWindow : public Gtk::Window
     const PhotoTagColumns m_photoTagColumns;
     Gtk::Frame m_photoTagFrame;
 
+    Gtk::HBox m_statusBox;
     Gtk::Statusbar m_statusBar;
+    Gtk::ProgressBar m_progressBar;
+    bool m_progressActive;
+    bool progressTimeout();
 
     Gtk::AboutDialog m_aboutDialog;
 

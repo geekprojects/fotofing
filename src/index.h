@@ -4,6 +4,8 @@
 #include <vector>
 #include <string>
 
+#include <time.h>
+
 #include "database.h"
 #include "photo.h"
 
@@ -22,8 +24,8 @@ class Index
     std::set<std::string> getAllTags();
     std::set<std::string> getTags(std::string pid);
 
-    std::vector<Photo*> getPhotos(std::vector<std::string> tags);
-    std::vector<Photo*> getPhotos();
+    std::vector<Photo*> getPhotos(std::vector<std::string> tags, time_t* from, time_t* to);
+    std::vector<Photo*> getPhotos(time_t* from, time_t* to);
 };
 
 #endif

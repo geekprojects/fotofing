@@ -15,6 +15,7 @@ MainWindow::MainWindow(Index* index) :
     m_photoDetailPane(Gtk::ORIENTATION_VERTICAL)
 {
     m_index = index;
+    m_progressActive = false;
 
     set_title("Fotofing");
     set_default_size(600, 400);
@@ -127,11 +128,14 @@ MainWindow::MainWindow(Index* index) :
 
     m_hBox.pack_start(m_photoDetailPane, Gtk::PACK_SHRINK);
 
+    m_statusBox.pack_start(m_statusBar, Gtk::PACK_EXPAND_WIDGET);
+    m_statusBox.pack_start(m_progressBar, Gtk::PACK_SHRINK, 5);
+
     Gtk::MenuBar* menuBar = createMenu();
     m_vBox.pack_start(*menuBar, Gtk::PACK_SHRINK);
     m_vBox.pack_start(m_toolbarBox, Gtk::PACK_SHRINK);
     m_vBox.pack_start(m_hBox, Gtk::PACK_EXPAND_WIDGET);
-    m_vBox.pack_start(m_statusBar, Gtk::PACK_SHRINK);
+    m_vBox.pack_start(m_statusBox, Gtk::PACK_SHRINK);
     add(m_vBox);
 
 createAbout();
@@ -205,6 +209,12 @@ Gtk::MenuBar* MainWindow::createMenu()
 
 void MainWindow::update()
 {
+    m_progressActive = true;
+    m_progressBar.pulse();
+    Glib::signal_timeout().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::progressTimeout), 50 );
+
     m_model->clear();
 
     freePhotos();
@@ -218,12 +228,15 @@ void MainWindow::update()
         {
             tagStrings.push_back((*it)->getTagName());
         }
-        m_photos = m_index->getPhotos(tagStrings);
+        m_photos = m_index->getPhotos(tagStrings, &m_fromDate, &m_toDate);
     }
     else
     {
-        m_photos = m_index->getPhotos();
+        m_photos = m_index->getPhotos(&m_fromDate, &m_toDate);
     }
+
+    //m_progressBar.set_fraction(0.75f);
+    updateDateButtons();
 
     vector<Photo*>::iterator it;
     for (it = m_photos.begin(); it != m_photos.end(); it++)
@@ -252,6 +265,22 @@ void MainWindow::update()
 
         //delete photo;
     }
+    //m_progressBar.set_fraction(1.0f);
+    m_progressActive = false;
+}
+
+bool MainWindow::progressTimeout()
+{
+    bool active = m_progressActive;
+    if (active)
+    {
+        m_progressBar.pulse();
+    }
+    else
+    {
+        m_progressBar.set_fraction(0.0f);
+    }
+    return active;
 }
 
 void MainWindow::onFromDateClicked()
@@ -263,6 +292,7 @@ void MainWindow::onFromDateClicked()
     delete cp;
 
     updateDateButtons();
+    update();
 }
 
 void MainWindow::onToDateClicked()
@@ -274,6 +304,7 @@ void MainWindow::onToDateClicked()
     delete cp;
 
     updateDateButtons();
+    update();
 }
 
 void MainWindow::updateDateButtons()
