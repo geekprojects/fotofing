@@ -1,9 +1,8 @@
 
+#include <fotofing/utils.h>
 
 #include "mainwindow.h"
-#include "detaildialog.h"
 #include "calendarpopup.h"
-#include "utils.h"
 
 #include <gtkmm/aboutdialog.h>
 

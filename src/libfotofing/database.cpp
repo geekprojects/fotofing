@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "database.h"
+#include <fotofing/database.h>
 
 using namespace std;
 

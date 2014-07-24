@@ -7,9 +7,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "fingerprint.h"
-#include "index.h"
-#include "file.h"
+#include <fotofing/index.h>
+#include <fotofing/file.h>
 
 using namespace std;
 

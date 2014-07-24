@@ -1,5 +1,5 @@
 
-#include "photo.h"
+#include <fotofing/photo.h>
 
 using namespace std;
 

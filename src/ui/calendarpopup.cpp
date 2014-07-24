@@ -1,6 +1,7 @@
 
+#include <fotofing/utils.h>
+
 #include "calendarpopup.h"
-#include "utils.h"
 
 CalendarPopup::CalendarPopup(Gtk::Window& parent, time_t time) :
     Gtk::Dialog("Date", parent, true),

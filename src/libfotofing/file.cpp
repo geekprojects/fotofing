@@ -1,8 +1,8 @@
 
 #include <exiv2/exiv2.hpp>
 
-#include "file.h"
-#include "utils.h"
+#include <fotofing/file.h>
+#include <fotofing/utils.h>
 #include "sha1.h"
 
 using namespace std;

@@ -6,7 +6,7 @@
 
 #include <gtkmm.h>
 
-#include "index.h"
+#include <fotofing/index.h>
 
 struct Tag
 {

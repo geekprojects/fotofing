@@ -2,7 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "index.h"
+#include <fotofing/index.h>
+
 #include "mainwindow.h"
 
 using namespace std;
