@@ -4,8 +4,6 @@
 #include "mainwindow.h"
 #include "calendarpopup.h"
 
-#include <gtkmm/aboutdialog.h>
-
 using namespace std;
 
 MainWindow::MainWindow(Index* index) :
@@ -141,8 +139,6 @@ MainWindow::MainWindow(Index* index) :
     m_vBox.pack_start(m_statusBox, Gtk::PACK_SHRINK);
     add(m_vBox);
 
-createAbout();
-
     show_all();
 
     updateTags();
@@ -163,7 +159,7 @@ Gtk::MenuBar* MainWindow::createMenu()
 
     actionGroup->add_action(
         "about",
-        sigc::mem_fun(*this, &MainWindow::openAbout));
+        sigc::mem_fun(m_about, &About::open));
 
     insert_action_group("fotofing", actionGroup);
 
@@ -503,42 +499,6 @@ void MainWindow::updateTags()
     {
         string tag = *it1;
         treeify(m_tagRoot, tag, 0);
-    }
-}
-
-void MainWindow::createAbout()
-{
-    m_aboutDialog.set_transient_for(*this);
-    m_aboutDialog.set_program_name("Fotofing");
-    m_aboutDialog.set_version("0.0.1");
-    m_aboutDialog.set_copyright("GeekProjects");
-    m_aboutDialog.set_comments("Photo Tagging and Management");
-    m_aboutDialog.set_license_type(Gtk::LICENSE_GPL_3_0);
-    m_aboutDialog.set_website("http://geekprojects.com");
-    m_aboutDialog.set_website_label("GeekProjects.com");
-
-    std::vector<Glib::ustring> authors;
-    authors.push_back("Ian Parker <ian@geekprojects.com>");
-    m_aboutDialog.set_authors(authors);
-
-    m_aboutDialog.signal_response().connect(
-        sigc::mem_fun(*this, &MainWindow::closeAbout) );
-
-}
-
-void MainWindow::openAbout()
-{
-    printf("MainWindow::openAbout: here!\n");
-    m_aboutDialog.show();
-    m_aboutDialog.present();
-}
-
-void MainWindow::closeAbout(int responseId)
-{
-    if ((responseId == Gtk::RESPONSE_CLOSE) ||
-        (responseId == Gtk::RESPONSE_CANCEL) )
-    {
-        m_aboutDialog.hide();
     }
 }
 

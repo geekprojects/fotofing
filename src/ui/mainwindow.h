@@ -8,6 +8,8 @@
 
 #include <fotofing/index.h>
 
+#include "about.h"
+
 struct Tag
 {
     Tag()
@@ -179,9 +181,8 @@ class MainWindow : public Gtk::Window
     bool m_progressActive;
     bool progressTimeout();
 
-    Gtk::AboutDialog m_aboutDialog;
+    About m_about;
 
-    void createAbout();
     Gtk::MenuBar* createMenu();
 
     std::vector<Tag*> getSelectedTags();
@@ -197,9 +198,6 @@ class MainWindow : public Gtk::Window
 
     void update();
     void updateTags();
-
-    void openAbout();
-    void closeAbout(int responseId);
 };
 
 #endif
