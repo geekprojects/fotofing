@@ -8,6 +8,7 @@
 
 #include <fotofing/index.h>
 
+#include "photodetails.h"
 #include "about.h"
 
 struct Tag
@@ -75,30 +76,6 @@ class PhotoModelColumns : public Gtk::TreeModelColumnRecord
     }
 };
 
-class PhotoPropColumns : public Gtk::TreeModelColumnRecord
-{
-  public:
-    Gtk::TreeModelColumn<Glib::ustring> property;
-    Gtk::TreeModelColumn<Glib::ustring> value;
-
-    PhotoPropColumns()
-    {
-        add(property);
-        add(value);
-    }
-};
-
-class PhotoTagColumns : public Gtk::TreeModelColumnRecord
-{
-  public:
-    Gtk::TreeModelColumn<Glib::ustring> tag;
-
-    PhotoTagColumns()
-    {
-        add(tag);
-    }
-};
-
 class MainWindow : public Gtk::Window
 {
  private:
@@ -155,24 +132,9 @@ class MainWindow : public Gtk::Window
     void onIconViewSelectionChanged();
 
     /* *** Photo detail panel *** */
-    Gtk::Paned m_photoDetailPane;
-
-    // Photo properties
-    Gtk::ScrolledWindow m_photoPropScrollWindow;
-    Gtk::TreeView m_photoPropTreeView;
-    Glib::RefPtr<Gtk::ListStore> m_photoPropListStore;
-    const PhotoPropColumns m_photoPropColumns;
-    Gtk::Frame m_photoPropFrame;
-
-    // Photo tags
-    Gtk::ScrolledWindow m_photoTagScrollWindow;
-    Gtk::TreeView m_photoTagTreeView;
-    Glib::RefPtr<Gtk::ListStore> m_photoTagListStore;
-    const PhotoTagColumns m_photoTagColumns;
-    Gtk::Frame m_photoTagFrame;
+    PhotoDetails m_photoDetails;
 
     Photo* getPhotoFromPath(Gtk::TreePath path);
-    void displayDetails(Photo* photo);
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
@@ -195,6 +157,8 @@ class MainWindow : public Gtk::Window
  public:
     MainWindow(Index* index);
     virtual ~MainWindow();
+
+    Index* getIndex() { return m_index; }
 
     void update();
     void updateTags();
