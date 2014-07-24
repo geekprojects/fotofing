@@ -97,7 +97,10 @@ bool Database::checkSchema(vector<Table> schema)
 
             bool comma = false;
             set<Column>::iterator columnIt;
-            for (columnIt = tableIt->columns.begin(); columnIt != tableIt->columns.end(); columnIt++)
+            for (
+                columnIt = tableIt->columns.begin();
+                columnIt != tableIt->columns.end();
+                columnIt++)
             {
                 if (comma)
                 {
@@ -111,7 +114,7 @@ bool Database::checkSchema(vector<Table> schema)
             printf("Database::checkSchema:  -> %s\n", createSql.c_str());
 
             execute(createSql);
-created = true;
+            created = true;
         }
     }
 
@@ -157,13 +160,19 @@ ResultSet Database::executeQuery(string query, vector<string> args)
     if (res)
     {
         printf("Database::executeQuery: prepare res=%d\n", res);
+        return resultSet;
     }
 
     vector<string>::iterator argIt;
     int arg = 1;
     for (argIt = args.begin(); argIt != args.end(); argIt++)
     {
-        sqlite3_bind_text(stmt, arg++, argIt->c_str(), argIt->length(), SQLITE_STATIC);
+        sqlite3_bind_text(
+            stmt,
+            arg++,
+            argIt->c_str(),
+            argIt->length(),
+            SQLITE_STATIC);
     }
 
     while (true)
@@ -193,7 +202,9 @@ ResultSet Database::executeQuery(string query, vector<string> args)
                 {
                     value = (const unsigned char*)"";
                 }
-                row.columns.insert(make_pair(string(name), string((char*)value)));
+                row.columns.insert(
+                    make_pair(string(name),
+                    string((char*)value)));
 #if 0
                 printf("Database::executeQuery: %s=%s\n", name, value);
 #endif
@@ -241,7 +252,12 @@ bool Database::execute(string query, vector<string> args)
     int arg = 1;
     for (argIt = args.begin(); argIt != args.end(); argIt++)
     {
-        sqlite3_bind_text(stmt, arg++, argIt->c_str(), argIt->length(), SQLITE_STATIC);
+        sqlite3_bind_text(
+            stmt,
+            arg++,
+            argIt->c_str(),
+            argIt->length(),
+            SQLITE_STATIC);
     }
 
     res = sqlite3_step(stmt);
