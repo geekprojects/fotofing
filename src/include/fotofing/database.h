@@ -13,19 +13,30 @@
 struct Column
 {
     std::string name;
+    std::string type;
     bool isPrimary;
 
     Column() {}
 
+    Column(std::string _name, std::string _type, bool _isPrimary)
+    {
+        name = _name;
+        type = _type;
+        isPrimary = _isPrimary;
+    }
+
+
     Column(std::string _name, bool _isPrimary)
     {
         name = _name;
+        type = "";
         isPrimary = _isPrimary;
     }
 
     Column(std::string _name)
     {
         name = _name;
+        type = "";
         isPrimary = false;
     }
 

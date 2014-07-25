@@ -76,7 +76,9 @@ bool Database::endTransaction()
     }
     char* errmsg;
     sqlite3_exec(m_db, "COMMIT", NULL, NULL, &errmsg);
-m_inTransaction = false;
+
+    m_inTransaction = false;
+
     return true;
 }
 
@@ -108,6 +110,14 @@ bool Database::checkSchema(vector<Table> schema)
                 }
                 comma = true;
                 createSql += columnIt->name;
+                if (columnIt->type.length() > 0)
+                {
+                    createSql += " " + columnIt->type;
+                }
+                if (columnIt->isPrimary)
+                {
+                    createSql += " PRIMARY KEY";
+                }
             }
 
             createSql += ")";
