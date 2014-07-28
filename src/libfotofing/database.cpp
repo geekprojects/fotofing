@@ -299,6 +299,11 @@ set<string> Database::getTables()
     return tables;
 }
 
+int64_t Database::getLastInsertId()
+{
+    return sqlite3_last_insert_rowid(m_db);
+}
+
 PreparedStatement::PreparedStatement(Database* db, sqlite3_stmt* stmt)
 {
     m_db = db;
@@ -391,4 +396,5 @@ bool PreparedStatement::reset()
     sqlite3_reset(m_stmt);
     return true;
 }
+
 

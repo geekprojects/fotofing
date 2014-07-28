@@ -131,6 +131,8 @@ class Database
     std::set<std::string> getTables();
 
     sqlite3* getDB() { return m_db; }
+
+    int64_t getLastInsertId();
 };
 
 #endif
