@@ -31,11 +31,10 @@ class Index
 
     std::vector<File*> getFiles(std::string pid);
 
-    std::vector<std::string> getSources();
-
     bool addFileSource(std::string path);
     bool scanFile(Source* source, File* f);
     bool scanSource(Source* s);
+    std::vector<Source> getSources();
 };
 
 #endif

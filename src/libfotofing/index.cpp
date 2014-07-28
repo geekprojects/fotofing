@@ -450,3 +450,33 @@ bool Index::saveSource(Source* s)
     return res;
 }
 
+vector<Source> Index::getSources()
+{
+    vector<Source> sources;
+    PreparedStatement* ps;
+    ps = m_db->prepareStatement("SELECT source_id, type, host, path FROM sources");
+
+    ps->executeQuery();
+    while (ps->step())
+    {
+        int64_t source_id = ps->getInt64(0);
+        string type = ps->getString(1);
+        string host = ps->getString(2);
+        string path = ps->getString(3);
+        if (type == "File")
+        {
+            FileSource f(source_id, host, path);
+            sources.push_back(f);
+        }
+        else
+        {
+            Source f(source_id, type, host, path);
+            sources.push_back(f);
+        }
+    }
+    delete ps;
+
+    return sources;
+}
+
+
