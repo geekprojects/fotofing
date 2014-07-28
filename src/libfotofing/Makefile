@@ -1,6 +1,6 @@
 
 TGT=libfotofing.so
-SRCS=index.cpp photo.cpp file.cpp database.cpp utils.cpp sha1.cpp
+SRCS=index.cpp photo.cpp source.cpp file.cpp database.cpp utils.cpp sha1.cpp
 OBJS=$(SRCS:.cpp=.o)
 
 all: $(OBJS)

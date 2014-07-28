@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include <fotofing/index.h>
+#include <fotofing/utils.h>
 
 #include "mainwindow.h"
 
@@ -17,7 +18,9 @@ int main(int argc, char** argv)
     Index* index = new Index();
     //index->scanDirectory("/data/home/ian/Pictures/2014/07/05");
     //index->scanDirectory("/data/home/ian/Pictures/flickr/Syria and Lebanon");
-    index->scanDirectory("test");
+    //index->scanDirectory("test");
+
+    index->addFileSource("/data/home/ian/projects/fotofing/test");
 
     MainWindow mainWindow(index);
 

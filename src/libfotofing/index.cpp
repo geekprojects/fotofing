@@ -27,6 +27,7 @@ Index::Index()
     filesTable.name = "files";
     filesTable.columns.insert(Column("path", true));
     filesTable.columns.insert(Column("pid")); // Photo ID
+    filesTable.columns.insert(Column("source_id")); // Source ID
     schema.push_back(filesTable);
 
     Table tagsTable;
@@ -34,6 +35,14 @@ Index::Index()
     tagsTable.columns.insert(Column("pid"));
     tagsTable.columns.insert(Column("tag"));
     schema.push_back(tagsTable);
+
+    Table sourcesTable;
+    sourcesTable.name = "sources";
+    sourcesTable.columns.insert(Column("source_id", "INTEGER", true));
+    sourcesTable.columns.insert(Column("type"));
+    sourcesTable.columns.insert(Column("host"));
+    sourcesTable.columns.insert(Column("path"));
+    schema.push_back(sourcesTable);
 
     m_db = new Database();
     m_db->open();
@@ -44,132 +53,13 @@ Index::Index()
     if (created)
     {
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS tags_uni_idx ON tags (pid, tag)");
+        m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS sources_uni_idx ON sources (host, path)");
     }
 }
 
 Index::~Index()
 {
     delete m_db;
-}
-
-bool Index::scanDirectory(string dir)
-{
-    DIR* fd = opendir(dir.c_str());
-    if (fd == NULL)
-    {
-        return false;
-    }
-
-    while (true)
-    {
-        dirent* dirent = readdir(fd);
-        if (dirent == NULL)
-        {
-            break;
-        }
-
-        if (dirent->d_name[0] == '.')
-        {
-            continue;
-        }
-
-        struct stat stat;
-        string path = dir + "/" + dirent->d_name;
-        lstat(path.c_str(), &stat);
-
-        if (S_ISDIR(stat.st_mode))
-        {
-            scanDirectory(path);
-        }
-        else if (S_ISREG(stat.st_mode))
-        {
-            string ext = "";
-            size_t extpos = path.rfind('.');
-            if (extpos != path.npos)
-            {
-                ext = path.substr(extpos);
-            }
-
-            // TODO: Replace this with proper file type recognition
-            if (!(ext == ".JPG" || ext == ".jpg"))
-            {
-                continue;
-            }
-
-            vector<string> args;
-            args.push_back(path);
-            ResultSet rs;
-            rs = m_db->executeQuery("SELECT * FROM files WHERE path=?", args);
-            if (rs.rows.size() == 0)
-            {
-                File f(path);
-                f.scan();
-
-                // File hasn't been seen before
-                string fp;
-                fp = f.getFingerprint();
-                printf("%s: %-32s\n", fp.c_str(), path.c_str());
-
-                // See if we've seen this fingerprint before
-                args.clear();
-                args.push_back(fp);
-                rs = m_db->executeQuery("SELECT * FROM photos WHERE pid=?", args);
-
-                m_db->startTransaction();
-                if (rs.rows.size() == 0)
-                {
-                    // Extract details from the file
-                    set<string> tags;
-                    time_t timestamp;
-                    f.getTags(tags, &timestamp);
-
-                    tags.insert("Fotofing/Visible");
-
-                    printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
-                    Surface* thumbnail = f.getThumbnail();
-
-                    uint8_t* thumbData = NULL;
-                    unsigned long thumbLength = 0;
-                    thumbnail->saveJPEG(&thumbData, &thumbLength);
-
-                    int res;
-                    sqlite3_stmt* stmt;
-                    string insertPhoto = "INSERT INTO photos (pid, thumbnail, timestamp) VALUES (?, ?, ?)";
-                    res = sqlite3_prepare_v2(m_db->getDB(), insertPhoto.c_str(), insertPhoto.length(), &stmt, NULL);
-                    if (res)
-                    {
-                        printf("Database::open: Error: %s\n", sqlite3_errmsg(m_db->getDB()));
-                        printf("Index::scanDirectory: Failed to prepare statement: %d\n", res);
-                        return false;
-                    }
-                    sqlite3_bind_text(stmt, 1, fp.c_str(), fp.length(), SQLITE_TRANSIENT);
-                    sqlite3_bind_blob(stmt, 2, thumbData, thumbLength, SQLITE_TRANSIENT);
-                    sqlite3_bind_int64(stmt, 3, timestamp);
-
-                    res = sqlite3_step(stmt);
-                    //printf("Index::scanDirectory: res=%d\n", res);
-                    sqlite3_finalize(stmt);
-                    if (res != SQLITE_DONE)
-                    {
-                        printf("Index::scanDirectory: Unexpected result: res=%d\n", res);
-                        return false;
-                    }
-
-                    free(thumbData);
-
-                    saveTags(fp, tags);
-                }
-
-                args.clear();
-                args.push_back(path);
-                args.push_back(fp);
-                m_db->execute("INSERT INTO files (path, pid) VALUES (?, ?)", args);
-                m_db->endTransaction();
-            }
-        }
-    }
-    closedir(fd);
-    return true;
 }
 
 bool Index::saveTags(string pid, set<string> tags)
@@ -436,4 +326,127 @@ vector<File*> Index::getFiles(string pid)
     return files;
 }
 
+bool Index::addFileSource(string path)
+{
+    FileSource fileSource(0, getHostName(), "/data/home/ian/projects/fotofing/test");
+    saveSource(&fileSource);
+
+    return scanSource(&fileSource);
+}
+
+bool Index::scanFile(Source* source, File* f)
+{
+    printf("Index::scanFile: file=%s\n", f->getPath().c_str());
+    vector<string> args;
+    args.push_back(f->getPath());
+    ResultSet rs;
+    rs = m_db->executeQuery("SELECT * FROM files WHERE path=?", args);
+    if (rs.rows.size() == 0)
+    {
+        f->scan();
+
+        // File hasn't been seen before
+        string fp;
+        fp = f->getFingerprint();
+        printf("%s: %-32s\n", fp.c_str(), f->getPath().c_str());
+
+        // See if we've seen this fingerprint before
+        args.clear();
+        args.push_back(fp);
+        rs = m_db->executeQuery("SELECT * FROM photos WHERE pid=?", args);
+
+        m_db->startTransaction();
+        if (rs.rows.size() == 0)
+        {
+            // Extract details from the file
+            set<string> tags;
+            time_t timestamp;
+            f->getTags(tags, &timestamp);
+
+            tags.insert("Fotofing/Visible");
+
+            printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
+            Surface* thumbnail = f->getThumbnail();
+
+            uint8_t* thumbData = NULL;
+            unsigned long thumbLength = 0;
+            thumbnail->saveJPEG(&thumbData, &thumbLength);
+
+            int res;
+            sqlite3_stmt* stmt;
+            string insertPhoto = "INSERT INTO photos (pid, thumbnail, timestamp) VALUES (?, ?, ?)";
+            res = sqlite3_prepare_v2(m_db->getDB(), insertPhoto.c_str(), insertPhoto.length(), &stmt, NULL);
+            if (res)
+            {
+                printf("Database::open: Error: %s\n", sqlite3_errmsg(m_db->getDB()));
+                printf("Index::scanDirectory: Failed to prepare statement: %d\n", res);
+                return false;
+            }
+            sqlite3_bind_text(stmt, 1, fp.c_str(), fp.length(), SQLITE_TRANSIENT);
+            sqlite3_bind_blob(stmt, 2, thumbData, thumbLength, SQLITE_TRANSIENT);
+            sqlite3_bind_int64(stmt, 3, timestamp);
+
+            res = sqlite3_step(stmt);
+            //printf("Index::scanDirectory: res=%d\n", res);
+            sqlite3_finalize(stmt);
+            if (res != SQLITE_DONE)
+            {
+                printf("Index::scanDirectory: Unexpected result: res=%d\n", res);
+                return false;
+            }
+
+            free(thumbData);
+
+            saveTags(fp, tags);
+        }
+
+        PreparedStatement* ps;
+        ps = m_db->prepareStatement(
+            "INSERT INTO files (path, pid, source_id) VALUES (?, ?, ?)");
+        ps->bindString(1, f->getPath());
+        ps->bindString(2, fp);
+        ps->bindInt64(3, source->getSourceId());
+        ps->execute();
+        delete ps;
+        m_db->endTransaction();
+    }
+
+    return true;
+}
+
+bool Index::scanSource(Source* s)
+{
+    return s->scan(this);
+}
+
+bool Index::saveSource(Source* s)
+{
+    PreparedStatement* ps;
+    int i = 1;
+    if (s->getSourceId() > 0)
+    {
+        ps = m_db->prepareStatement("INSERT INTO sources (source_id, type, host, path) VALUES (?, ?, ?, ?)");
+        ps->bindInt64(i++, s->getSourceId());
+    }
+    else
+    {
+        ps = m_db->prepareStatement("INSERT INTO sources (type, host, path) VALUES (?, ?, ?)");
+    }
+    ps->bindString(i++, s->getType());
+    ps->bindString(i++, s->getHost());
+    ps->bindString(i++, s->getPath());
+
+    bool res;
+    res = ps->execute();
+
+    if (res && s->getSourceId() == 0)
+    {
+        int64_t rowId = m_db->getLastInsertId();
+        printf("Index::saveSource: Last insert id=%ld\n", rowId);
+        s->setSourceId(rowId);
+    }
+    delete ps;
+
+    return res;
+}
 
