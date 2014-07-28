@@ -67,12 +67,14 @@ class PhotoModelColumns : public Gtk::TreeModelColumnRecord
     Gtk::TreeModelColumn<Glib::ustring> display_name;
     Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > pixbuf;
     Gtk::TreeModelColumn<Photo*> photo;
+    Gtk::TreeModelColumn<time_t> timestamp;
 
     PhotoModelColumns()
     {
         add(display_name);
         add(pixbuf);
         add(photo);
+        add(timestamp);
     }
 };
 
@@ -128,8 +130,10 @@ class MainWindow : public Gtk::Window
     Gtk::IconView m_iconView;
     Glib::RefPtr<Gtk::ListStore> m_model;
 
+
     void onIconViewItemActivated(const Gtk::TreeModel::Path& path);
     void onIconViewSelectionChanged();
+    int onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::TreeModel::iterator& b);
 
     /* *** Photo detail panel *** */
     PhotoDetails m_photoDetails;

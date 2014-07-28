@@ -82,7 +82,12 @@ MainWindow::MainWindow(Index* index) :
 
     // Thumbnail View
     m_model = Gtk::ListStore::create(m_photoColumns);
-    //m_model->set_sort_column(Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID, Gtk::SORT_ASCENDING);
+    m_model->set_default_sort_func(sigc::mem_fun(
+        *this,
+        &MainWindow::onIconViewSort));
+    m_model->set_sort_column(
+        Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID,
+        Gtk::SORT_ASCENDING);
 
     m_iconView.set_model(m_model);
     m_iconView.set_selection_mode(Gtk::SELECTION_MULTIPLE);
@@ -100,7 +105,6 @@ MainWindow::MainWindow(Index* index) :
     m_iconView.signal_selection_changed().connect(sigc::mem_fun(
         *this,
         &MainWindow::onIconViewSelectionChanged));
-
 
     m_scrolledWindowIcons.add(m_iconView);
     m_hBox.pack_start(m_scrolledWindowIcons, Gtk::PACK_EXPAND_WIDGET);
@@ -249,6 +253,7 @@ void MainWindow::update()
         row[m_photoColumns.pixbuf] = pixbuf;
         //row[m_photoColumns.photo] = Glib::RefPtr<Photo>(photo);
         row[m_photoColumns.photo] = photo;
+        row[m_photoColumns.timestamp] = photo->getTimestamp();
 
         //delete photo;
     }
@@ -325,6 +330,14 @@ void MainWindow::onIconViewSelectionChanged()
     {
         m_photoDetails.displayDetails(getPhotoFromPath(selected.at(0)));
     }
+}
+
+int MainWindow::onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::TreeModel::iterator& b)
+{
+    Gtk::TreeModel::Row row_a = *a;
+    Gtk::TreeModel::Row row_b = *b;
+
+    return row_a[m_photoColumns.timestamp] - row_b[m_photoColumns.timestamp];
 }
 
 Photo* MainWindow::getPhotoFromPath(Gtk::TreePath path)
