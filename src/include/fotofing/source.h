@@ -20,7 +20,7 @@ class Source
     std::string m_path;
 
  public:
-    Source(Source& s);
+    Source(const Source& s);
     Source(
         int64_t sourceId,
         std::string type,
@@ -44,7 +44,7 @@ class FileSource : public Source
     bool scanDirectory(std::string path, Index* index);
 
  public:
-    FileSource(Source& s);
+    FileSource(const Source& s);
     FileSource(
         int64_t sourceId,
         std::string host,

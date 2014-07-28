@@ -11,7 +11,7 @@
 
 using namespace std;
 
-Source::Source(Source& s)
+Source::Source(const Source& s)
 {
     m_sourceId = s.m_sourceId;
     m_type = s.m_type;
@@ -36,7 +36,7 @@ bool Source::scan(Index* index)
     return true;
 }
 
-FileSource::FileSource(Source& s) :
+FileSource::FileSource(const Source& s) :
     Source(s)
 {
     if (m_type != "Source")
