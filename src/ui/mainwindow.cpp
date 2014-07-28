@@ -3,6 +3,7 @@
 
 #include "mainwindow.h"
 #include "calendarpopup.h"
+#include "sourcesdialog.h"
 
 using namespace std;
 
@@ -138,6 +139,10 @@ Gtk::MenuBar* MainWindow::createMenu()
         "about",
         sigc::mem_fun(m_about, &About::open));
 
+    actionGroup->add_action(
+        "sources",
+        sigc::mem_fun(*this, &MainWindow::openSourcesDialog));
+
     insert_action_group("fotofing", actionGroup);
 
     m_refBuilder = Gtk::Builder::create();
@@ -151,6 +156,12 @@ Gtk::MenuBar* MainWindow::createMenu()
         "          <item>"
         "            <attribute name='label' translatable='yes'>_Import Index</attribute>"
         "            <attribute name='action' translatable='yes'>fotofing.importindex</attribute>"
+        "          </item>"
+        "        </section>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>_Sources...</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.sources</attribute>"
         "          </item>"
         "        </section>"
         "    </submenu>"
@@ -356,6 +367,14 @@ vector<Tag*> MainWindow::getSelectedTags()
         tags.push_back(tag);
     }
     return tags;
+}
+
+void MainWindow::openSourcesDialog()
+{
+    SourcesDialog* sources = new SourcesDialog(this);
+    sources->open();
+    sources->run();
+    delete sources;
 }
 
 void MainWindow::treeify(Tag* parent, string remainder, int level)

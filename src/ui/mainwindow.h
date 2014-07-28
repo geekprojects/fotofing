@@ -147,6 +147,8 @@ class MainWindow : public Gtk::Window
 
     Gtk::MenuBar* createMenu();
 
+    void openSourcesDialog();
+
     std::vector<Tag*> getSelectedTags();
     void treeify(Tag* parent, std::string remainder, int level);
 

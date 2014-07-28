@@ -1,6 +1,6 @@
 
 TGT=fotofing
-SRCS=main.cpp mainwindow.cpp photodetails.cpp calendarpopup.cpp about.cpp
+SRCS=main.cpp mainwindow.cpp photodetails.cpp calendarpopup.cpp about.cpp sourcesdialog.cpp
 OBJS=$(SRCS:.cpp=.o)
 
 all: $(OBJS)
