@@ -1,4 +1,7 @@
 
+#include <unistd.h>
+#include <limits.h>
+
 #include <fotofing/utils.h>
 
 using namespace std;
@@ -18,5 +21,17 @@ string timeToString(time_t t)
     char buf[64];
     strftime(buf, 64, "%x", &tm);
     return string(buf);
+}
+
+string getHostName()
+{
+    int res;
+    char hostname[HOST_NAME_MAX + 1];
+    res = gethostname(hostname, HOST_NAME_MAX);
+    if (res)
+    {
+        return "unknown-host";
+    }
+    return string(hostname);
 }
 
