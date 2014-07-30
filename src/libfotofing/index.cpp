@@ -328,7 +328,7 @@ vector<File*> Index::getFiles(string pid)
 
 bool Index::addFileSource(string path)
 {
-    FileSource fileSource(0, getHostName(), "/data/home/ian/projects/fotofing/test");
+    FileSource fileSource(0, getHostName(), path);
     saveSource(&fileSource);
 
     return scanSource(&fileSource);
