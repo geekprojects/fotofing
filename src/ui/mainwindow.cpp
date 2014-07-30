@@ -10,6 +10,7 @@ using namespace std;
 MainWindow::MainWindow(Index* index) :
     m_dateSeparator("-"),
     m_tagSearchButton("Search"),
+    m_photoView(this),
     m_photoDetails(this)
 {
     m_index = index;
@@ -78,37 +79,9 @@ MainWindow::MainWindow(Index* index) :
     m_tagBox.pack_start(m_scrolledWindowTags, Gtk::PACK_EXPAND_WIDGET);
     m_tagBox.pack_start(m_tagSearchButton, Gtk::PACK_SHRINK);
     m_tagFrame.add(m_tagBox);
+
     m_hBox.pack_start(m_tagFrame, Gtk::PACK_SHRINK);
-
-    // Thumbnail View
-    m_model = Gtk::ListStore::create(m_photoColumns);
-    m_model->set_default_sort_func(sigc::mem_fun(
-        *this,
-        &MainWindow::onIconViewSort));
-    m_model->set_sort_column(
-        Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID,
-        Gtk::SORT_ASCENDING);
-
-    m_iconView.set_model(m_model);
-    m_iconView.set_selection_mode(Gtk::SELECTION_MULTIPLE);
-
-    m_iconView.set_text_column(m_photoColumns.display_name);
-    m_iconView.set_pixbuf_column(m_photoColumns.pixbuf);
-
-    m_iconView.set_item_width(10);
-    m_iconView.grab_focus();
-
-    m_iconView.set_activate_on_single_click(false);
-    m_iconView.signal_item_activated().connect(sigc::mem_fun(
-        *this,
-        &MainWindow::onIconViewItemActivated));
-    m_iconView.signal_selection_changed().connect(sigc::mem_fun(
-        *this,
-        &MainWindow::onIconViewSelectionChanged));
-
-    m_scrolledWindowIcons.add(m_iconView);
-    m_hBox.pack_start(m_scrolledWindowIcons, Gtk::PACK_EXPAND_WIDGET);
-
+    m_hBox.pack_start(m_photoView, Gtk::PACK_EXPAND_WIDGET);
     m_hBox.pack_start(m_photoDetails, Gtk::PACK_SHRINK);
 
     m_statusBox.pack_start(m_statusBar, Gtk::PACK_EXPAND_WIDGET);
@@ -130,7 +103,6 @@ MainWindow::MainWindow(Index* index) :
 MainWindow::~MainWindow()
 {
     delete m_tagRoot;
-    freePhotos();
 }
 
 Gtk::MenuBar* MainWindow::createMenu()
@@ -206,62 +178,19 @@ void MainWindow::update()
         *this,
         &MainWindow::progressTimeout), 50 );
 
-    m_model->clear();
-
-    freePhotos();
-
-    time_t from = m_fromDate;
-    time_t to = m_toDate;
-
     vector<Tag*> tags = getSelectedTags();
-    if (tags.size() > 0)
-    {
-        vector<string> tagStrings;
-        vector<Tag*>::iterator it;
-        for (it = tags.begin(); it != tags.end(); it++)
-        {
-            tagStrings.push_back((*it)->getTagName());
-        }
-        m_photos = m_index->getPhotos(tagStrings, &from, &to);
-    }
-    else
-    {
-        m_photos = m_index->getPhotos(&from, &to);
-    }
+    m_photoView.update(tags, m_fromDate, m_toDate);
 
     //m_progressBar.set_fraction(0.75f);
     updateDateButtons();
 
-    vector<Photo*>::iterator it;
-    for (it = m_photos.begin(); it != m_photos.end(); it++)
-    {
-        Gtk::TreeModel::iterator iter = m_model->append();
-        Gtk::TreeModel::Row row = *iter;
-
-        Photo* photo = *it;
-        Surface* thumbnail = photo->getThumbnail();
-
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_data(
-            thumbnail->getData(),
-            Gdk::COLORSPACE_RGB,
-            true,
-            8,
-            thumbnail->getWidth(),
-            thumbnail->getHeight(),
-            thumbnail->getWidth() * 4
-        );
-
-        string displayName = photo->getId().substr(0, 6) + "...";
-        row[m_photoColumns.display_name] = displayName;
-        row[m_photoColumns.pixbuf] = pixbuf;
-        //row[m_photoColumns.photo] = Glib::RefPtr<Photo>(photo);
-        row[m_photoColumns.photo] = photo;
-        row[m_photoColumns.timestamp] = photo->getTimestamp();
-
-        //delete photo;
-    }
     //m_progressBar.set_fraction(1.0f);
     m_progressActive = false;
+}
+
+void MainWindow::displayDetails(Photo* photo)
+{
+    m_photoDetails.displayDetails(photo);
 }
 
 bool MainWindow::progressTimeout()
@@ -321,52 +250,6 @@ void MainWindow::updateDateButtons()
     {
         m_toDateButton.set_label("-");
     }
-}
-
-
-void MainWindow::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
-{
-    Photo* photo = getPhotoFromPath(path);
-    m_photoDetails.displayDetails(photo);
-
-    vector<File*> files = m_index->getFiles(photo->getId());
-    if (files.size() > 0)
-    {
-        // TODO: Make this configurable!
-        string cmd = string("/usr/bin/qiv -fm ") + files.at(0)->getPath();
-        printf("MainWindow::onIconViewItemActivated: cmd=%s\n", cmd.c_str());
-        int res;
-        res = system(cmd.c_str());
-        printf("MainWindow::onIconViewItemActivated: res=%d\n", res);
-    }
-}
-
-void MainWindow::onIconViewSelectionChanged()
-{
-    vector<Gtk::TreePath> selected = m_iconView.get_selected_items();
-    if (selected.size() > 0)
-    {
-        m_photoDetails.displayDetails(getPhotoFromPath(selected.at(0)));
-    }
-}
-
-int MainWindow::onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::TreeModel::iterator& b)
-{
-    Gtk::TreeModel::Row row_a = *a;
-    Gtk::TreeModel::Row row_b = *b;
-
-    return row_a[m_photoColumns.timestamp] - row_b[m_photoColumns.timestamp];
-}
-
-Photo* MainWindow::getPhotoFromPath(Gtk::TreePath path)
-{
-    Gtk::TreeModel::iterator iter = m_model->get_iter(path);
-    if (iter)
-    {
-        Gtk::TreeModel::Row row = *iter;
-        return row[m_photoColumns.photo];
-    }
-    return NULL;
 }
 
 void MainWindow::onTagRowActivate(
@@ -459,16 +342,6 @@ void MainWindow::treeify(Tag* parent, string remainder, int level)
 
 void MainWindow::freeTags()
 {
-}
-
-void MainWindow::freePhotos()
-{
-    vector<Photo*>::iterator it;
-    for (it = m_photos.begin(); it != m_photos.end(); it++)
-    {
-        delete *it;
-    }
-    m_photos.clear();
 }
 
 void MainWindow::updateTags()

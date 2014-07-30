@@ -9,43 +9,9 @@
 #include <fotofing/index.h>
 
 #include "photodetails.h"
+#include "photoview.h"
+#include "tagview.h"
 #include "about.h"
-
-struct Tag
-{
-    Tag()
-    {
-        parent = NULL;
-    }
-
-    ~Tag()
-    {
-        std::map<std::string, Tag*>::iterator it;
-        for (it = children.begin(); it != children.end(); it++)
-        {
-            delete it->second;
-        }
-    }
-
-    Tag* parent;
-    std::string name;
-    std::map<std::string, Tag*> children;
-    Gtk::TreeRow treeRow;
-
-    std::string getTagName()
-    {
-        std::string fullname = "";
-        if (parent != NULL)
-        {
-            if (parent->parent != NULL)
-            {
-                fullname = parent->getTagName() + "/";
-            }
-        }
-        fullname += name;
-        return fullname;
-    }
-};
 
 class TagModelColumns : public Gtk::TreeModelColumnRecord
 {
@@ -57,24 +23,6 @@ class TagModelColumns : public Gtk::TreeModelColumnRecord
     {
         add(tagText);
         add(tag);
-    }
-};
-
-class PhotoModelColumns : public Gtk::TreeModelColumnRecord
-{
-  public:
-
-    Gtk::TreeModelColumn<Glib::ustring> display_name;
-    Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > pixbuf;
-    Gtk::TreeModelColumn<Photo*> photo;
-    Gtk::TreeModelColumn<time_t> timestamp;
-
-    PhotoModelColumns()
-    {
-        add(display_name);
-        add(pixbuf);
-        add(photo);
-        add(timestamp);
     }
 };
 
@@ -124,21 +72,10 @@ class MainWindow : public Gtk::Window
     void onTagSearchClicked();
 
     // Thumbnail View
-    std::vector<Photo*> m_photos;
-    const PhotoModelColumns m_photoColumns;
-    Gtk::ScrolledWindow m_scrolledWindowIcons;
-    Gtk::IconView m_iconView;
-    Glib::RefPtr<Gtk::ListStore> m_model;
-
-
-    void onIconViewItemActivated(const Gtk::TreeModel::Path& path);
-    void onIconViewSelectionChanged();
-    int onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::TreeModel::iterator& b);
+    PhotoView m_photoView;
 
     /* *** Photo detail panel *** */
     PhotoDetails m_photoDetails;
-
-    Photo* getPhotoFromPath(Gtk::TreePath path);
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
@@ -168,6 +105,8 @@ class MainWindow : public Gtk::Window
 
     void update();
     void updateTags();
+
+    void displayDetails(Photo* photo);
 };
 
 #endif
