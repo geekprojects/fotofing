@@ -9,6 +9,8 @@ using namespace std;
 
 #define FINGERPRINT_SIZE 12
 
+typedef int v4si __attribute__ ((vector_size (16)));
+
 union pixel_t
 {
     uint32_t p;
@@ -93,37 +95,21 @@ bool File::scan()
             int blockY = floor((float)y * stepY);
             int bx;
             int by;
-            uint64_t totals[4];
-memset(totals, 0, sizeof(uint64_t) * 4);
+            v4si totals = {0, 0, 0, 0};
             for (by = 0; by < stepYi; by++)
             {
                 for (bx = 0; bx < stepXi; bx++)
                 {
                     pixel_t p;
                     p.p = image->getPixel(blockX + bx, blockY + by);
-
-                    totals[0] += p.rgb[0];
-                    totals[1] += p.rgb[1];
-                    totals[2] += p.rgb[2];
-                    totals[3] += p.rgb[3];
-
-#if 0
-                    tr += ((int)roundf((float)pr / 16.0f)) * 16;
-                    tg += ((int)roundf((float)pg / 16.0f)) * 16;
-                    tb += ((int)roundf((float)pb / 16.0f)) * 16;
-#endif
+                    v4si pv = {p.rgb[0], p.rgb[1], p.rgb[2], p.rgb[3]};
+                    totals += pv;
                 }
             }
-#if 0
-            uint8_t r = ((int)((float)tr / (float)blockCount)) & 0xf0;
-            uint8_t g = ((int)((float)tg / (float)blockCount)) & 0xf0;
-            uint8_t b = ((int)((float)tb / (float)blockCount)) & 0xf0;
-#else
-            uint8_t r = ((int)(totals[0] / blockCount)) & 0xc0;
-            uint8_t g = ((int)(totals[1] / blockCount)) & 0xc0;
-            uint8_t b = ((int)(totals[2] / blockCount)) & 0xc0;
-#endif
-            fingerprintSurface->drawPixel(x, y, 0xff000000 | (r << 16) | (g << 8) | (b << 0));
+            v4si avg = totals / blockCount;
+            avg &= 0xc0;
+
+            fingerprintSurface->drawPixel(x, y, 0xff000000 | (avg[0] << 16) | (avg[1] << 8) | (avg[2] << 0));
         }
     }
 
