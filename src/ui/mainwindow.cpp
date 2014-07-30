@@ -210,6 +210,9 @@ void MainWindow::update()
 
     freePhotos();
 
+    time_t from = m_fromDate;
+    time_t to = m_toDate;
+
     vector<Tag*> tags = getSelectedTags();
     if (tags.size() > 0)
     {
@@ -219,11 +222,11 @@ void MainWindow::update()
         {
             tagStrings.push_back((*it)->getTagName());
         }
-        m_photos = m_index->getPhotos(tagStrings, &m_fromDate, &m_toDate);
+        m_photos = m_index->getPhotos(tagStrings, &from, &to);
     }
     else
     {
-        m_photos = m_index->getPhotos(&m_fromDate, &m_toDate);
+        m_photos = m_index->getPhotos(&from, &to);
     }
 
     //m_progressBar.set_fraction(0.75f);
@@ -301,8 +304,23 @@ void MainWindow::onToDateClicked()
 
 void MainWindow::updateDateButtons()
 {
-    m_fromDateButton.set_label(timeToString(m_fromDate));
-    m_toDateButton.set_label(timeToString(m_toDate));
+    if (m_fromDate > 0)
+    {
+        m_fromDateButton.set_label(timeToString(m_fromDate));
+    }
+    else
+    {
+        m_fromDateButton.set_label("-");
+    }
+
+    if (m_toDate > 0)
+    {
+        m_toDateButton.set_label(timeToString(m_toDate));
+    }
+    else
+    {
+        m_toDateButton.set_label("-");
+    }
 }
 
 
