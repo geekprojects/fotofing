@@ -13,24 +13,10 @@
 #include "tagview.h"
 #include "about.h"
 
-class TagModelColumns : public Gtk::TreeModelColumnRecord
-{
- public:
-    Gtk::TreeModelColumn<Glib::ustring> tagText;
-    Gtk::TreeModelColumn<Tag*> tag;
-
-    TagModelColumns()
-    {
-        add(tagText);
-        add(tag);
-    }
-};
-
 class MainWindow : public Gtk::Window
 {
  private:
     Index* m_index;
-    Tag* m_tagRoot;
 
     Gtk::VBox m_vBox;
     Gtk::HBox m_hBox;
@@ -56,19 +42,11 @@ class MainWindow : public Gtk::Window
 
     // Tag VBox
     Gtk::VBox m_tagBox;
+    TagView m_allTagsView;
     Gtk::Button m_tagSearchButton;
 
     // Tag View
-    const TagModelColumns m_tagColumns;
-    Gtk::ScrolledWindow m_scrolledWindowTags;
-    Gtk::TreeView m_treeViewTags;
-    Glib::RefPtr<Gtk::TreeStore> m_tagTreeStore;
-    Glib::RefPtr<Gtk::TreeSelection> m_refTreeSelection;
     Gtk::Frame m_tagFrame;
-
-    void onTagRowActivate(
-        const Gtk::TreeModel::Path& path,
-        Gtk::TreeViewColumn* column);
     void onTagSearchClicked();
 
     // Thumbnail View
@@ -89,13 +67,6 @@ class MainWindow : public Gtk::Window
     Gtk::MenuBar* createMenu();
 
     void openSourcesDialog();
-
-    std::vector<Tag*> getSelectedTags();
-    void treeify(Tag* parent, std::string remainder, int level);
-
-    void freeTags();
-    void freePhotos();
-    void freeThumbnails();
 
  public:
     MainWindow(Index* index);

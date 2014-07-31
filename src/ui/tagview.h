@@ -1,6 +1,13 @@
 #ifndef __FOTOFING_UI_TAGVIEW_H_
 #define __FOTOFING_UI_TAGVIEW_H_
 
+#include <string>
+#include <vector>
+#include <set>
+#include <map>
+
+#include <gtkmm.h>
+
 struct Tag
 {
     Tag()
@@ -35,6 +42,51 @@ struct Tag
         fullname += name;
         return fullname;
     }
+};
+
+class TagModelColumns : public Gtk::TreeModelColumnRecord
+{
+ public:
+    Gtk::TreeModelColumn<Glib::ustring> tagText;
+    Gtk::TreeModelColumn<Tag*> tag;
+
+    TagModelColumns()
+    {
+        add(tagText);
+        add(tag);
+    }
+};
+
+class TagView : public Gtk::ScrolledWindow
+{
+ private:
+    Tag* m_tagRoot;
+
+    sigc::signal<void> m_rowActivateSignal;
+
+    const TagModelColumns m_tagColumns;
+    Gtk::ScrolledWindow m_scrolledWindowTags;
+    Gtk::TreeView m_treeViewTags;
+    Glib::RefPtr<Gtk::TreeStore> m_tagTreeStore;
+    Glib::RefPtr<Gtk::TreeSelection> m_refTreeSelection;
+
+    void onTagRowActivate(
+        const Gtk::TreeModel::Path& path,
+        Gtk::TreeViewColumn* column);
+
+    void treeify(Tag* parent, std::string remainder, int level);
+
+    void freeTags();
+
+ public:
+    TagView();
+    ~TagView();
+
+    std::vector<Tag*> getSelectedTags();
+
+    void update(std::set<std::string> tags);
+
+    sigc::signal<void>& signal_row_activate();
 };
 
 #endif
