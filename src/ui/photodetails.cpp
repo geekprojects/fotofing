@@ -24,13 +24,8 @@ PhotoDetails::PhotoDetails(MainWindow* mainWindow) :
     pack1(m_photoPropFrame, true, false);
 
     // Photo tags
-    m_photoTagListStore = Gtk::ListStore::create(m_photoTagColumns);
-    m_photoTagTreeView.set_model(m_photoTagListStore);
-    m_photoTagScrollWindow.add(m_photoTagTreeView);
-    m_photoTagTreeView.append_column_editable("Tag", m_photoTagColumns.tag);
-
     m_photoTagFrame.set_shadow_type(Gtk::SHADOW_IN);
-    m_photoTagFrame.add(m_photoTagScrollWindow);
+    m_photoTagFrame.add(m_tagView);
     pack2(m_photoTagFrame, true, false);
 }
 
@@ -62,7 +57,6 @@ void PhotoDetails::displayDetails(Photo* photo)
     propRow[m_photoPropColumns.value] = string(tsbuf);
 
     // Tags
-    m_photoTagListStore->clear();
     set<string> tags = photo->getTags();
     if (tags.size() == 0)
     {
@@ -71,12 +65,6 @@ void PhotoDetails::displayDetails(Photo* photo)
         photo->setTags(tags);
     }
 
-    set<string>::iterator tagIt;
-    for (tagIt = tags.begin(); tagIt != tags.end(); tagIt++)
-    {
-        Gtk::TreeRow tagRow;
-        tagRow = *(m_photoTagListStore->append());
-        tagRow[m_photoTagColumns.tag] = *tagIt;
-    }
+    m_tagView.update(tags);
 }
 

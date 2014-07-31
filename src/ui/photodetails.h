@@ -5,6 +5,8 @@
 
 #include <gtkmm.h>
 
+#include "tagview.h"
+
 class PhotoPropColumns : public Gtk::TreeModelColumnRecord
 {
   public:
@@ -15,17 +17,6 @@ class PhotoPropColumns : public Gtk::TreeModelColumnRecord
     {
         add(property);
         add(value);
-    }
-};
-
-class PhotoTagColumns : public Gtk::TreeModelColumnRecord
-{
-  public:
-    Gtk::TreeModelColumn<Glib::ustring> tag;
-
-    PhotoTagColumns()
-    {
-        add(tag);
     }
 };
 
@@ -44,10 +35,7 @@ class PhotoDetails : public Gtk::Paned
     Gtk::Frame m_photoPropFrame;
 
     // Photo tags
-    Gtk::ScrolledWindow m_photoTagScrollWindow;
-    Gtk::TreeView m_photoTagTreeView;
-    Glib::RefPtr<Gtk::ListStore> m_photoTagListStore;
-    const PhotoTagColumns m_photoTagColumns;
+    TagView m_tagView;
     Gtk::Frame m_photoTagFrame;
 
  public:
