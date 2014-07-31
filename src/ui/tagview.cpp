@@ -121,6 +121,8 @@ void TagView::update(std::set<std::string> tags)
         delete m_tagRoot;
     }
 
+    m_tagTreeStore->clear();
+
     m_tagRoot = new Tag();
     m_tagRoot->name = "";
 
