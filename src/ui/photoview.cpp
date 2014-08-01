@@ -148,3 +148,17 @@ void PhotoView::freePhotos()
     m_photos.clear();
 }
 
+vector<Photo*> PhotoView::getSelectedPhotos()
+{
+    vector<Photo*> photos;
+    vector<Gtk::TreePath> selected = m_iconView.get_selected_items();
+    vector<Gtk::TreePath>::iterator it;
+
+    for (it = selected.begin(); it != selected.end(); it++)
+    {
+        photos.push_back(getPhotoFromPath(*it));
+    }
+
+    return photos;
+}
+

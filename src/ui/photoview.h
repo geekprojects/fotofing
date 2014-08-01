@@ -53,6 +53,7 @@ class PhotoView : public Gtk::ScrolledWindow
 
     void update(std::vector<Tag*> tags, time_t from, time_t to);
 
+    std::vector<Photo*> getSelectedPhotos();
 };
 
 #endif

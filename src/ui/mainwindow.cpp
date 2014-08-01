@@ -4,6 +4,7 @@
 #include "mainwindow.h"
 #include "calendarpopup.h"
 #include "sourcesdialog.h"
+#include "tagdialog.h"
 
 using namespace std;
 
@@ -22,6 +23,9 @@ MainWindow::MainWindow(Index* index) :
     // Toolbar
     m_toolbarTag.set_icon_name("tag-new");
     m_toolbarTag.set_tooltip_text("Add Tag");
+    m_toolbarTag.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onTagButton));
     m_toolbar.append(m_toolbarTag);
 
     m_toolbarTagEvent.set_icon_name("appointment-new");
@@ -186,6 +190,33 @@ bool MainWindow::progressTimeout()
         m_progressBar.set_fraction(0.0f);
     }
     return active;
+}
+
+void MainWindow::onTagButton()
+{
+    int res;
+
+    TagDialog* tagDialog = new TagDialog();
+    res = tagDialog->run();
+    if (res == Gtk::RESPONSE_OK)
+    {
+        string tag = tagDialog->getTag();
+        set<string> tags;
+        tags.insert(tag);
+
+        vector<Photo*> selected = m_photoView.getSelectedPhotos();
+        vector<Photo*>::iterator it;
+        for (it = selected.begin(); it != selected.end(); it++)
+        {
+            m_index->saveTags((*it)->getId(), tags);
+        }
+
+        printf("MainWindow::onTagButton: Applying tag %s\n", tag.c_str());
+    }
+
+    delete tagDialog;
+
+updateTags();
 }
 
 void MainWindow::onFromDateClicked()

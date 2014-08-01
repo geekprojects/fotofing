@@ -30,6 +30,8 @@ class MainWindow : public Gtk::Window
     Gtk::ToolButton m_toolbarTagEvent;
     Gtk::ToolButton m_toolbarHide;
 
+    void onTagButton();
+
     time_t m_fromDate;
     time_t m_toDate;
     Gtk::Button m_fromDateButton;
