@@ -28,6 +28,21 @@ TagView::TagView()
     m_treeViewTags.signal_row_activated().connect(sigc::mem_fun(
         *this,
         &TagView::onTagRowActivate));
+
+
+    // Add context menu
+    Gtk::MenuItem* item = Gtk::manage(new Gtk::MenuItem("_Delete", true));
+    item->signal_activate().connect(sigc::mem_fun(
+        *this,
+        &TagView::deleteTags));
+    m_popupMenu.append(*item);
+
+    m_popupMenu.accelerate(m_treeViewTags);
+    m_popupMenu.show_all();
+
+    m_treeViewTags.signal_button_press_event().connect(sigc::mem_fun(
+        *this,
+        &TagView::onButtonPress), false);
 }
 
 TagView::~TagView()
@@ -43,6 +58,20 @@ void TagView::onTagRowActivate(
     Gtk::TreeViewColumn* column)
 {
     m_rowActivateSignal.emit();
+}
+
+bool TagView::onButtonPress(GdkEventButton* event)
+{
+    bool res = false;
+
+    //res = m_treeViewTags.on_button_press_event(event);
+
+    if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
+    {
+        m_popupMenu.popup(event->button, event->time);
+    }
+
+    return res;
 }
 
 void TagView::treeify(Tag* parent, string remainder, int level)
@@ -134,8 +163,21 @@ void TagView::update(std::set<std::string> tags)
     }
 }
 
+void TagView::deleteTags()
+{
+    vector<Tag*> tags;
+    tags = getSelectedTags();
+
+    m_deleteTagsSignal.emit(tags);
+}
+
 sigc::signal<void>& TagView::signal_row_activate()
 {
     return m_rowActivateSignal;
+}
+
+sigc::signal<void, vector<Tag*> >& TagView::signal_delete_tags()
+{
+    return m_deleteTagsSignal;
 }
 

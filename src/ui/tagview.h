@@ -63,6 +63,7 @@ class TagView : public Gtk::ScrolledWindow
     Tag* m_tagRoot;
 
     sigc::signal<void> m_rowActivateSignal;
+    sigc::signal<void, std::vector<Tag*> > m_deleteTagsSignal;
 
     const TagModelColumns m_tagColumns;
     Gtk::ScrolledWindow m_scrolledWindowTags;
@@ -70,9 +71,13 @@ class TagView : public Gtk::ScrolledWindow
     Glib::RefPtr<Gtk::TreeStore> m_tagTreeStore;
     Glib::RefPtr<Gtk::TreeSelection> m_refTreeSelection;
 
+    Gtk::Menu m_popupMenu;
+
     void onTagRowActivate(
         const Gtk::TreeModel::Path& path,
         Gtk::TreeViewColumn* column);
+
+    bool onButtonPress(GdkEventButton* event);
 
     void treeify(Tag* parent, std::string remainder, int level);
 
@@ -86,7 +91,11 @@ class TagView : public Gtk::ScrolledWindow
 
     void update(std::set<std::string> tags);
 
+    void deleteTags();
+
     sigc::signal<void>& signal_row_activate();
+    sigc::signal<void, std::vector<Tag*> >& signal_delete_tags();
+
 };
 
 #endif
