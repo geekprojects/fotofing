@@ -92,10 +92,11 @@ bool Database::checkSchema(vector<Table> schema)
 
     for (tableIt = schema.begin(); tableIt != schema.end(); tableIt++)
     {
-        it = tables.find(tableIt->name);
+        string table = tableIt->name;
+        it = tables.find(table);
         if (it == tables.end())
         {
-            string createSql = "CREATE TABLE " + tableIt->name + " (";
+            string createSql = "CREATE TABLE " + table + " (";
 
             bool comma = false;
             set<Column>::iterator columnIt;
@@ -126,6 +127,33 @@ bool Database::checkSchema(vector<Table> schema)
             execute(createSql);
             created = true;
         }
+        else
+        {
+            // Table already exists
+            // Check columns all exist
+            set<string> columns = getColumns(table);
+            set<Column>::iterator columnIt;
+            for (
+                columnIt = tableIt->columns.begin();
+                columnIt != tableIt->columns.end();
+                columnIt++)
+            {
+                set<string>::iterator it;
+                string column = columnIt->name;
+                it = columns.find(column);
+                if (it == columns.end())
+                {
+                    printf(
+                        "Database::checkSchema: Column missing: %s\n",
+                        column.c_str());
+                    string alterSql =
+                        "ALTER TABLE " + table + " ADD COLUMN " + column;
+                    printf("Database::checkSchema:  -> %s\n", alterSql.c_str());
+                    execute(alterSql);
+                    created = true;
+                }
+            }
+        }
     }
 
     return created;
@@ -140,7 +168,10 @@ PreparedStatement* Database::prepareStatement(string sql)
     res = sqlite3_prepare_v2(m_db, sql.c_str(), sql.length(), &stmt, NULL);
     if (res)
     {
-        printf("Database::preparedStatement: prepare res=%d\n", res);
+        printf(
+            "Database::prepareStatement: Prepare Error: res=%d, msg=%s\n",
+            res,
+            sqlite3_errmsg(m_db));
         return NULL;
     }
 
@@ -169,7 +200,10 @@ ResultSet Database::executeQuery(string query, vector<string> args)
     res = sqlite3_prepare_v2(m_db, query.c_str(), query.length(), &stmt, NULL);
     if (res)
     {
-        printf("Database::executeQuery: prepare res=%d\n", res);
+        printf(
+            "Database::open: Prepare Error: res=%d, msg=%s\n",
+            res,
+            sqlite3_errmsg(m_db));
         return resultSet;
     }
 
@@ -227,7 +261,10 @@ ResultSet Database::executeQuery(string query, vector<string> args)
         }
         else
         {
-            printf("Database::open: Error: %s\n", sqlite3_errmsg(m_db));
+            printf(
+                "Database::open: Error: res=%d, msg=%s\n",
+                s,
+                sqlite3_errmsg(m_db));
             break;
         }
     }
@@ -254,7 +291,10 @@ bool Database::execute(string query, vector<string> args)
     res = sqlite3_prepare_v2(m_db, query.c_str(), query.length(), &stmt, NULL);
     if (res)
     {
-        printf("Database::execute: prepare res=%d\n", res);
+        printf(
+            "Database::execute: Error: res=%d, msg=%s\n",
+            res,
+            sqlite3_errmsg(m_db));
         return false;
     }
 
@@ -274,11 +314,14 @@ bool Database::execute(string query, vector<string> args)
     sqlite3_finalize(stmt);
     if (res != SQLITE_DONE)
     {
-        printf("Database::execute: Unexpected result: res=%d\n", res);
+        printf(
+            "Database::execute: Error: res=%d, msg=%s\n",
+            res,
+            sqlite3_errmsg(m_db));
         return false;
     }
 
-    return false;
+    return true;
 }
 
 set<string> Database::getTables()
@@ -297,6 +340,24 @@ set<string> Database::getTables()
         }
     }
     return tables;
+}
+
+set<string> Database::getColumns(string table)
+{
+    set<string> columns;
+
+    PreparedStatement* ps = prepareStatement("SELECT * FROM " + table + " LIMIT 1");
+
+    ps->step();
+    int columnCount = ps->getColumnCount();
+    int i;
+    for (i = 0; i < columnCount; i++)
+    {
+        columns.insert(ps->getColumnName(i));
+    }
+    delete ps;
+
+    return columns;
 }
 
 int64_t Database::getLastInsertId()
@@ -325,6 +386,16 @@ bool PreparedStatement::bindInt64(int i, int64_t value)
 {
     sqlite3_bind_int64(m_stmt, i, value);
     return true;
+}
+
+int PreparedStatement::getColumnCount()
+{
+   return sqlite3_column_count(m_stmt);
+}
+
+string PreparedStatement::getColumnName(int i)
+{
+   return string((char*)sqlite3_column_origin_name(m_stmt, i));
 }
 
 int PreparedStatement::getInt(int i)
@@ -360,7 +431,10 @@ bool PreparedStatement::execute()
 
     if (res != SQLITE_DONE)
     {
-        printf("PreparedStatement::execute: Unexpected result: res=%d\n", res);
+        printf(
+            "PreparedStatement::execute: Prepare Error: res=%d, msg=%s\n",
+            res,
+            sqlite3_errmsg(m_db->getDB()));
         result = false;
     }
     else
@@ -391,8 +465,14 @@ bool PreparedStatement::step()
     {
         return false;
     }
+    else
+    {
+        printf(
+            "PreparedStatement::executeQuery: Prepare Error: res=%d, msg=%s\n",
+            res,
+            sqlite3_errmsg(m_db->getDB()));
+    }
 
-    printf("PreparedStatement::executeQuery: Unexpected result: res=%d\n", res);
     return false;
 }
 

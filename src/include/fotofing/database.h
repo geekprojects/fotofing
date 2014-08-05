@@ -89,6 +89,9 @@ class PreparedStatement
     bool bindString(int i, std::string str);
     bool bindInt64(int i, int64_t v);
 
+    int getColumnCount();
+    std::string getColumnName(int i);
+
     int getInt(int i);
     int64_t getInt64(int i);
     std::string getString(int i);
@@ -129,6 +132,7 @@ class Database
     bool execute(std::string query, std::vector<std::string> args);
 
     std::set<std::string> getTables();
+    std::set<std::string> getColumns(std::string table);
 
     sqlite3* getDB() { return m_db; }
 
