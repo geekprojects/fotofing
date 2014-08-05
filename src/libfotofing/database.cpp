@@ -355,16 +355,21 @@ bool PreparedStatement::getBlob(int i, const void** data, uint32_t* length)
 bool PreparedStatement::execute()
 {
     int res;
+    bool result;
     res = sqlite3_step(m_stmt);
 
     if (res != SQLITE_DONE)
     {
         printf("PreparedStatement::execute: Unexpected result: res=%d\n", res);
-        return false;
+        result = false;
+    }
+    else
+    {
+        result = true;
     }
     sqlite3_reset(m_stmt);
 
-    return false;
+    return result;
 }
 
 bool PreparedStatement::executeQuery()
