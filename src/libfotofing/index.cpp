@@ -205,6 +205,24 @@ bool Index::removeTag(string pid, string tag)
     return true;
 }
 
+set<string> Index::getChildTags(string tag)
+{
+    set<string> tags;
+
+    PreparedStatement* ps = m_db->prepareStatement(
+        "SELECT DISTINCT tag FROM tags WHERE tag LIKE ?");
+    ps->bindString(1, tag + "/%");
+
+    ps->executeQuery();
+    while (ps->step())
+    {
+        tags.insert(ps->getString(0));
+    }
+
+    return tags;
+}
+
+
 bool Index::removeTag(string tag)
 {
     PreparedStatement* ps = m_db->prepareStatement("DELETE FROM tags WHERE tag LIKE ?");

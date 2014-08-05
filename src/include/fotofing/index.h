@@ -25,6 +25,7 @@ class Index
     bool saveTags(std::string pid, std::set<std::string> tags);
     std::set<std::string> getAllTags();
     std::set<std::string> getTags(std::string pid);
+    std::set<std::string> getChildTags(std::string tag);
 
     // Remove a tag from a photo
     bool removeTag(std::string pid, std::string tag);
