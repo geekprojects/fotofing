@@ -26,6 +26,7 @@ class PhotoDetails : public Gtk::Paned
 {
  private:
     MainWindow* m_mainWindow;
+    Photo* m_photo;
 
     // Photo properties
     Gtk::ScrolledWindow m_photoPropScrollWindow;
@@ -38,12 +39,16 @@ class PhotoDetails : public Gtk::Paned
     TagView m_tagView;
     Gtk::Frame m_photoTagFrame;
 
+    void onDeleteTags(std::vector<Tag*> tags);
+
  public:
 
     PhotoDetails(MainWindow* mainWindow);
     ~PhotoDetails();
 
     void displayDetails(Photo* photo);
+
+    void updateTags();
 };
 
 #endif

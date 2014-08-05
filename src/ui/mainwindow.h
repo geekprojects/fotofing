@@ -50,6 +50,7 @@ class MainWindow : public Gtk::Window
     // Tag View
     Gtk::Frame m_tagFrame;
     void onTagSearchClicked();
+    void onDeleteTags(std::vector<Tag*> tags);
 
     // Thumbnail View
     PhotoView m_photoView;
@@ -69,6 +70,8 @@ class MainWindow : public Gtk::Window
     Gtk::MenuBar* createMenu();
 
     void openSourcesDialog();
+
+    bool confirm(std::string title, std::string text);
 
  public:
     MainWindow(Index* index);

@@ -11,6 +11,7 @@ PhotoDetails::PhotoDetails(MainWindow* mainWindow) :
     Gtk::Paned(Gtk::ORIENTATION_VERTICAL)
 {
     m_mainWindow = mainWindow;
+    m_photo = NULL;
 
     // Photo properties
     m_photoPropListStore = Gtk::ListStore::create(m_photoPropColumns);
@@ -24,6 +25,9 @@ PhotoDetails::PhotoDetails(MainWindow* mainWindow) :
     pack1(m_photoPropFrame, true, false);
 
     // Photo tags
+    m_tagView.signal_delete_tags().connect(sigc::mem_fun(
+        *this,
+        &PhotoDetails::onDeleteTags));
     m_photoTagFrame.set_shadow_type(Gtk::SHADOW_IN);
     m_photoTagFrame.add(m_tagView);
     pack2(m_photoTagFrame, true, false);
@@ -35,6 +39,8 @@ PhotoDetails::~PhotoDetails()
 
 void PhotoDetails::displayDetails(Photo* photo)
 {
+    m_photo = photo;
+
     m_photoPropListStore->clear();
     Gtk::TreeRow propRow;
     propRow = *(m_photoPropListStore->append());
@@ -66,5 +72,43 @@ void PhotoDetails::displayDetails(Photo* photo)
     }
 
     m_tagView.update(tags);
+}
+
+void PhotoDetails::updateTags()
+{
+    if (m_photo == NULL)
+    {
+        return;
+    }
+
+    // Refresh the photo's tags
+    set<string> updatedTags;
+    updatedTags = m_mainWindow->getIndex()->getTags(m_photo->getId());
+    m_photo->setTags(updatedTags);
+    m_tagView.update(updatedTags);
+
+}
+
+void PhotoDetails::onDeleteTags(vector<Tag*> tags)
+{
+    if (m_photo == NULL)
+    {
+        return;
+    }
+
+    vector<Tag*>::iterator it;
+    for (it = tags.begin(); it != tags.end(); it++)
+    {
+        Tag* tag = *it;
+        printf(
+            "MainWindow::onDeleteTags: Deleting tag: %s\n",
+            tag->getTagName().c_str());
+        m_mainWindow->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
+    }
+
+    updateTags();
+
+    // Just in case this we just removed the last instance of a tags
+    m_mainWindow->updateTags();
 }
 

@@ -63,6 +63,9 @@ MainWindow::MainWindow(Index* index) :
     m_allTagsView.signal_row_activate().connect(sigc::mem_fun(
         *this,
         &MainWindow::update));
+    m_allTagsView.signal_delete_tags().connect(sigc::mem_fun(
+        *this,
+        &MainWindow::onDeleteTags));
     m_tagBox.pack_start(m_allTagsView, Gtk::PACK_EXPAND_WIDGET);
     m_tagBox.pack_start(m_tagSearchButton, Gtk::PACK_SHRINK);
     m_tagFrame.add(m_tagBox);
@@ -212,11 +215,10 @@ void MainWindow::onTagButton()
         }
 
         printf("MainWindow::onTagButton: Applying tag %s\n", tag.c_str());
+        updateTags();
     }
 
     delete tagDialog;
-
-updateTags();
 }
 
 void MainWindow::onFromDateClicked()
@@ -269,6 +271,30 @@ void MainWindow::onTagSearchClicked()
     update();
 }
 
+void MainWindow::onDeleteTags(vector<Tag*> tags)
+{
+    int res;
+
+    printf("MainWindow::onDeleteTags: Deleting tags\n");
+    res = confirm(
+        "Delete selected tags?",
+        "Are you sure you wish to delete the selected tags?\n"
+        "This cannot be undone.");
+    if (res)
+    {
+        vector<Tag*>::iterator it;
+        for (it = tags.begin(); it != tags.end(); it++)
+        {
+            Tag* tag = *it;
+            printf(
+                "MainWindow::onDeleteTags: Deleting tag: %s\n",
+                tag->getTagName().c_str());
+            m_index->removeTag(tag->getTagName());
+        }
+        updateTags();
+    }
+}
+
 void MainWindow::openSourcesDialog()
 {
     SourcesDialog* sources = new SourcesDialog(this);
@@ -282,5 +308,22 @@ void MainWindow::updateTags()
     set<string> tags;
     tags = m_index->getAllTags();
     m_allTagsView.update(tags);
+    m_photoDetails.updateTags();
+}
+
+bool MainWindow::confirm(string title, string text)
+{
+    Gtk::MessageDialog dialog(
+        *this,
+        title,
+        false,
+        Gtk::MESSAGE_QUESTION,
+        Gtk::BUTTONS_OK_CANCEL);
+    dialog.set_secondary_text(text);
+
+
+    int result = dialog.run();
+
+    return (result == Gtk::RESPONSE_OK);
 }
 
