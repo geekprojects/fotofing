@@ -1,10 +1,12 @@
 
 #include "tagdialog.h"
+#include "mainwindow.h"
 
 using namespace std;
 
-TagDialog::TagDialog() :
+TagDialog::TagDialog(MainWindow* mainWindow) :
     Gtk::Dialog("Add Tag"),
+    m_mainWindow(mainWindow),
     m_tagTextCombo(true)
 {
 
@@ -45,22 +47,18 @@ void TagDialog::onTypeChanged()
 
     m_tagTextCombo.remove_all();
 
-    if (type == "Trip")
+    set<string> children;
+    if (type != "Other")
     {
-        m_tagTextCombo.append("Kenya");
-        m_tagTextCombo.append("Berlin");
-        m_tagTextCombo.append("Syria and Lebanon");
+        children = m_mainWindow->getIndex()->getChildTags(type);
     }
-    else if (type == "Location")
+
+    set<string>::iterator it;
+    for (it = children.begin(); it != children.end(); it++)
     {
-        m_tagTextCombo.append("Kenya/Masai Mara");
-        m_tagTextCombo.append("Berlin/Berlin Zoo");
-        m_tagTextCombo.append("Syria/Damascus");
-    }
-    else if (type == "People")
-    {
-        m_tagTextCombo.append("Caroline");
-        m_tagTextCombo.append("Thomas");
+        // Strip the current type off the beginning
+        string tag = (*it).substr(type.length() + 1);
+        m_tagTextCombo.append(tag);
     }
 
     updateTag();

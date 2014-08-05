@@ -199,7 +199,7 @@ void MainWindow::onTagButton()
 {
     int res;
 
-    TagDialog* tagDialog = new TagDialog();
+    TagDialog* tagDialog = new TagDialog(this);
     res = tagDialog->run();
     if (res == Gtk::RESPONSE_OK)
     {

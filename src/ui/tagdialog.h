@@ -3,9 +3,13 @@
 
 #include <gtkmm.h>
 
+class MainWindow;
+
 class TagDialog : public Gtk::Dialog
 {
  private:
+    MainWindow* m_mainWindow;
+
     Gtk::VBox m_vBox;
     Gtk::ComboBoxText m_tagTypeCombo;
     Gtk::ComboBoxText m_tagTextCombo;
@@ -17,7 +21,7 @@ class TagDialog : public Gtk::Dialog
     void updateTag();
 
  public:
-    TagDialog();
+    TagDialog(MainWindow* mainWindow);
     ~TagDialog();
 
     std::string getTag();
