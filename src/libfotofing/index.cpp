@@ -100,7 +100,8 @@ bool Index::saveTags(string pid, set<string> tags)
         tags.insert(*it);
     }
 
-    PreparedStatement* ps = m_db->prepareStatement("INSERT INTO tags (pid, tag) VALUES (?, ?)");
+    PreparedStatement* ps = m_db->prepareStatement(
+        "INSERT INTO tags (pid, tag) VALUES (?, ?)");
 
     m_db->startTransaction();
     for (it = tags.begin(); it != tags.end(); it++)
@@ -183,6 +184,40 @@ set<string> Index::getTags(string pid)
 
     return tags;
 }
+
+bool Index::removeTag(string pid, string tag)
+{
+    m_db->startTransaction();
+
+    PreparedStatement* ps = m_db->prepareStatement(
+        "DELETE FROM tags WHERE pid=? AND tag LIKE ?");
+    ps->bindString(1, pid);
+    ps->bindString(2, tag);
+    ps->execute();
+
+    ps->bindString(1, pid);
+    ps->bindString(2, tag + "/%");
+    ps->execute();
+    delete ps;
+
+    m_db->endTransaction();
+
+    return true;
+}
+
+bool Index::removeTag(string tag)
+{
+    PreparedStatement* ps = m_db->prepareStatement("DELETE FROM tags WHERE tag LIKE ?");
+    ps->bindString(1, tag);
+    ps->execute();
+
+    ps->bindString(1, tag + "/%");
+    ps->execute();
+    delete ps;
+
+    return true;
+}
+
 
 static Photo* createPhoto(PreparedStatement* ps)
 {

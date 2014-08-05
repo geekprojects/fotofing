@@ -26,6 +26,12 @@ class Index
     std::set<std::string> getAllTags();
     std::set<std::string> getTags(std::string pid);
 
+    // Remove a tag from a photo
+    bool removeTag(std::string pid, std::string tag);
+
+    // Remove all occurences of a tag
+    bool removeTag(std::string tag);
+
     std::vector<Photo*> getPhotos(std::vector<std::string> tags, time_t* from, time_t* to);
     std::vector<Photo*> getPhotos(time_t* from, time_t* to);
 
