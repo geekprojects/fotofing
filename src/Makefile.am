@@ -1,0 +1,3 @@
+
+SUBDIRS=libfotofing ui tests
+
