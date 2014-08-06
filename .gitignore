@@ -7,6 +7,21 @@
 *.la
 *.so*
 
+# Autoconf and automake
+autom4te.cache/
+aclocal.m4
+ar-lib
+compile
+configure
+config.guess
+config.sub
+depcomp
+ltmain.sh
+install-sh
+missing
+Makefile
+Makefile.in
+
 # Disassembly files
 *.asm
 
