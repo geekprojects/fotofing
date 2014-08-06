@@ -2,6 +2,8 @@
 #include "photoview.h"
 #include "mainwindow.h"
 
+#include <sys/wait.h>
+
 using namespace std;
 
 PhotoView::PhotoView(MainWindow* mainWindow)
@@ -101,12 +103,31 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
     vector<File*> files = m_mainWindow->getIndex()->getFiles(photo->getId());
     if (files.size() > 0)
     {
-        // TODO: Make this configurable!
-        string cmd = string("/usr/bin/qiv -fm ") + files.at(0)->getPath();
-        printf("PhotoView::onIconViewItemActivated: cmd=%s\n", cmd.c_str());
-        int res;
-        res = system(cmd.c_str());
-        printf("PhotoView::onIconViewItemActivated: res=%d\n", res);
+        pid_t childPid = fork();
+        if (childPid == 0)
+        {
+            const char* argv[] =
+            {
+                "/usr/bin/qiv",
+                "-fm",
+                files.at(0)->getPath().c_str(),
+                (const char*)NULL
+            };
+            execvp(argv[0], (char**)argv);
+            printf("PhotoView::onIconViewItemActivated: Failed to show image\n");
+
+            exit(0);
+        }
+        else
+        {
+            pid_t tpid;
+            do
+            {
+                int status;
+                tpid = wait(&status);
+            }
+            while (tpid != childPid);
+        }
     }
 }
 
