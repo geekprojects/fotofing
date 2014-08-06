@@ -5,7 +5,7 @@ AC_PREREQ([2.69])
 AC_INIT([Fotofing], [0.0.1], [fotofing@geekprojects.com])
 AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_SRCDIR([src/ui/main.cpp])
-AC_CONFIG_HEADERS([src/include/fotofing/config.h])
+AC_CONFIG_HEADERS([src/include/config.h])
 
 # Checks for programs.
 AM_PROG_AR
