@@ -71,7 +71,6 @@ class MainWindow : public Gtk::Window
 
     void openSourcesDialog();
 
-    bool confirm(std::string title, std::string text);
 
  public:
     MainWindow(Index* index);
@@ -83,6 +82,8 @@ class MainWindow : public Gtk::Window
     void updateTags();
 
     void displayDetails(Photo* photo);
+
+    bool confirm(std::string title, std::string text);
 };
 
 #endif
