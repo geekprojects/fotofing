@@ -11,6 +11,14 @@
 
 using namespace std;
 
+Source::Source()
+{
+    m_sourceId = 0;
+    m_type = "";
+    m_host = "";
+    m_path = "";
+}
+
 Source::Source(const Source& s)
 {
     m_sourceId = s.m_sourceId;

@@ -20,6 +20,7 @@ class Source
     std::string m_path;
 
  public:
+    Source();
     Source(const Source& s);
     Source(
         int64_t sourceId,
