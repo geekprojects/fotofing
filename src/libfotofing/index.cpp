@@ -478,16 +478,18 @@ bool Index::saveSource(Source* s)
     int i = 1;
     if (s->getSourceId() > 0)
     {
-        ps = m_db->prepareStatement("INSERT INTO sources (source_id, type, host, path) VALUES (?, ?, ?, ?)");
+        ps = m_db->prepareStatement("UPDATE sources SET host=?, path=? WHERE source_id=?");
+        ps->bindString(i++, s->getHost());
+        ps->bindString(i++, s->getPath());
         ps->bindInt64(i++, s->getSourceId());
     }
     else
     {
         ps = m_db->prepareStatement("INSERT INTO sources (type, host, path) VALUES (?, ?, ?)");
+        ps->bindString(i++, s->getType());
+        ps->bindString(i++, s->getHost());
+        ps->bindString(i++, s->getPath());
     }
-    ps->bindString(i++, s->getType());
-    ps->bindString(i++, s->getHost());
-    ps->bindString(i++, s->getPath());
 
     bool res;
     res = ps->execute();
@@ -499,6 +501,23 @@ bool Index::saveSource(Source* s)
         s->setSourceId(rowId);
     }
     delete ps;
+
+    return res;
+}
+
+bool Index::removeSource(Source* source)
+{
+    PreparedStatement* ps = m_db->prepareStatement(
+        "DELETE FROM sources WHERE source_id=?");
+    ps->bindInt64(1, source->getSourceId());
+
+    bool res = ps->execute();
+    if (!res)
+    {
+        printf(
+            "Index::removeSource: Failed to remove source %ld\n",
+            source->getSourceId());
+    }
 
     return res;
 }

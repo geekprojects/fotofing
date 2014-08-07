@@ -41,6 +41,7 @@ class Index
     bool addFileSource(std::string path);
     bool scanFile(Source* source, File* f);
     bool scanSource(Source* s);
+    bool removeSource(Source* s);
     std::vector<Source> getSources();
 };
 
