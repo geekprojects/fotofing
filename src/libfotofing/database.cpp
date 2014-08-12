@@ -10,8 +10,9 @@ using namespace std;
 
 string GET_TABLES_SQL = "SELECT name FROM sqlite_master WHERE type='table'";
 
-Database::Database()
+Database::Database(string path)
 {
+    m_path = path;
     m_db = NULL;
     m_open = false;
     m_inTransaction = 0;
@@ -30,8 +31,7 @@ bool Database::open()
     }
 
     int res;
-
-    res = sqlite3_open("fotofing.db", &m_db);
+    res = sqlite3_open(m_path.c_str(), &m_db);
     if (res)
     {
         fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(m_db));

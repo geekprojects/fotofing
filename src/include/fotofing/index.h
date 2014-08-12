@@ -14,12 +14,13 @@
 class Index
 {
  private:
+    std::string m_path;
     Database* m_db;
 
     bool saveSource(Source* s);
 
  public:
-    Index();
+    Index(std::string path);
     ~Index();
 
     bool saveTags(std::string pid, std::set<std::string> tags);

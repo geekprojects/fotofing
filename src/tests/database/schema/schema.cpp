@@ -20,7 +20,7 @@ bool createVersion1()
     table1.columns.insert(Column("data2"));
     schema.push_back(table1);
 
-    Database* db = new Database();
+    Database* db = new Database("schema_test.db");
     res = db->open();
     if (!res)
     {
@@ -59,7 +59,7 @@ bool createVersion2()
     table1.columns.insert(Column("data3"));
     schema.push_back(table1);
 
-    Database* db = new Database();
+    Database* db = new Database("schema_test.db");
     res = db->open();
     if (!res)
     {

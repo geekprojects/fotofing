@@ -4,7 +4,9 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/stat.h>
 
 #include <fotofing/index.h>
@@ -12,8 +14,28 @@
 
 using namespace std;
 
-Index::Index()
+Index::Index(string path)
 {
+    m_path = path;
+
+    int res;
+    res = access(path.c_str(), R_OK | X_OK | W_OK);
+    printf("Index::Index: access res=%d\n", res);
+    if (res == -1)
+    {
+        int err = errno;
+        printf("Index::Index: access errno=%d\n", err);
+        if (errno == ENOENT)
+        {
+            printf("Index::Index: Making dir\n");
+            mkdir(path.c_str(), 0755);
+        }
+        else
+        {
+            return;
+        }
+    }
+
     vector<Table> schema;
 
     Table photosTable;
@@ -44,7 +66,8 @@ Index::Index()
     sourcesTable.columns.insert(Column("path"));
     schema.push_back(sourcesTable);
 
-    m_db = new Database();
+    string dbpath = path + "/fotofing.db";
+    m_db = new Database(dbpath);
     m_db->open();
 
     bool created;

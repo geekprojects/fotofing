@@ -14,7 +14,9 @@ int main(int argc, char** argv)
     Glib::RefPtr<Gtk::Application> app;
     app = Gtk::Application::create(argc, argv, "com.geekprojects.fotofing");
 
-    Index* index = new Index();
+    string home = string(getenv("HOME"));
+    string path = home + "/.fotofing";
+    Index* index = new Index(path);
 
     MainWindow mainWindow(index);
 

@@ -107,12 +107,13 @@ class PreparedStatement
 class Database
 {
  private:
+    std::string m_path;
     sqlite3* m_db;
     bool m_open;
     int m_inTransaction;
 
  public:
-    Database();
+    Database(std::string path);
     ~Database();
 
     bool open();
