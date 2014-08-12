@@ -13,14 +13,20 @@ aclocal.m4
 ar-lib
 compile
 configure
+configure.scan
 config.guess
+config.log
+config.status
 config.sub
 depcomp
+libtool
 ltmain.sh
 install-sh
 missing
 Makefile
 Makefile.in
+stamp-h1
+.libs
 
 # Disassembly files
 *.asm
