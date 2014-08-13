@@ -15,7 +15,7 @@ int main(int argc, char** argv)
     app = Gtk::Application::create(argc, argv, "com.geekprojects.fotofing");
 
     string home = string(getenv("HOME"));
-    string path = home + "/.fotofing";
+    string path = home + DEFAULT_DB_PATH;
     Index* index = new Index(path);
 
     MainWindow mainWindow(index);

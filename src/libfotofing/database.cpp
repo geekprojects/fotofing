@@ -1,6 +1,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <sys/stat.h>
 
 #include <string>
 
@@ -29,6 +32,36 @@ bool Database::open()
     {
         return true;
     }
+
+    // Check that the parent directory exists
+    size_t pos = m_path.rfind('/');
+    if (pos != m_path.npos)
+    {
+        string dir = m_path.substr(0, pos);
+
+        int res;
+        res = access(dir.c_str(), R_OK | X_OK | W_OK);
+        if (res == -1)
+        {
+            printf("Database::open: access errno=%d\n", err);
+            if (errno == ENOENT)
+            {
+                printf("Database::open: Creating dir\n");
+                res = mkdir(dir.c_str(), 0755);
+                if (res == -1)
+                {
+                    printf("Database::open: Failed to create parent dir\n");
+                    return false;
+                }
+            }
+            else
+            {
+                printf("Database::open: Failed to check parent directory\n");
+                return false;
+            }
+        }
+    }
+
 
     int res;
     res = sqlite3_open(m_path.c_str(), &m_db);

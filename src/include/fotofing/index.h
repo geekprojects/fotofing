@@ -11,6 +11,8 @@
 #include "source.h"
 #include "file.h"
 
+#define DEFAULT_DB_PATH "/.fotofing/fotofing.db"
+
 class Index;
 
 class IndexClient
