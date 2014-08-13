@@ -350,18 +350,24 @@ vector<Photo*> Index::getPhotos(vector<string> tags, time_t* fromDate, time_t* t
 
     ps->executeQuery();
 
-    *fromDate = time(NULL);
-    *toDate = 0;
+    if (fromDate != NULL)
+    {
+        *fromDate = time(NULL);
+    }
+    if (toDate != NULL)
+    {
+        *toDate = 0;
+    }
 
     while (ps->step())
     {
         Photo* p = createPhoto(ps);
         time_t t = p->getTimestamp();
-        if (t < *fromDate)
+        if (fromDate != NULL && t < *fromDate)
         {
             *fromDate = t;
         }
-        if (t > *toDate)
+        if (toDate != NULL && t > *toDate)
         {
             *toDate = t;
         }
