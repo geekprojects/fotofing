@@ -405,9 +405,7 @@ vector<File*> Index::getFiles(string pid)
 bool Index::addFileSource(string path)
 {
     FileSource fileSource(0, getHostName(), path);
-    saveSource(&fileSource);
-
-    return scanSource(&fileSource);
+    return saveSource(&fileSource);
 }
 
 bool Index::scanFile(Source* source, File* f)
@@ -490,9 +488,20 @@ bool Index::scanFile(Source* source, File* f)
     return true;
 }
 
-bool Index::scanSource(Source* s)
+bool Index::scanSource(Source* s, IndexClient* client)
 {
-    return s->scan(this);
+    return s->scan(this, client);
+}
+
+bool Index::scanSources(IndexClient* client)
+{
+    vector<Source*> sources = getSources();
+    vector<Source*>::iterator it;
+    for (it = sources.begin(); it != sources.end(); it++)
+    {
+        (*it)->scan(this, client);
+    }
+    return true;
 }
 
 bool Index::saveSource(Source* s)
@@ -545,9 +554,9 @@ bool Index::removeSource(Source* source)
     return res;
 }
 
-vector<Source> Index::getSources()
+vector<Source*> Index::getSources()
 {
-    vector<Source> sources;
+    vector<Source*> sources;
     PreparedStatement* ps;
     ps = m_db->prepareStatement("SELECT source_id, type, host, path FROM sources");
 
@@ -560,12 +569,12 @@ vector<Source> Index::getSources()
         string path = ps->getString(3);
         if (type == "File")
         {
-            FileSource f(source_id, host, path);
+            FileSource* f = new FileSource(source_id, host, path);
             sources.push_back(f);
         }
         else
         {
-            Source f(source_id, type, host, path);
+            Source* f = new Source(source_id, type, host, path);
             sources.push_back(f);
         }
     }
@@ -573,5 +582,4 @@ vector<Source> Index::getSources()
 
     return sources;
 }
-
 

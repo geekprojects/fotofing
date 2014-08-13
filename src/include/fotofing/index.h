@@ -11,6 +11,25 @@
 #include "source.h"
 #include "file.h"
 
+class Index;
+
+class IndexClient
+{
+ protected:
+    Index* m_index;
+
+ public:
+    virtual ~IndexClient() {}
+
+    virtual void scanProgress(
+        Source* source,
+        int complete,
+        int total,
+        std::string info)
+    {
+    }
+};
+
 class Index
 {
  private:
@@ -41,9 +60,10 @@ class Index
 
     bool addFileSource(std::string path);
     bool scanFile(Source* source, File* f);
-    bool scanSource(Source* s);
+    bool scanSource(Source* s, IndexClient* client = NULL);
+    bool scanSources(IndexClient* client = NULL);
     bool removeSource(Source* s);
-    std::vector<Source> getSources();
+    std::vector<Source*> getSources();
 };
 
 #endif

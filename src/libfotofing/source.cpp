@@ -39,7 +39,7 @@ Source::~Source()
 {
 }
 
-bool Source::scan(Index* index)
+bool Source::scan(Index* index, IndexClient* client)
 {
     return true;
 }
@@ -62,7 +62,7 @@ FileSource::~FileSource()
 {
 }
 
-bool FileSource::scan(Index* index)
+bool FileSource::scan(Index* index, IndexClient* client)
 {
     string hostname = getHostName();
     if (m_host != hostname)
@@ -70,15 +70,40 @@ bool FileSource::scan(Index* index)
         printf("FileSource::getFiles: WARNING: Wrong host\n");
         return false;
     }
-    return scanDirectory(m_path, index);
+
+    // Find files first. This is mostly so we can show the progress
+    if (client != NULL)
+    {
+        client->scanProgress(this, 0, 100, "Scanning directory...");
+    }
+    vector<string> files = scanDirectory(m_path, index);
+
+    int i = 0;
+    vector<string>::iterator it;
+    for (it = files.begin(), i = 0; it != files.end(); it++, i++)
+    {
+        if (client != NULL)
+        {
+            client->scanProgress(this, i, files.size(), *it);
+        }
+        File file(*it);
+        index->scanFile(this, &file);
+    }
+    if (client != NULL)
+    {
+        client->scanProgress(this, files.size(), files.size(), "Done");
+    }
+    return true;
 }
 
-bool FileSource::scanDirectory(string dir, Index* index)
+vector<string> FileSource::scanDirectory(string dir, Index* index)
 {
+    vector<string> results;
+
     DIR* fd = opendir(dir.c_str());
     if (fd == NULL)
     {
-        return false;
+        return results;
     }
 
     while (true)
@@ -100,7 +125,12 @@ bool FileSource::scanDirectory(string dir, Index* index)
 
         if (S_ISDIR(stat.st_mode))
         {
-            scanDirectory(path, index);
+            vector<string> subdir = scanDirectory(path, index);
+            vector<string>::iterator it;
+            for (it = subdir.begin(); it != subdir.end(); it++)
+            {
+                results.push_back(*it);
+            }
         }
         else if (S_ISREG(stat.st_mode))
         {
@@ -116,12 +146,11 @@ bool FileSource::scanDirectory(string dir, Index* index)
             {
                 continue;
             }
-            File file(path);
-            index->scanFile(this, &file);
+            results.push_back(path);
         }
     }
     closedir(fd);
 
-    return true;
+    return results;
 }
 

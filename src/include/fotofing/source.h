@@ -10,6 +10,7 @@
 #include <fotofing/utils.h>
 
 class Index;
+class IndexClient;
 
 class Source
 {
@@ -36,13 +37,13 @@ class Source
 
     void setSourceId(int64_t sourceId) { m_sourceId = sourceId; }
 
-    virtual bool scan(Index* index);
+    virtual bool scan(Index* index, IndexClient* client);
 };
 
 class FileSource : public Source
 {
  protected:
-    bool scanDirectory(std::string path, Index* index);
+    std::vector<std::string> scanDirectory(std::string path, Index* index);
 
  public:
     FileSource(const Source& s);
@@ -52,7 +53,7 @@ class FileSource : public Source
         std::string path);
     virtual ~FileSource();
 
-    virtual bool scan(Index* index);
+    virtual bool scan(Index* index, IndexClient* client);
 };
 
 #endif
