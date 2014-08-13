@@ -17,6 +17,7 @@ int main(int argc, char** argv)
     string home = string(getenv("HOME"));
     string path = home + DEFAULT_DB_PATH;
     Index* index = new Index(path);
+    index->open();
 
     MainWindow mainWindow(index);
 

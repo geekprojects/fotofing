@@ -18,6 +18,15 @@ Index::Index(string path)
 {
     m_path = path;
 
+}
+
+Index::~Index()
+{
+    delete m_db;
+}
+
+bool Index::open()
+{
     vector<Table> schema;
 
     Table photosTable;
@@ -49,7 +58,11 @@ Index::Index(string path)
     schema.push_back(sourcesTable);
 
     m_db = new Database(m_path);
-    m_db->open();
+    bool res = m_db->open();
+    if (!res)
+    {
+        return false;
+    }
 
     bool created;
     created = m_db->checkSchema(schema);
@@ -59,11 +72,7 @@ Index::Index(string path)
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS tags_uni_idx ON tags (pid, tag)");
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS sources_uni_idx ON sources (host, path)");
     }
-}
-
-Index::~Index()
-{
-    delete m_db;
+    return true;
 }
 
 bool Index::saveTags(string pid, set<string> tags)
