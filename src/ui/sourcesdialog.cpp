@@ -49,18 +49,19 @@ SourcesDialog::~SourcesDialog()
 
 void SourcesDialog::update()
 {
-    vector<Source> sources = m_mainWindow->getIndex()->getSources();
-    vector<Source>::iterator it;
+    vector<Source*> sources = m_mainWindow->getIndex()->getSources();
+    vector<Source*>::iterator it;
 
     m_refListStore->clear();
     for (it = sources.begin(); it != sources.end(); it++)
     {
         Gtk::TreeRow row = *(m_refListStore->append());
-        row[m_columns.sourceId] = it->getSourceId();
-        row[m_columns.type] = it->getType();
-        row[m_columns.host] = it->getHost();
-        row[m_columns.path] = it->getPath();
-        row[m_columns.source] = *it;
+        row[m_columns.sourceId] = (*it)->getSourceId();
+        row[m_columns.type] = (*it)->getType();
+        row[m_columns.host] = (*it)->getHost();
+        row[m_columns.path] = (*it)->getPath();
+        row[m_columns.source] = *(*it);
+delete (*it);
     }
 }
 

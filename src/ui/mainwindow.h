@@ -13,11 +13,9 @@
 #include "tagview.h"
 #include "about.h"
 
-class MainWindow : public Gtk::Window
+class MainWindow : public Gtk::Window, public IndexClient
 {
  private:
-    Index* m_index;
-
     Gtk::VBox m_vBox;
     Gtk::HBox m_hBox;
 
@@ -71,6 +69,8 @@ class MainWindow : public Gtk::Window
 
     void openSourcesDialog();
 
+    Glib::Threads::Thread* m_workerThread;
+    void updateSourcesThread(MainWindow* arg);
 
  public:
     MainWindow(Index* index);
@@ -80,10 +80,17 @@ class MainWindow : public Gtk::Window
 
     void update();
     void updateTags();
+    void updateSources();
 
     void displayDetails(Photo* photo);
 
     bool confirm(std::string title, std::string text);
+
+    void scanProgress(
+        Source* source,
+        int complete,
+        int total,
+        std::string info);
 };
 
 #endif

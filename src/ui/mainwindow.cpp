@@ -16,6 +16,7 @@ MainWindow::MainWindow(Index* index) :
 {
     m_index = index;
     m_progressActive = false;
+    m_workerThread = NULL;
 
     set_title("Fotofing");
     set_default_size(600, 400);
@@ -74,6 +75,8 @@ MainWindow::MainWindow(Index* index) :
     m_hBox.pack_start(m_photoView, Gtk::PACK_EXPAND_WIDGET);
     m_hBox.pack_start(m_photoDetails, Gtk::PACK_SHRINK);
 
+    m_progressBar.set_show_text(true);
+    m_progressBar.set_ellipsize(Pango::ELLIPSIZE_START);
     m_statusBox.pack_start(m_statusBar, Gtk::PACK_EXPAND_WIDGET);
     m_statusBox.pack_start(m_progressBar, Gtk::PACK_SHRINK, 5);
 
@@ -86,8 +89,7 @@ MainWindow::MainWindow(Index* index) :
 
     show_all();
 
-    updateTags();
-    update();
+    updateSources();
 }
 
 MainWindow::~MainWindow()
@@ -301,6 +303,7 @@ void MainWindow::openSourcesDialog()
     sources->open();
     sources->run();
     delete sources;
+    updateSources();
 }
 
 void MainWindow::updateTags()
@@ -309,6 +312,27 @@ void MainWindow::updateTags()
     tags = m_index->getAllTags();
     m_allTagsView.update(tags);
     m_photoDetails.updateTags();
+}
+
+void MainWindow::updateSources()
+{
+    if (m_workerThread != NULL)
+    {
+        // TODO: Queue this!
+        printf("MainWindow::updateSources: There's already a worker thread\n");
+        return;
+    }
+    m_workerThread = Glib::Threads::Thread::create(
+    sigc::bind(sigc::mem_fun(*this, &MainWindow::updateSourcesThread), this));
+}
+
+void MainWindow::updateSourcesThread(MainWindow* arg)
+{
+    m_index->scanSources(this);
+    m_workerThread = NULL;
+
+    updateTags();
+    update();
 }
 
 bool MainWindow::confirm(string title, string text)
@@ -325,5 +349,15 @@ bool MainWindow::confirm(string title, string text)
     int result = dialog.run();
 
     return (result == Gtk::RESPONSE_OK);
+}
+
+void MainWindow::scanProgress(
+    Source* source,
+    int complete,
+    int total,
+    std::string info)
+{
+    m_progressBar.set_fraction((float)complete / (float)total);
+    m_progressBar.set_text(info);
 }
 
