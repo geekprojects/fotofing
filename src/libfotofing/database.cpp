@@ -43,7 +43,6 @@ bool Database::open()
         res = access(dir.c_str(), R_OK | X_OK | W_OK);
         if (res == -1)
         {
-            printf("Database::open: access errno=%d\n", err);
             if (errno == ENOENT)
             {
                 printf("Database::open: Creating dir\n");
