@@ -40,6 +40,7 @@ AC_CHECK_FUNCS([floor gethostname localtime_r memset])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/libfotofing/Makefile
+                 src/cli/Makefile
                  src/tests/Makefile
                  src/tests/database/Makefile
                  src/tests/database/schema/Makefile

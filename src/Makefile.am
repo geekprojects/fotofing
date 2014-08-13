@@ -1,3 +1,3 @@
 
-SUBDIRS=libfotofing ui tests
+SUBDIRS=libfotofing ui cli tests
 
