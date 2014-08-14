@@ -14,12 +14,23 @@ time_t tm2time(const struct tm *src)
     return timegm(&tmp) - src->tm_gmtoff;
 }
 
-string timeToString(time_t t)
+string timeToString(time_t t, bool time)
 {
     struct tm tm;
     localtime_r(&t, &tm);
-    char buf[64];
-    strftime(buf, 64, "%x", &tm);
+    char buf[128];
+    const char* fmt;
+
+    if (time)
+    {
+        fmt = "%x %X";
+    }
+    else
+    {
+        fmt = "%x";
+    }
+
+    strftime(buf, 128, fmt, &tm);
     return string(buf);
 }
 

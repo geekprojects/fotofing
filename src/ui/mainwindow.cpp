@@ -251,7 +251,7 @@ void MainWindow::updateDateButtons()
 {
     if (m_fromDate > 0)
     {
-        m_fromDateButton.set_label(timeToString(m_fromDate));
+        m_fromDateButton.set_label(timeToString(m_fromDate, false));
     }
     else
     {
@@ -260,7 +260,7 @@ void MainWindow::updateDateButtons()
 
     if (m_toDate > 0)
     {
-        m_toDateButton.set_label(timeToString(m_toDate));
+        m_toDateButton.set_label(timeToString(m_toDate, false));
     }
     else
     {
