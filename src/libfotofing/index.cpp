@@ -322,7 +322,7 @@ vector<Photo*> Index::getPhotos(vector<string> tags, time_t* fromDate, time_t* t
     }
     sql += " ORDER BY timestamp ASC";
 
-#if 1
+#if 0
     printf("Index::getPhotos: sql=%s\n", sql.c_str());
 #endif
 
@@ -378,6 +378,30 @@ vector<Photo*> Index::getPhotos(vector<string> tags, time_t* fromDate, time_t* t
     return results;
 }
 
+Photo* Index::getPhoto(string pid)
+{
+    Photo* result = NULL;
+    string sql = "SELECT pid, thumbnail, timestamp FROM photos WHERE pid=?";
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    if (ps == NULL)
+    {
+        return NULL;
+    }
+
+    ps->bindString(1, pid);
+
+    ps->executeQuery();
+if (ps->step())
+{
+    result = createPhoto(ps);
+}
+    delete ps;
+
+    return result;
+}
+
+
 vector<File*> Index::getFiles(string pid)
 {
     vector<File*> files;
@@ -406,7 +430,9 @@ bool Index::addFileSource(string path)
 
 bool Index::scanFile(Source* source, File* f)
 {
+#if 1
     printf("Index::scanFile: file=%s\n", f->getPath().c_str());
+#endif
     vector<string> args;
     args.push_back(f->getPath());
     ResultSet rs;
@@ -418,7 +444,9 @@ bool Index::scanFile(Source* source, File* f)
         // File hasn't been seen before
         string fp;
         fp = f->getFingerprint();
+#if 0
         printf("%s: %-32s\n", fp.c_str(), f->getPath().c_str());
+#endif
 
         // See if we've seen this fingerprint before
         args.clear();
@@ -435,7 +463,9 @@ bool Index::scanFile(Source* source, File* f)
 
             tags.insert("Fotofing/Visible");
 
+#if 0
             printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
+#endif
             Surface* thumbnail = f->getThumbnail();
 
             uint8_t* thumbData = NULL;
@@ -448,7 +478,7 @@ bool Index::scanFile(Source* source, File* f)
             res = sqlite3_prepare_v2(m_db->getDB(), insertPhoto.c_str(), insertPhoto.length(), &stmt, NULL);
             if (res)
             {
-                printf("Database::open: Error: %s\n", sqlite3_errmsg(m_db->getDB()));
+                printf("Index::scanDirectory: Error: %s\n", sqlite3_errmsg(m_db->getDB()));
                 printf("Index::scanDirectory: Failed to prepare statement: %d\n", res);
                 return false;
             }
@@ -457,7 +487,6 @@ bool Index::scanFile(Source* source, File* f)
             sqlite3_bind_int64(stmt, 3, timestamp);
 
             res = sqlite3_step(stmt);
-            //printf("Index::scanDirectory: res=%d\n", res);
             sqlite3_finalize(stmt);
             if (res != SQLITE_DONE)
             {
@@ -525,7 +554,9 @@ bool Index::saveSource(Source* s)
     if (res && s->getSourceId() == 0)
     {
         int64_t rowId = m_db->getLastInsertId();
+#if 0
         printf("Index::saveSource: Last insert id=%ld\n", rowId);
+#endif
         s->setSourceId(rowId);
     }
     delete ps;

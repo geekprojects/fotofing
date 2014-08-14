@@ -59,6 +59,7 @@ class Index
 
     std::vector<Photo*> getPhotos(std::vector<std::string> tags, time_t* from, time_t* to);
     std::vector<Photo*> getPhotos(time_t* from, time_t* to);
+    Photo* getPhoto(std::string id);
 
     std::vector<File*> getFiles(std::string pid);
 
