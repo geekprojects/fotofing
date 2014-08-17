@@ -459,7 +459,15 @@ bool Index::scanFile(Source* source, File* f)
             // Extract details from the file
             set<string> tags;
             time_t timestamp;
-            f->getTags(tags, &timestamp);
+            bool valid;
+
+            valid = f->getTags(tags, &timestamp);
+            if (!valid)
+            {
+                // Unable to extract tags!
+                // Skip!
+                return false;
+            }
 
             tags.insert("Fotofing/Visible");
 
