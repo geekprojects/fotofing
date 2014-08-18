@@ -425,7 +425,7 @@ vector<File*> Index::getFiles(string pid)
 bool Index::addFileSource(string path)
 {
     FileSource fileSource(0, getHostName(), path);
-    return saveSource(&fileSource);
+    return addSource(&fileSource);
 }
 
 bool Index::scanFile(Source* source, File* f)
@@ -537,7 +537,7 @@ bool Index::scanSources(IndexClient* client)
     return true;
 }
 
-bool Index::saveSource(Source* s)
+bool Index::addSource(Source* s)
 {
     PreparedStatement* ps;
     int i = 1;
@@ -563,7 +563,7 @@ bool Index::saveSource(Source* s)
     {
         int64_t rowId = m_db->getLastInsertId();
 #if 0
-        printf("Index::saveSource: Last insert id=%ld\n", rowId);
+        printf("Index::addSource: Last insert id=%ld\n", rowId);
 #endif
         s->setSourceId(rowId);
     }

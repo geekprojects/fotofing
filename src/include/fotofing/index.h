@@ -38,7 +38,6 @@ class Index
     std::string m_path;
     Database* m_db;
 
-    bool saveSource(Source* s);
 
  public:
     Index(std::string path);
@@ -64,6 +63,7 @@ class Index
     std::vector<File*> getFiles(std::string pid);
 
     bool addFileSource(std::string path);
+    bool addSource(Source* s);
     bool scanFile(Source* source, File* f);
     bool scanSource(Source* s, IndexClient* client = NULL);
     bool scanSources(IndexClient* client = NULL);
