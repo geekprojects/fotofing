@@ -407,7 +407,7 @@ vector<File*> Index::getFiles(string pid)
     vector<File*> files;
 
     PreparedStatement* ps;
-    ps = m_db->prepareStatement("SELECT path FROM files WHERE pid=?");
+    ps = m_db->prepareStatement("SELECT path, source_id FROM files WHERE pid=?");
     ps->bindString(1, pid);
 
     ps->executeQuery();
@@ -415,7 +415,8 @@ vector<File*> Index::getFiles(string pid)
     while (ps->step())
     {
         string path = ps->getString(0);
-        File* f = new File(path);
+        int64_t sourceId = ps->getInt64(1);
+        File* f = new File(sourceId, path);
         files.push_back(f);
     }
 

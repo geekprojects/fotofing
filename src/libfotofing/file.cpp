@@ -19,8 +19,9 @@ union pixel_t
     uint8_t rgb[4];
 };
 
-File::File(string path)
+File::File(int64_t sourceId, string path)
 {
+    m_sourceId = sourceId;
     m_path = path;
     m_thumbnail = NULL;
 }

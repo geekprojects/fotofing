@@ -86,7 +86,7 @@ bool FileSource::scan(Index* index, IndexClient* client)
         {
             client->scanProgress(this, i, files.size(), *it);
         }
-        File file(*it);
+        File file(m_sourceId, *it);
         index->scanFile(this, &file);
     }
     if (client != NULL)

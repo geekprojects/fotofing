@@ -9,14 +9,16 @@
 class File
 {
  private:
+    int64_t m_sourceId;
     std::string m_path;
     Surface* m_thumbnail;
     std::string m_fingerprint;
 
  public:
-    File(std::string path);
+    File(int64_t sourceId, std::string path);
     ~File();
 
+    int64_t getSourceId() { return m_sourceId; }
     std::string getPath() { return m_path; }
 
     bool scan();
