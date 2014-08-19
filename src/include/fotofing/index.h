@@ -60,6 +60,10 @@ class Index
     std::vector<Photo*> getPhotos(time_t* from, time_t* to);
     Photo* getPhoto(std::string id);
 
+    bool setProperty(std::string pid, std::string name, std::string value);
+    std::string getProperty(std::string pid, std::string name);
+    std::map<std::string, std::string> getProperties(std::string pid);
+
     std::vector<File*> getFiles(std::string pid);
 
     bool addFileSource(std::string path);

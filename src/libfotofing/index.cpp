@@ -49,6 +49,13 @@ bool Index::open()
     tagsTable.columns.insert(Column("tag"));
     schema.push_back(tagsTable);
 
+    Table propsTable;
+    propsTable.name = "properties";
+    propsTable.columns.insert(Column("pid"));
+    propsTable.columns.insert(Column("name"));
+    propsTable.columns.insert(Column("value"));
+    schema.push_back(propsTable);
+
     Table sourcesTable;
     sourcesTable.name = "sources";
     sourcesTable.columns.insert(Column("source_id", "INTEGER", true));
@@ -71,6 +78,7 @@ bool Index::open()
     {
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS tags_uni_idx ON tags (pid, tag)");
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS sources_uni_idx ON sources (host, path)");
+        m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS props_uni_idx ON properties (pid, name)");
     }
     return true;
 }
@@ -392,10 +400,68 @@ Photo* Index::getPhoto(string pid)
     ps->bindString(1, pid);
 
     ps->executeQuery();
-if (ps->step())
-{
-    result = createPhoto(ps);
+    if (ps->step())
+    {
+        result = createPhoto(ps);
+    }
+    delete ps;
+
+    return result;
 }
+
+bool Index::setProperty(string pid, string name, string value)
+{
+    string sql =
+        "INSERT OR REPLACE INTO properties (pid, name, value) VALUES (?, ?, ?)";
+
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindString(1, pid);
+    ps->bindString(2, name);
+    ps->bindString(3, value);
+
+    bool res;
+    res = ps->execute();
+    if (!res)
+    {
+        printf("Index::setProperty: Failed to set property\n");
+    }
+    delete ps;
+
+    return res;
+}
+
+string Index::getProperty(string pid, string name)
+{
+    string sql = "SELECT value FROM properties WHERE pid = ? AND name = ?";
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindString(1, pid);
+    ps->bindString(2, name);
+
+    string result = "";
+    ps->executeQuery();
+    if (ps->step())
+    {
+        result = ps->getString(0);
+    }
+    delete ps;
+
+    return result;
+}
+
+map<string, string> Index::getProperties(string pid)
+{
+    string sql = "SELECT name, value FROM properties WHERE pid = ?";
+    PreparedStatement* ps = m_db->prepareStatement(sql);
+    ps->bindString(1, pid);
+
+    map<string, string> result;
+    ps->executeQuery();
+    while (ps->step())
+    {
+        string name = ps->getString(1);
+        string value = ps->getString(2);
+        result.insert(make_pair(name, value));
+    }
     delete ps;
 
     return result;
