@@ -442,9 +442,13 @@ int64_t PreparedStatement::getInt64(int i)
 
 string PreparedStatement::getString(int i)
 {
-   const void* str;
-   str = sqlite3_column_text(m_stmt, i);
-   return string((char*)str);
+    const void* str;
+    str = sqlite3_column_text(m_stmt, i);
+    if (str == NULL)
+    {
+        str = "";
+    }
+    return string((char*)str);
 }
 
 bool PreparedStatement::getBlob(int i, const void** data, uint32_t* length)
@@ -461,11 +465,13 @@ bool PreparedStatement::execute()
     bool result;
     res = sqlite3_step(m_stmt);
 
+    m_error = res;
+
     if (res != SQLITE_DONE)
     {
         printf(
             "PreparedStatement::execute: Prepare Error: res=%d, msg=%s\n",
-            res,
+            m_error,
             sqlite3_errmsg(m_db->getDB()));
         result = false;
     }

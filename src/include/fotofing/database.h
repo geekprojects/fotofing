@@ -81,6 +81,7 @@ class PreparedStatement
  private:
     Database* m_db;
     sqlite3_stmt* m_stmt;
+    int m_error;
 
  public:
     PreparedStatement(Database* db, sqlite3_stmt* stmt);
@@ -102,6 +103,8 @@ class PreparedStatement
 
     bool executeQuery();
     bool step();
+
+    int getLastError() { return m_error; }
 };
 
 class Database
@@ -138,6 +141,7 @@ class Database
     sqlite3* getDB() { return m_db; }
 
     int64_t getLastInsertId();
+
 };
 
 #endif
