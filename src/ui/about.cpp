@@ -5,7 +5,6 @@ using namespace std;
 
 About::About()
 {
-    set_transient_for(*this);
     set_program_name("Fotofing");
     set_version("0.0.1");
     set_copyright("GeekProjects");
