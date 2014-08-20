@@ -5,6 +5,7 @@
 #include "calendarpopup.h"
 #include "sourcesdialog.h"
 #include "tagdialog.h"
+#include "uiutils.h"
 
 using namespace std;
 
@@ -278,7 +279,8 @@ void MainWindow::onDeleteTags(vector<Tag*> tags)
     int res;
 
     printf("MainWindow::onDeleteTags: Deleting tags\n");
-    res = confirm(
+    res = UIUtils::confirm(
+        *this,
         "Delete selected tags?",
         "Are you sure you wish to delete the selected tags?\n"
         "This cannot be undone.");
@@ -333,22 +335,6 @@ void MainWindow::updateSourcesThread(MainWindow* arg)
 
     updateTags();
     update();
-}
-
-bool MainWindow::confirm(string title, string text)
-{
-    Gtk::MessageDialog dialog(
-        *this,
-        title,
-        false,
-        Gtk::MESSAGE_QUESTION,
-        Gtk::BUTTONS_OK_CANCEL);
-    dialog.set_secondary_text(text);
-
-
-    int result = dialog.run();
-
-    return (result == Gtk::RESPONSE_OK);
 }
 
 void MainWindow::scanProgress(

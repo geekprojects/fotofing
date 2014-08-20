@@ -71,6 +71,7 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     Glib::Threads::Thread* m_workerThread;
     void updateSourcesThread(MainWindow* arg);
+    void updateThread(MainWindow* arg);
 
  public:
     MainWindow(Index* index);
@@ -83,8 +84,6 @@ class MainWindow : public Gtk::Window, public IndexClient
     void updateSources();
 
     void displayDetails(Photo* photo);
-
-    bool confirm(std::string title, std::string text);
 
     void scanProgress(
         Source* source,

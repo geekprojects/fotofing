@@ -4,6 +4,7 @@
 
 #include "photodetails.h"
 #include "mainwindow.h"
+#include "uiutils.h"
 
 using namespace std;
 
@@ -96,19 +97,27 @@ void PhotoDetails::onDeleteTags(vector<Tag*> tags)
         return;
     }
 
-    vector<Tag*>::iterator it;
-    for (it = tags.begin(); it != tags.end(); it++)
+    int res;
+    res = UIUtils::confirm(
+        *m_mainWindow,
+        "Remove selected tags?",
+        "Are you sure you wish to remove the selected tags?");
+    if (res)
     {
-        Tag* tag = *it;
-        printf(
-            "MainWindow::onDeleteTags: Deleting tag: %s\n",
-            tag->getTagName().c_str());
-        m_mainWindow->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
+        vector<Tag*>::iterator it;
+        for (it = tags.begin(); it != tags.end(); it++)
+        {
+            Tag* tag = *it;
+            printf(
+                "MainWindow::onDeleteTags: Deleting tag: %s\n",
+                tag->getTagName().c_str());
+            m_mainWindow->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
+        }
+
+        updateTags();
+
+        // Just in case this we just removed the last instance of a tags
+        m_mainWindow->updateTags();
     }
-
-    updateTags();
-
-    // Just in case this we just removed the last instance of a tags
-    m_mainWindow->updateTags();
 }
 

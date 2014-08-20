@@ -1,6 +1,7 @@
 
 #include "sourcesdialog.h"
 #include "mainwindow.h"
+#include "uiutils.h"
 
 using namespace std;
 
@@ -129,7 +130,8 @@ void SourcesDialog::onDeleteClicked()
     if (res)
     {
         bool confirm;
-        confirm = m_mainWindow->confirm(
+        confirm = UIUtils::confirm(
+            *this,
             "Delete Source",
             "Are you sure you want to delete this source?");
         if (confirm)
