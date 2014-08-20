@@ -533,6 +533,7 @@ bool Index::scanFile(Source* source, File* f)
             {
                 // Unable to extract tags!
                 // Skip!
+                m_db->endTransaction();
                 return false;
             }
 
