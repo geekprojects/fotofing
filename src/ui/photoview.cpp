@@ -1,6 +1,7 @@
 
 #include "photoview.h"
 #include "mainwindow.h"
+#include "uiutils.h"
 
 #include <sys/wait.h>
 
@@ -34,6 +35,25 @@ PhotoView::PhotoView(MainWindow* mainWindow)
     m_iconView.signal_selection_changed().connect(sigc::mem_fun(
         *this,
         &PhotoView::onIconViewSelectionChanged));
+
+    // Add context menu
+    Gtk::MenuItem* item = Gtk::manage(new Gtk::MenuItem("_Add Tag", true));
+    item->signal_activate().connect(sigc::mem_fun(
+        *this,
+        &PhotoView::addTag));
+    m_popupMenu.append(*item);
+    item = Gtk::manage(new Gtk::MenuItem("_Rename", true));
+    item->signal_activate().connect(sigc::mem_fun(
+        *this,
+        &PhotoView::rename));
+    m_popupMenu.append(*item);
+
+    m_popupMenu.accelerate(m_iconView);
+    m_popupMenu.show_all();
+
+    m_iconView.signal_button_press_event().connect(sigc::mem_fun(
+        *this,
+        &PhotoView::onButtonPress), false);
 
     add(m_iconView);
 }
@@ -80,10 +100,18 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             8,
             thumbnail->getWidth(),
             thumbnail->getHeight(),
-            thumbnail->getWidth() * 4
-        );
+            thumbnail->getWidth() * 4);
 
-        string displayName = photo->getId().substr(0, 6) + "...";
+        string title = m_mainWindow->getIndex()->getProperty(
+            photo->getId(),
+            "Title");
+
+        string displayName = title;
+        if (displayName == "")
+        {
+            displayName = photo->getId().substr(0, 6) + "...";
+        }
+
         row[m_photoColumns.display_name] = displayName;
         row[m_photoColumns.pixbuf] = pixbuf;
         //row[m_photoColumns.photo] = Glib::RefPtr<Photo>(photo);
@@ -148,6 +176,20 @@ int PhotoView::onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::Tree
     return row_a[m_photoColumns.timestamp] - row_b[m_photoColumns.timestamp];
 }
 
+bool PhotoView::onButtonPress(GdkEventButton* event)
+{
+    bool res = false;
+
+    //res = m_iconView.on_button_press_event(event);
+
+    if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
+    {
+        m_popupMenu.popup(event->button, event->time);
+    }
+
+    return res;
+}
+
 Photo* PhotoView::getPhotoFromPath(Gtk::TreePath path)
 {
     Gtk::TreeModel::iterator iter = m_model->get_iter(path);
@@ -181,5 +223,38 @@ vector<Photo*> PhotoView::getSelectedPhotos()
     }
 
     return photos;
+}
+
+void PhotoView::addTag()
+{
+}
+
+void PhotoView::rename()
+{
+    vector<Photo*> photos = getSelectedPhotos();
+    if (photos.size() == 1)
+    {
+        Photo* photo = photos.at(0);
+
+        string title = m_mainWindow->getIndex()->getProperty(
+            photo->getId(),
+            "Title");
+
+        bool res;
+        res = UIUtils::promptString(
+            *m_mainWindow,
+            "Photo Title",
+            "Please give this photo a title",
+            title,
+            title);
+        if (res)
+        {
+            m_mainWindow->getIndex()->setProperty(
+                photo->getId(),
+                "Title",
+                title);
+            m_mainWindow->update();
+        }
+    }
 }
 

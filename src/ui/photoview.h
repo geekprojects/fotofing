@@ -39,9 +39,12 @@ class PhotoView : public Gtk::ScrolledWindow
     Gtk::IconView m_iconView;
     Glib::RefPtr<Gtk::ListStore> m_model;
 
+    Gtk::Menu m_popupMenu;
+
     void onIconViewItemActivated(const Gtk::TreeModel::Path& path);
     void onIconViewSelectionChanged();
     int onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::TreeModel::iterator& b);
+    bool onButtonPress(GdkEventButton* event);
 
     Photo* getPhotoFromPath(Gtk::TreePath path);
 
@@ -52,6 +55,9 @@ class PhotoView : public Gtk::ScrolledWindow
     ~PhotoView();
 
     void update(std::vector<Tag*> tags, time_t from, time_t to);
+
+    void addTag();
+    void rename();
 
     std::vector<Photo*> getSelectedPhotos();
 };
