@@ -19,11 +19,15 @@ Database::Database(string path)
     m_db = NULL;
     m_open = false;
     m_inTransaction = 0;
+
+    sqlite3_initialize();
 }
 
 Database::~Database()
 {
     close();
+
+    sqlite3_shutdown();
 }
 
 bool Database::open()
