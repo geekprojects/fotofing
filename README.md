@@ -15,6 +15,11 @@ Fotofing tracks photos and not files. Photos are managed wherever you happen to 
 * Portable core library
 * Simple GTK interface
 
+## Requirements
+* gtkmm (For the UI)
+* [exiv2] (http://exiv2.org)
+* [sqlite3] (http://sqlite.org)
+* [libgeek-gtk] (https://github.com/geekprojects/libgeek)
 
 ## License
 
