@@ -4,14 +4,14 @@
 #include <string>
 #include <set>
 
-#include <beyond/surface.h>
+#include <geek/gfx-surface.h>
 
 class File
 {
  private:
     int64_t m_sourceId;
     std::string m_path;
-    Surface* m_thumbnail;
+    Geek::Gfx::Surface* m_thumbnail;
     std::string m_fingerprint;
 
  public:
@@ -23,7 +23,7 @@ class File
 
     bool scan();
 
-    Surface* getThumbnail() { return m_thumbnail; }
+    Geek::Gfx::Surface* getThumbnail() { return m_thumbnail; }
     std::string getFingerprint() { return m_fingerprint; }
     bool getTags(std::set<std::string>& tags, time_t* timestamp);
 };

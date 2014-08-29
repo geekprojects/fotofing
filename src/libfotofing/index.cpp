@@ -13,6 +13,7 @@
 #include <fotofing/file.h>
 
 using namespace std;
+using namespace Geek::Gfx;
 
 Index::Index(string path)
 {

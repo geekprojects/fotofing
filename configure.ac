@@ -15,13 +15,10 @@ AC_PROG_LIBTOOL
 AC_PROG_RANLIB
 
 # Checks for libraries.
-AC_CHECK_LIB([beyond], [_ZTS7Surface])
-# FIXME: Replace `main' with a function in `-lexiv2':
 AC_CHECK_LIB([exiv2], [_ZN5Exiv212ImageFactory4openERKSs])
-# FIXME: Replace `main' with a function in `-lm':
 AC_CHECK_LIB([m], [pow])
-# FIXME: Replace `main' with a function in `-lsqlite3':
 AC_CHECK_LIB([sqlite3], [sqlite3_open])
+AC_CHECK_LIB([geek-gfx], _ZN4Geek3Gfx7Surface8loadJPEGESs)
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h unistd.h])

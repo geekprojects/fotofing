@@ -8,6 +8,7 @@
 #include "exiftags.h"
 
 using namespace std;
+using namespace Geek::Gfx;
 
 #define FINGERPRINT_SIZE 12
 

@@ -2,6 +2,7 @@
 #include <fotofing/photo.h>
 
 using namespace std;
+using namespace Geek::Gfx;
 
 Photo::Photo(string id, Surface* thumbnail, time_t timestamp)
 {
