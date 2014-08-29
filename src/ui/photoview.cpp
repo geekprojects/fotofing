@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 
 using namespace std;
+using namespace Geek::Gfx;
 
 PhotoView::PhotoView(MainWindow* mainWindow)
 {
