@@ -110,6 +110,10 @@ Gtk::MenuBar* MainWindow::createMenu()
         "sources",
         sigc::mem_fun(*this, &MainWindow::openSourcesDialog));
 
+    actionGroup->add_action(
+        "selectAll",
+        sigc::mem_fun(m_photoView, &PhotoView::selectAll));
+
     insert_action_group("fotofing", actionGroup);
 
     m_refBuilder = Gtk::Builder::create();
@@ -134,6 +138,13 @@ Gtk::MenuBar* MainWindow::createMenu()
         "    </submenu>"
         "    <submenu>"
         "      <attribute name='label' translatable='yes'>_Edit</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>Select _All</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.selectAll</attribute>"
+        "            <attribute name='accel'>&lt;Primary&gt;a</attribute>"
+        "          </item>"
+        "        </section>"
         "        <section>"
         "          <item>"
         "            <attribute name='label' translatable='yes'>Preferences</attribute>"

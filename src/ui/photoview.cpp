@@ -119,6 +119,11 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
     }
 }
 
+void PhotoView::selectAll()
+{
+    m_iconView.select_all();
+}
+
 void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
 {
     Photo* photo = getPhotoFromPath(path);

@@ -54,6 +54,8 @@ class PhotoView : public Gtk::ScrolledWindow
 
     void update(std::vector<Tag*> tags, time_t from, time_t to);
 
+    void selectAll();
+
     void addTag();
     void rename();
 
