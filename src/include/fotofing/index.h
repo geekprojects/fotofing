@@ -45,6 +45,8 @@ class Index
 
     bool open();
 
+    Database* getDatabase() { return m_db; }
+
     bool saveTags(std::string pid, std::set<std::string> tags);
     std::set<std::string> getAllTags();
     std::set<std::string> getTags(std::string pid);

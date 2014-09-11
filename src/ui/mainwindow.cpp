@@ -212,10 +212,13 @@ void MainWindow::onTagButton()
 
         vector<Photo*> selected = m_photoView.getSelectedPhotos();
         vector<Photo*>::iterator it;
+
+        m_index->getDatabase()->startTransaction();
         for (it = selected.begin(); it != selected.end(); it++)
         {
             m_index->saveTags((*it)->getId(), tags);
         }
+        m_index->getDatabase()->endTransaction();
 
         printf("MainWindow::onTagButton: Applying tag %s\n", tag.c_str());
         updateTags();
