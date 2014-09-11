@@ -18,14 +18,12 @@ class PhotoModelColumns : public Gtk::TreeModelColumnRecord
     Gtk::TreeModelColumn<Glib::ustring> display_name;
     Gtk::TreeModelColumn<Glib::RefPtr<Gdk::Pixbuf> > pixbuf;
     Gtk::TreeModelColumn<Photo*> photo;
-    Gtk::TreeModelColumn<time_t> timestamp;
 
     PhotoModelColumns()
     {
         add(display_name);
         add(pixbuf);
         add(photo);
-        add(timestamp);
     }
 };
 

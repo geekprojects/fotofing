@@ -88,8 +88,6 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
     vector<Photo*>::iterator it;
     for (it = m_photos.begin(); it != m_photos.end(); it++)
     {
-        Gtk::TreeModel::iterator iter = m_model->append();
-        Gtk::TreeModel::Row row = *iter;
 
         Photo* photo = *it;
         Surface* thumbnail = photo->getThumbnail();
@@ -113,15 +111,12 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             displayName = photo->getId().substr(0, 6) + "...";
         }
 
+        Gtk::TreeModel::iterator iter = m_model->append();
+        Gtk::TreeModel::Row row = *iter;
         row[m_photoColumns.display_name] = displayName;
         row[m_photoColumns.pixbuf] = pixbuf;
-        //row[m_photoColumns.photo] = Glib::RefPtr<Photo>(photo);
         row[m_photoColumns.photo] = photo;
-        row[m_photoColumns.timestamp] = photo->getTimestamp();
-
-        //delete photo;
     }
-
 }
 
 void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
@@ -173,8 +168,19 @@ int PhotoView::onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::Tree
 {
     Gtk::TreeModel::Row row_a = *a;
     Gtk::TreeModel::Row row_b = *b;
+    Photo* photoa = (row_a[m_photoColumns.photo]);
+    Photo* photob = (row_b[m_photoColumns.photo]);
 
-    return row_a[m_photoColumns.timestamp] - row_b[m_photoColumns.timestamp];
+    if (photoa == NULL)
+    {
+        return true;
+    }
+    else if (photob == NULL)
+    {
+        return false;
+    }
+
+    return photoa->getTimestamp() - photob->getTimestamp();
 }
 
 bool PhotoView::onButtonPress(GdkEventButton* event)

@@ -324,8 +324,12 @@ void MainWindow::updateSources()
         printf("MainWindow::updateSources: There's already a worker thread\n");
         return;
     }
+#if 0
     m_workerThread = Glib::Threads::Thread::create(
     sigc::bind(sigc::mem_fun(*this, &MainWindow::updateSourcesThread), this));
+#else
+    updateSourcesThread(this);
+#endif
 }
 
 void MainWindow::updateSourcesThread(MainWindow* arg)
