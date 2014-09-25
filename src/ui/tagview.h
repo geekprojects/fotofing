@@ -92,6 +92,7 @@ class TagView : public Gtk::ScrolledWindow
     void update(std::set<std::string> tags);
 
     void deleteTags();
+    void aliasTag();
 
     sigc::signal<void>& signal_row_activate();
     sigc::signal<void, std::vector<Tag*> >& signal_delete_tags();

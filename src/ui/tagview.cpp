@@ -36,6 +36,12 @@ TagView::TagView()
         *this,
         &TagView::deleteTags));
     m_popupMenu.append(*item);
+    item = Gtk::manage(new Gtk::MenuItem("_Alias", true));
+    item->signal_activate().connect(sigc::mem_fun(
+        *this,
+        &TagView::aliasTag));
+    m_popupMenu.append(*item);
+
 
     m_popupMenu.accelerate(m_treeViewTags);
     m_popupMenu.show_all();
@@ -169,6 +175,17 @@ void TagView::deleteTags()
     tags = getSelectedTags();
 
     m_deleteTagsSignal.emit(tags);
+}
+
+void TagView::aliasTag()
+{
+    vector<Tag*> tags;
+    tags = getSelectedTags();
+
+    if (tags.size() != 1)
+    {
+        return;
+    }
 }
 
 sigc::signal<void>& TagView::signal_row_activate()
