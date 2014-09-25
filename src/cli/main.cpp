@@ -176,6 +176,33 @@ void photos(Index* index, int argc, char** argv)
         }
         printTags(index->getTags(argv[2]));
     }
+    else if (!strcmp(argv[1], "files"))
+    {
+        if (argc < 3)
+        {
+            return;
+        }
+        vector<File*> files = index->getFiles(argv[2]);
+        vector<File*>::iterator it;
+        for (it = files.begin(); it != files.end(); it++)
+        {
+            File* f = *it;
+            printf("%ld %s\n", f->getSourceId(), f->getPath().c_str());
+        }
+    }
+    else if (!strcmp(argv[1], "props"))
+    {
+        if (argc < 3)
+        {
+            return;
+        }
+        map<string,string> props = index->getProperties(argv[2]);
+        map<string, string>::iterator it;
+        for (it = props.begin(); it != props.end(); it++)
+        {
+            printf("%s=%s\n", it->first.c_str(), it->second.c_str());
+        }
+    }
 }
 
 void sources(Index* index, int argc, char** argv)
@@ -200,6 +227,26 @@ void sources(Index* index, int argc, char** argv)
                 s->getHost().c_str(),
                 s->getPath().c_str());
         }
+    }
+    else if (!strcmp(argv[1], "add"))
+    {
+        if (argc < 4)
+        {
+            printf("Not enough arguments\n");
+            return;
+        }
+
+        if (strcmp(argv[2], "file") != 0)
+        {
+            printf("Source type must be \"file\"\n");
+            return;
+        }
+
+        const char* path = argv[3];
+        FileSource fileSource(0, getHostName(), path);
+
+        index->addSource(&fileSource);
+        index->scanSource(&fileSource, NULL);
     }
 }
 
