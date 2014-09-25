@@ -1,0 +1,16 @@
+<opencvTagger>
+    <feature name="faces" tag="Feature/Faces">
+        <cascade base="opencv">haarcascade_frontalface_alt2.xml</cascade>
+        <subfeatures require="2">
+            <feature name="eyes">
+                <cascade base="opencv">haarcascade_mcs_eyepair_big.xml</cascade>
+            </feature>
+            <feature name="nose">
+                <cascade base="opencv">haarcascade_mcs_nose.xml</cascade>
+            </feature>
+            <feature name="mouth">
+                <cascade base="opencv">haarcascade_mcs_mouth.xml</cascade>
+            </feature>
+        </subfeatures>
+    </feature>
+</opencvTagger>
