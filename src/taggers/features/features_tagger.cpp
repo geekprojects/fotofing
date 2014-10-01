@@ -1,11 +1,11 @@
 #include <stdio.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
-#include <opencv/cvaux.h>
-
-#include <geek/core-xml.h>
 
 #include <string>
+
+#include "features_tagger.h"
+#include "features_config.h"
 
 using namespace std;
 using namespace Geek::Core;
@@ -184,17 +184,138 @@ CvHaarClassifierCascade* loadCascade(const char* name)
     return (CvHaarClassifierCascade*)cvLoad(path.c_str(), 0, 0, 0 );
 }
 
+FeatureTagger::FeatureTagger()
+{
+}
+
+FeatureTagger::~FeatureTagger()
+{
+}
+
+bool FeatureTagger::init()
+{
+    m_config = new Config("config.xml");
+    m_config->parse();
+}
+
+int FeatureTagger::matches(IplImage* img, Feature feature)
+{
+    printf("FeatureTagger::matches: %s: matching...\n", feature.name.c_str());
+
+#if 0
+    printf("FeatureTagger::matches: %s: scaleFactor=%0.2f, minNeighbours=%d, flags=%d, minWidth=%d, minHeight=%d\n", feature.name.c_str(), feature.scaleFactor, feature.minNeighbours, feature.flags, feature.minWidth, feature.minHeight);
+#endif
+
+    CvSeq* objs;
+    objs = cvHaarDetectObjects(
+        img,
+        feature.cascade,
+        m_storage,
+        feature.scaleFactor,
+        feature.minNeighbours,
+        feature.flags,
+        cvSize(feature.minWidth, feature.minHeight));
+
+    printf("FeatureTagger::matches: %s: matches=%d\n", feature.name.c_str(), (objs != NULL) ? objs->total : 0);
+
+    if (objs != NULL && objs->total > 0)
+    {
+        int i;
+        for (i = 0; i < objs->total; i++)
+        {
+            CvRect* r = (CvRect*)cvGetSeqElem(objs, i);
+            cvRectangle(
+                img,
+                cvPoint(r->x, r->y),
+                cvPoint(r->x + r->width, r->y + r->height),
+                CV_RGB(255, 0, 0),
+                2, 8, 0);
+        }
+
+        if (!feature.subfeatures.empty())
+        {
+            int matchCount = 0;
+            for (i = 0; i < objs->total; i++)
+            {
+                CvRect* r = (CvRect*)cvGetSeqElem(objs, i);
+                cvSetImageROI(
+                    img,
+                    cvRect(r->x, r->y, r->width, r->height));
+
+                vector<Feature>::iterator it;
+                bool match = true;
+                for (it = feature.subfeatures.begin();
+                    it != feature.subfeatures.end();
+                    it++)
+                {
+                    printf("FeatureTagger::matches: Checking subfeature: %s\n", it->name.c_str());
+                    int res = matches(img, *it);
+                    match = (res == 1);
+
+                    if (!match)
+                    {
+                        break;
+                    }
+
+                }
+                if (match)
+                {
+                    printf("Matches subfeatures!\n");
+                    matchCount++;
+                }
+                cvResetImageROI(img);
+            }
+            return matchCount;
+        }
+        else
+        {
+            return objs->total;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+vector<string> FeatureTagger::tag(string path)
+{
+    vector<string> results;
+    IplImage  *img;
+
+    img = cvLoadImage(path.c_str());
+
+    m_storage = cvCreateMemStorage(0);
+    cvClearMemStorage(m_storage);
+
+    vector<Feature> features = m_config->getFeatures();
+    vector<Feature>::iterator it;
+    for (it = features.begin(); it != features.end(); it++)
+    {
+Feature feature = *it;
+        int count;
+printf("FeatureTagger::tag: Feature: %s\n", feature.name.c_str());
+        count = matches(img, feature);
+if (count > 0)
+{
+printf("FeatureTagger::tag: %s/%d\n", feature.tag.c_str(), count);
+}
+    }
+cvSaveImage("output.jpg", img);
+
+    cvReleaseImage(&img);
+    return results;
+}
+
 int main( int argc, char** argv )
 {
-    CvCapture *capture;
-    IplImage  *img;
-    int       key;
 
-XMLDocument config("config.xml");
+FeatureTagger tagger;
+tagger.init();
+printf("FeatureTagger: Tagging...\n");
+tagger.tag(argv[1]);
 
-xmlNodePtr features = config.evalPath("/opencvTaggers");
-
-
+#if 0
     storage = cvCreateMemStorage(0);
     cascade = loadCascade(face_cascade);
     cascade_e = loadCascade(eye_cascade);
@@ -219,6 +340,8 @@ xmlNodePtr features = config.evalPath("/opencvTaggers");
     cvReleaseMemStorage( &storage );
 
     cvReleaseImage(&img);
+#endif
 
     return 0;
 }
+

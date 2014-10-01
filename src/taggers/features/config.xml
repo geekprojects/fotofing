@@ -1,16 +1,53 @@
-<opencvTagger>
+<features>
     <feature name="faces" tag="Feature/Faces">
-        <cascade base="opencv">haarcascade_frontalface_alt2.xml</cascade>
+        <cascade>
+            <definition base="opencv">
+                haarcascade_frontalface_alt2.xml
+            </definition>
+            <scaleFactor>1.2</scaleFactor>
+            <minNeighbours>2</minNeighbours>
+            <flags>DO_CANNY_PRUNING</flags>
+            <minWidth>20</minWidth>
+            <minHeight>20</minHeight>
+        </cascade>
         <subfeatures require="2">
             <feature name="eyes">
-                <cascade base="opencv">haarcascade_mcs_eyepair_big.xml</cascade>
+                <cascade type="haar">
+                    <definition base="opencv">
+                        haarcascade_mcs_eyepair_big.xml
+                    </definition>
+                    <scaleFactor>1.15</scaleFactor>
+                    <minNeighbours>3</minNeighbours>
+                    <flags></flags>
+                    <minWidth>25</minWidth>
+                    <minHeight>15</minHeight>
+                    <regionOfInterest>top_third</regionOfInterest>
+                </cascade>
             </feature>
             <feature name="nose">
-                <cascade base="opencv">haarcascade_mcs_nose.xml</cascade>
+                <cascade>
+                    <definition base="opencv">
+                        haarcascade_mcs_nose.xml
+                    </definition>
+                    <scaleFactor>1.15</scaleFactor>
+                    <minNeighbours>3</minNeighbours>
+                    <flags></flags>
+                    <minWidth>25</minWidth>
+                    <minHeight>15</minHeight>
+                </cascade>
             </feature>
             <feature name="mouth">
-                <cascade base="opencv">haarcascade_mcs_mouth.xml</cascade>
+                <cascade type="haar">
+                    <definition base="opencv">
+                        haarcascade_mcs_mouth.xml
+                    </definition>
+                    <scaleFactor>1.15</scaleFactor>
+                    <minNeighbours>4</minNeighbours>
+                    <flags></flags>
+                    <minWidth>25</minWidth>
+                    <minHeight>15</minHeight>
+                </cascade>
             </feature>
         </subfeatures>
     </feature>
-</opencvTagger>
+</features>

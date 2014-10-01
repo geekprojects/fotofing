@@ -1,7 +1,7 @@
 
-bin_PROGRAMS=tagger_features
+bin_PROGRAMS=features
 
-tagger_features_SOURCES=features.cpp
-tagger_features_CPPFLAGS=`xml2-config --cflags`
-tagger_features_LDFLAGS=../../libfotofing/libfotofing.la -lgeek-core -lopencv_core -lopencv_objdetect -lopencv_highgui -lopencv_imgproc
+features_SOURCES=features_tagger.cpp features_config.cpp
+features_CPPFLAGS=`xml2-config --cflags`
+features_LDFLAGS=../../libfotofing/libfotofing.la -lgeek-core -lopencv_core -lopencv_objdetect -lopencv_highgui -lopencv_imgproc `xml2-config --libs`
 
