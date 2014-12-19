@@ -14,6 +14,8 @@ class File
     Geek::Gfx::Surface* m_thumbnail;
     std::string m_fingerprint;
 
+    Geek::Gfx::Surface* generateThumbnail(Geek::Gfx::Surface* image, int width, int height, bool fingerprint);
+
  public:
     File(int64_t sourceId, std::string path);
     ~File();

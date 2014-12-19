@@ -14,12 +14,6 @@ using namespace Geek::Gfx;
 
 typedef int v4si __attribute__ ((vector_size (16)));
 
-union pixel_t
-{
-    uint32_t p;
-    uint8_t rgb[4];
-};
-
 File::File(int64_t sourceId, string path)
 {
     m_sourceId = sourceId;
@@ -41,8 +35,6 @@ bool File::scan()
 
     float imageWidth = (float)image->getWidth();
     float imageHeight = (float)image->getHeight();
-
-    // Generate Thumbnail
     float ratio = imageHeight / imageWidth;
 
     int thumbWidth = 150;
@@ -58,66 +50,11 @@ bool File::scan()
     {
         thumbHeight = (int)((float)thumbWidth * ratio);
     }
-#if 0
-    printf("File::generateThumbnail: thumbWidth=%d\n", thumbWidth);
-#endif
 
-    m_thumbnail = new Surface(thumbWidth, thumbHeight, 4);
+    m_thumbnail = generateThumbnail(image, thumbWidth, thumbHeight, false);
+    Surface* fingerprintSurface = generateThumbnail(image, FINGERPRINT_SIZE, FINGERPRINT_SIZE, true);
 
-    float stepX = (float)imageWidth / (float)thumbWidth;
-    float stepY = (float)imageHeight / (float)thumbHeight;
-
-    float oy = 0;
-    int y;
-    int x;
-    for (y = 0; y < thumbHeight; y++)
-    {
-        float ox = 0;
-        for (x = 0; x < thumbWidth; x++)
-        {
-            uint32_t c = image->getPixel((int)ox, (int)oy);
-            m_thumbnail->drawPixel(x, y, c);
-            ox += stepX;
-        }
-        oy += stepY;
-    }
-
-    // Generate fingerprint
-    stepX = (float)imageWidth / (float)FINGERPRINT_SIZE;
-    stepY = (float)imageHeight / (float)FINGERPRINT_SIZE;
-    int stepXi = (int)round(stepX);
-    int stepYi = (int)round(stepY);
-    int blockCount = (stepXi * stepYi);
-
-    Surface* fingerprintSurface = new Surface(FINGERPRINT_SIZE, FINGERPRINT_SIZE, 4);
-    for (y = 0; y < FINGERPRINT_SIZE; y++)
-    {
-        for (x = 0; x < FINGERPRINT_SIZE; x++)
-        {
-
-            int blockX = floor((float)x * stepX);
-            int blockY = floor((float)y * stepY);
-            int bx;
-            int by;
-            v4si totals = {0, 0, 0, 0};
-            for (by = 0; by < stepYi; by++)
-            {
-                for (bx = 0; bx < stepXi; bx++)
-                {
-                    pixel_t p;
-                    p.p = image->getPixel(blockX + bx, blockY + by);
-                    v4si pv = {p.rgb[0], p.rgb[1], p.rgb[2], p.rgb[3]};
-                    totals += pv;
-                }
-            }
-            v4si avg = totals / blockCount;
-            avg &= 0xc0;
-
-            fingerprintSurface->drawPixel(x, y, 0xff000000 | (avg[0] << 16) | (avg[1] << 8) | (avg[2] << 0));
-        }
-    }
-
-#if 0
+#if 1
     size_t pos = m_path.rfind('/');
     string file = m_path;
     if (pos != m_path.npos)
@@ -127,7 +64,11 @@ bool File::scan()
 
     string fingerprintFile = "fingerprint_" + file + ".jpg";
     fingerprintSurface->saveJPEG(fingerprintFile);
+
+    string thumbnailFile = "thumbnail_" + file + ".jpg";
+    m_thumbnail->saveJPEG(thumbnailFile);
 #endif
+
     SHA1Context sha;
     uint8_t digest[20];
     memset(digest, 0, 20);
@@ -167,6 +108,69 @@ bool File::scan()
     delete image;
 
     return true;
+}
+
+Surface* File::generateThumbnail(Surface* image, int thumbWidth, int thumbHeight, bool fingerprint)
+{
+    int imageWidthi = image->getWidth();
+    float imageWidth = (float)image->getWidth();
+    float imageHeight = (float)image->getHeight();
+
+    // Generate fingerprint
+    float stepX = (float)imageWidth / (float)thumbWidth;
+    float stepY = (float)imageHeight / (float)thumbHeight;
+    int stepXi = (int)round(stepX);
+    int stepYi = (int)round(stepY);
+    int blockCount = (stepXi * stepYi);
+
+    Surface* fingerprintSurface = new Surface(thumbWidth, thumbHeight, 4);
+
+    uint32_t* data = (uint32_t*)fingerprintSurface->getData();
+    uint8_t* srcdata = (uint8_t*)image->getData();
+
+int blockDelta = (imageWidthi - stepXi) * 4;
+
+    int y;
+    for (y = 0; y < thumbHeight; y++)
+    {
+        int blockY = floor((float)y * stepY);
+        int x;
+        for (x = 0; x < thumbWidth; x++)
+        {
+
+            int blockX = floor((float)x * stepX);
+            int bx;
+            int by;
+            v4si totals = {0, 0, 0, 0};
+
+            uint8_t* imgrow = srcdata;
+            imgrow += ((imageWidthi * blockY) + (blockX)) * 4;
+
+            for (by = 0; by < stepYi; by++)
+            {
+                for (bx = 0; bx < stepXi; bx++)
+                {
+                    v4si pv = {
+                        imgrow[3],
+                        imgrow[2],
+                        imgrow[1],
+                        imgrow[0]};
+                    totals += pv;
+                    imgrow += 4;
+                }
+                imgrow += blockDelta;
+            }
+            v4si avg = totals / blockCount;
+            if (fingerprint)
+            {
+                avg &= 0xc0;
+            }
+
+            *(data++) = 0xff000000 | (avg[1] << 16) | (avg[2] << 8) | (avg[3] << 0);
+        }
+    }
+
+    return fingerprintSurface;
 }
 
 static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, string def = "")
