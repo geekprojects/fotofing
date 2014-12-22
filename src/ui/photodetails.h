@@ -21,11 +21,12 @@ class PhotoPropColumns : public Gtk::TreeModelColumnRecord
 };
 
 class MainWindow;
+class Library;
 
 class PhotoDetails : public Gtk::Paned
 {
  private:
-    MainWindow* m_mainWindow;
+    Library* m_library;
     Photo* m_photo;
 
     // Photo properties
@@ -43,7 +44,7 @@ class PhotoDetails : public Gtk::Paned
 
  public:
 
-    PhotoDetails(MainWindow* mainWindow);
+    PhotoDetails(Library* library);
     ~PhotoDetails();
 
     void displayDetails(Photo* photo);

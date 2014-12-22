@@ -9,7 +9,7 @@
 
 #include "tagview.h"
 
-class MainWindow;
+class Library;
 
 class PhotoModelColumns : public Gtk::TreeModelColumnRecord
 {
@@ -30,7 +30,7 @@ class PhotoModelColumns : public Gtk::TreeModelColumnRecord
 class PhotoView : public Gtk::ScrolledWindow
 {
  private:
-    MainWindow* m_mainWindow;
+    Library* m_library;
 
     std::vector<Photo*> m_photos;
     const PhotoModelColumns m_photoColumns;
@@ -49,7 +49,7 @@ class PhotoView : public Gtk::ScrolledWindow
     void freePhotos();
 
  public:
-    PhotoView(MainWindow* mainWindow);
+    PhotoView(Library* library);
     ~PhotoView();
 
     void update(std::vector<Tag*> tags, time_t from, time_t to);

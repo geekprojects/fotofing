@@ -8,10 +8,10 @@
 
 using namespace std;
 
-PhotoDetails::PhotoDetails(MainWindow* mainWindow) :
+PhotoDetails::PhotoDetails(Library* library) :
     Gtk::Paned(Gtk::ORIENTATION_VERTICAL)
 {
-    m_mainWindow = mainWindow;
+    m_library = library;
     m_photo = NULL;
 
     // Photo properties
@@ -53,7 +53,7 @@ void PhotoDetails::displayDetails(Photo* photo)
     localtime_r(&ts, &tm);
 
     char tsbuf[64];
-    strftime(tsbuf, 64, "%x", &tm);
+    strftime(tsbuf, 64, "%Ex", &tm);
     propRow = *(m_photoPropListStore->append());
     propRow[m_photoPropColumns.property] = "Date";
     propRow[m_photoPropColumns.value] = string(tsbuf);
@@ -68,7 +68,7 @@ void PhotoDetails::displayDetails(Photo* photo)
     if (tags.size() == 0)
     {
         // Only do this if we haven't already retrieved the tags
-        tags = m_mainWindow->getIndex()->getTags(photo->getId());
+        tags = m_library->getIndex()->getTags(photo->getId());
         photo->setTags(tags);
     }
 
@@ -84,7 +84,7 @@ void PhotoDetails::updateTags()
 
     // Refresh the photo's tags
     set<string> updatedTags;
-    updatedTags = m_mainWindow->getIndex()->getTags(m_photo->getId());
+    updatedTags = m_library->getIndex()->getTags(m_photo->getId());
     m_photo->setTags(updatedTags);
     m_tagView.update(updatedTags);
 
@@ -99,7 +99,7 @@ void PhotoDetails::onDeleteTags(vector<Tag*> tags)
 
     int res;
     res = UIUtils::confirm(
-        *m_mainWindow,
+        *m_library->getMainWindow(),
         "Remove selected tags?",
         "Are you sure you wish to remove the selected tags?");
     if (res)
@@ -111,13 +111,13 @@ void PhotoDetails::onDeleteTags(vector<Tag*> tags)
             printf(
                 "MainWindow::onDeleteTags: Deleting tag: %s\n",
                 tag->getTagName().c_str());
-            m_mainWindow->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
+            m_library->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
         }
 
         updateTags();
 
         // Just in case this we just removed the last instance of a tags
-        m_mainWindow->updateTags();
+        m_library->updateTags();
     }
 }
 
