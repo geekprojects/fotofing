@@ -8,53 +8,20 @@
 
 #include <fotofing/index.h>
 
-#include "photodetails.h"
-#include "photoview.h"
-#include "tagview.h"
 #include "about.h"
+#include "library.h"
 
 class MainWindow : public Gtk::Window, public IndexClient
 {
  private:
     Gtk::VBox m_vBox;
-    Gtk::HBox m_hBox;
 
     Glib::RefPtr<Gtk::Builder> m_refBuilder;
 
-    // Toolbar and Menu
-    Gtk::HBox m_toolbarBox;
-    Gtk::Toolbar m_toolbar;
-    Gtk::ToolButton m_toolbarTag;
-    Gtk::ToolButton m_toolbarTagEvent;
-    Gtk::ToolButton m_toolbarHide;
+    Gtk::Notebook m_tabs;
 
-    void onTagButton();
-
-    time_t m_fromDate;
-    time_t m_toDate;
-    Gtk::Button m_fromDateButton;
-    Gtk::Button m_toDateButton;
-    Gtk::Label m_dateSeparator;
-
-    void onFromDateClicked();
-    void onToDateClicked();
-    void updateDateButtons();
-
-    // Tag VBox
-    Gtk::VBox m_tagBox;
-    TagView m_allTagsView;
-    Gtk::Button m_tagSearchButton;
-
-    // Tag View
-    Gtk::Frame m_tagFrame;
-    void onTagSearchClicked();
-    void onDeleteTags(std::vector<Tag*> tags);
-
-    // Thumbnail View
-    PhotoView m_photoView;
-
-    /* *** Photo detail panel *** */
-    PhotoDetails m_photoDetails;
+    /* Library Tab */
+    Library m_library;
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
@@ -67,23 +34,11 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     Gtk::MenuBar* createMenu();
 
-    void openSourcesDialog();
-
-    Glib::Threads::Thread* m_workerThread;
-    void updateSourcesThread(MainWindow* arg);
-    void updateThread(MainWindow* arg);
-
  public:
     MainWindow(Index* index);
     virtual ~MainWindow();
 
     Index* getIndex() { return m_index; }
-
-    void update();
-    void updateTags();
-    void updateSources();
-
-    void displayDetails(Photo* photo);
 
     void scanProgress(
         Source* source,
