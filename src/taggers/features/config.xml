@@ -17,7 +17,7 @@
                         haarcascade_mcs_eyepair_big.xml
                     </definition>
                     <scaleFactor>1.15</scaleFactor>
-                    <minNeighbours>3</minNeighbours>
+                    <minNeighbours>1</minNeighbours>
                     <flags></flags>
                     <minWidth>25</minWidth>
                     <minHeight>15</minHeight>
@@ -25,12 +25,12 @@
                 </cascade>
             </feature>
             <feature name="nose">
-                <cascade>
+                <cascade type="haar">
                     <definition base="opencv">
                         haarcascade_mcs_nose.xml
                     </definition>
                     <scaleFactor>1.15</scaleFactor>
-                    <minNeighbours>3</minNeighbours>
+                    <minNeighbours>1</minNeighbours>
                     <flags></flags>
                     <minWidth>25</minWidth>
                     <minHeight>15</minHeight>
