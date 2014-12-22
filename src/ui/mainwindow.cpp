@@ -10,7 +10,8 @@
 using namespace std;
 
 MainWindow::MainWindow(Index* index) :
-    m_library(this)
+    m_library(this),
+    m_edit("Edit tab")
 {
     m_index = index;
 
@@ -18,6 +19,7 @@ MainWindow::MainWindow(Index* index) :
     set_default_size(600, 400);
 
     m_tabs.append_page(m_library, "Library");
+    m_tabs.append_page(m_edit, "Edit");
 
     m_progressBar.set_show_text(true);
     m_progressBar.set_ellipsize(Pango::ELLIPSIZE_START);

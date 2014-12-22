@@ -23,6 +23,9 @@ class MainWindow : public Gtk::Window, public IndexClient
     /* Library Tab */
     Library m_library;
 
+    /* Edit Tab */
+    Gtk::Label m_edit;
+
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
     Gtk::Statusbar m_statusBar;
