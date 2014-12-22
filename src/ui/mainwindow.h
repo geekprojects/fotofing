@@ -43,8 +43,9 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     Index* getIndex() { return m_index; }
 
-    void scanProgress(
-        Source* source,
+    void startProgress();
+    void endProgress();
+    void updateProgress(
         int complete,
         int total,
         std::string info);

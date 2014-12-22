@@ -118,30 +118,40 @@ Gtk::MenuBar* MainWindow::createMenu()
     return Gtk::manage(new Gtk::MenuBar(gmenu));
 }
 
-/*
+void MainWindow::startProgress()
+{
+    m_progressActive = true;
+    m_progressBar.pulse();
     Glib::signal_timeout().connect(sigc::mem_fun(
         *this,
         &MainWindow::progressTimeout), 50 );
+}
 
-    vector<Tag*> tags = m_allTagsView.getSelectedTags();
-    m_photoView.update(tags, m_fromDate, m_toDate);
-
-    //m_progressBar.set_fraction(0.75f);
-    updateDateButtons();
-
-    //m_progressBar.set_fraction(1.0f);
+void MainWindow::endProgress()
+{
     m_progressActive = false;
 }
 
-*/
-
-void MainWindow::scanProgress(
-    Source* source,
+void MainWindow::updateProgress(
     int complete,
     int total,
     std::string info)
 {
     m_progressBar.set_fraction((float)complete / (float)total);
     m_progressBar.set_text(info);
+}
+
+bool MainWindow::progressTimeout()
+{
+    bool active = m_progressActive;
+    if (active)
+    {
+        m_progressBar.pulse();
+    }
+    else
+    {
+        m_progressBar.set_fraction(0.0f);
+    }
+    return active;
 }
 

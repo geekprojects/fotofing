@@ -86,44 +86,22 @@ Library::~Library()
 
 void Library::update()
 {
-/*
-    m_progressActive = true;
-    m_progressBar.pulse();
-    Glib::signal_timeout().connect(sigc::mem_fun(
-        *this,
-        &Library::progressTimeout), 50 );
-*/
+    m_mainWindow->startProgress();
 
     vector<Tag*> tags = m_allTagsView.getSelectedTags();
     m_photoView.update(tags, m_fromDate, m_toDate);
 
-    //m_progressBar.set_fraction(0.75f);
+    m_mainWindow->updateProgress(75, 100, "");
     updateDateButtons();
-/*
-    //m_progressBar.set_fraction(1.0f);
-    m_progressActive = false;
-*/
+
+    m_mainWindow->endProgress();
 }
 
 void Library::displayDetails(Photo* photo)
 {
     m_photoDetails.displayDetails(photo);
 }
-/*
-bool Library::progressTimeout()
-{
-    bool active = m_progressActive;
-    if (active)
-    {
-        m_progressBar.pulse();
-    }
-    else
-    {
-        m_progressBar.set_fraction(0.0f);
-    }
-    return active;
-}
-*/
+
 void Library::onTagButton()
 {
     int res;
@@ -253,12 +231,17 @@ void Library::updateSources()
         printf("Library::updateSources: There's already a worker thread\n");
         return;
     }
+
+    m_mainWindow->startProgress();
+
 #if 0
     m_workerThread = Glib::Threads::Thread::create(
     sigc::bind(sigc::mem_fun(*this, &Library::updateSourcesThread), this));
 #else
     updateSourcesThread(this);
 #endif
+
+    m_mainWindow->endProgress();
 }
 
 void Library::updateSourcesThread(Library* arg)
@@ -270,17 +253,14 @@ void Library::updateSourcesThread(Library* arg)
     update();
 }
 
-/*
 void Library::scanProgress(
     Source* source,
     int complete,
     int total,
     std::string info)
 {
-    m_progressBar.set_fraction((float)complete / (float)total);
-    m_progressBar.set_text(info);
+    m_mainWindow->updateProgress(complete, total, info);
 }
-*/
 
 Index* Library::getIndex()
 {

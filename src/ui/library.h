@@ -7,7 +7,7 @@
 
 class MainWindow;
 
-class Library : public Gtk::VBox
+class Library : public Gtk::VBox, public IndexClient
 {
  private:
     MainWindow* m_mainWindow;
@@ -62,6 +62,12 @@ class Library : public Gtk::VBox
     Glib::Threads::Thread* m_workerThread;
     void updateSourcesThread(Library* arg);
     void updateThread(MainWindow* arg);
+
+    virtual void scanProgress(
+        Source* source,
+        int complete,
+        int total,
+        std::string info);
 
     void displayDetails(Photo* photo);
 
