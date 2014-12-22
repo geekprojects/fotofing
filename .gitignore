@@ -34,6 +34,9 @@ stamp-h1
 # Vim temp files
 *.swp
 
+# Other temp files
+*~
+
 fotofing.db*
 
 test/
