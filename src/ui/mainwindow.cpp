@@ -34,6 +34,25 @@ MainWindow::MainWindow(Index* index) :
 
     show_all();
 
+    Glib::RefPtr<Gtk::StyleContext> styleContext = get_style_context();
+
+    Glib::RefPtr<Gtk::CssProvider> refStyleProvider = Gtk::CssProvider::create();
+
+    refStyleProvider->load_from_data(
+        "* { background-color: #101010; color: #ffffff; text-shadow: 1 1 black; }"
+        "GtkIconView { border: 5px solid #ff0000 }"
+        "GtkIconView.view.cell { color: #ffffff; text-shadow: 1 1 black; }"
+        "GtkToolbar { background-image: none; }"
+        ".notebook tab { border: none; background-image: none; }"
+        ".notebook tab:active { border: none; }"
+        ".notebook tab GtkLabel { color: #ffffff; font-weight: bold; font-size: 150%; }"
+        ".notebook tab:active GtkLabel { color: #ff0000; background-color: #ff0000 }"
+        ".notebook { border-top: 2px solid black; }"
+        "column-header .button { background-image: none; }"
+    );
+
+    Gtk::StyleContext::add_provider_for_screen(get_screen(), refStyleProvider, 800);
+
     m_library.updateSources();
 }
 
