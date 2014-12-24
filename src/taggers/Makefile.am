@@ -1,3 +1,3 @@
 
-SUBDIRS=features
+SUBDIRS=features histogram
 

@@ -42,7 +42,9 @@ AC_CONFIG_FILES([Makefile
                  src/tests/Makefile
                  src/tests/database/Makefile
                  src/tests/database/schema/Makefile
+                 src/tests/taggers/Makefile
                  src/ui/Makefile
                  src/taggers/Makefile
+                 src/taggers/histogram/Makefile
                  src/taggers/features/Makefile])
 AC_OUTPUT
