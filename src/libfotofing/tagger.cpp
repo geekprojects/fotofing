@@ -18,11 +18,12 @@ Tagger::~Tagger()
 {
 }
 
-void Tagger::tag(string path, Geek::Gfx::Surface* image)
+void Tagger::tag(string path, Geek::Gfx::Surface* image, std::set<std::string>& tags)
 {
 }
 
 const char* taggerPaths[] = {
+    "src/taggers/histogram/.libs/",
     "/usr/lib",
     "/usr/local/lib",
     NULL
@@ -40,10 +41,10 @@ int taggerfilter(const struct dirent* e)
 
 vector<TaggerInfo*> Tagger::findTaggers()
 {
-if (g_taggers.size() > 0)
-{
-return g_taggers;
-}
+    if (g_taggers.size() > 0)
+    {
+        return g_taggers;
+    }
 
     int i;
     for (i = 0; taggerPaths[i] != NULL; i++)

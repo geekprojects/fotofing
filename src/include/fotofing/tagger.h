@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 
 #include <geek/gfx-surface.h>
 
@@ -18,6 +19,7 @@ struct TaggerInfo
     newTagger_t newTagger;
 
     // Filled in by fotofing
+    Tagger* tagger;
     std::string path;
     void* handle;
 };
@@ -30,7 +32,7 @@ class Tagger
     Tagger();
     virtual ~Tagger();
 
-    virtual void tag(std::string path, Geek::Gfx::Surface* image);
+    virtual void tag(std::string path, Geek::Gfx::Surface* image, std::set<std::string>& tags);
 
     static std::vector<TaggerInfo*> findTaggers();
 };

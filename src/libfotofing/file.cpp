@@ -3,6 +3,7 @@
 
 #include <fotofing/file.h>
 #include <fotofing/utils.h>
+#include <fotofing/tagger.h>
 #include "sha1.h"
 
 #include "exiftags.h"
@@ -19,6 +20,8 @@ File::File(int64_t sourceId, string path)
     m_sourceId = sourceId;
     m_path = path;
     m_thumbnail = NULL;
+
+    m_image = NULL;
 }
 
 File::~File()
@@ -27,14 +30,19 @@ File::~File()
     {
         delete m_thumbnail;
     }
+
+    if (m_image != NULL)
+    {
+        delete m_image;
+    }
 }
 
 bool File::scan()
 {
-    Surface* image = Surface::loadJPEG(m_path);
+    m_image = Surface::loadJPEG(m_path);
 
-    float imageWidth = (float)image->getWidth();
-    float imageHeight = (float)image->getHeight();
+    float imageWidth = (float)m_image->getWidth();
+    float imageHeight = (float)m_image->getHeight();
     float ratio = imageHeight / imageWidth;
 
     int thumbWidth = 150;
@@ -51,10 +59,10 @@ bool File::scan()
         thumbHeight = (int)((float)thumbWidth * ratio);
     }
 
-    m_thumbnail = generateThumbnail(image, thumbWidth, thumbHeight, false);
-    Surface* fingerprintSurface = generateThumbnail(image, FINGERPRINT_SIZE, FINGERPRINT_SIZE, true);
+    m_thumbnail = generateThumbnail(m_image, thumbWidth, thumbHeight, false);
+    Surface* fingerprintSurface = generateThumbnail(m_image, FINGERPRINT_SIZE, FINGERPRINT_SIZE, true);
 
-#if 1
+#if 0
     size_t pos = m_path.rfind('/');
     string file = m_path;
     if (pos != m_path.npos)
@@ -104,8 +112,6 @@ bool File::scan()
     delete fingerprintSurface;
 
     m_fingerprint = string(digestStr);
-
-    delete image;
 
     return true;
 }
@@ -187,8 +193,20 @@ static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, stri
 
 bool File::getTags(set<string>& tags, time_t* timestamp)
 {
-    // Derive tags from the EXIF data
+    vector<TaggerInfo*> taggers = Tagger::findTaggers();
+    vector<TaggerInfo*>::iterator it;
+    for (it = taggers.begin(); it != taggers.end(); it++)
+    {
+        TaggerInfo* info = *it;
+        if (info->tagger == NULL)
+        {
+            info->tagger = info->newTagger();
+        }
 
+        info->tagger->tag(m_path, m_image, tags);
+    }
+
+    // Derive tags from the EXIF data
     Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(m_path);
     image->readMetadata();
 

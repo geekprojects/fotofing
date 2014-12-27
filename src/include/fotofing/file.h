@@ -11,6 +11,7 @@ class File
  private:
     int64_t m_sourceId;
     std::string m_path;
+    Geek::Gfx::Surface* m_image;
     Geek::Gfx::Surface* m_thumbnail;
     std::string m_fingerprint;
 
