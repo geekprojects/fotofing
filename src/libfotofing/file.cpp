@@ -203,7 +203,12 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
             info->tagger = info->newTagger();
         }
 
-        info->tagger->tag(m_path, m_image, tags);
+        bool res;
+        res = info->tagger->tag(m_path, m_image, tags);
+        if (res)
+        {
+            tags.insert(string("Fotofing/Taggers/") + info->name);
+        }
     }
 
     // Derive tags from the EXIF data

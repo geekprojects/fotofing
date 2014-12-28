@@ -32,7 +32,7 @@ class Tagger
     Tagger();
     virtual ~Tagger();
 
-    virtual void tag(std::string path, Geek::Gfx::Surface* image, std::set<std::string>& tags);
+    virtual bool tag(std::string path, Geek::Gfx::Surface* image, std::set<std::string>& tags);
 
     static std::vector<TaggerInfo*> findTaggers();
 };
