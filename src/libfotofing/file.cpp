@@ -191,7 +191,7 @@ static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, stri
     return value;
 }
 
-bool File::getTags(set<string>& tags, time_t* timestamp)
+bool File::getTags(map<string, TagData*>& tags, time_t* timestamp)
 {
     vector<TaggerInfo*> taggers = Tagger::findTaggers();
     vector<TaggerInfo*>::iterator it;
@@ -207,7 +207,7 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
         res = info->tagger->tag(m_path, m_image, tags);
         if (res)
         {
-            tags.insert(string("Fotofing/Taggers/") + info->name);
+            tags.insert(make_pair(string("Fotofing/Taggers/") + info->name, (TagData*)NULL));
         }
     }
 
@@ -236,13 +236,13 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
     }
 
     string cameraTag = "Hardware/Camera/" + make + "/" + model;
-    tags.insert(cameraTag);
+    tags.insert(make_pair(cameraTag, (TagData*)NULL));
 
     // Lens details
     string lensMake = getTagValue(exifData, EXIF_Photo_LensMake, "Unknown");
     string lensModel = getTagValue(exifData, EXIF_Photo_LensModel, "Unknown");
     string lensTag = "Hardware/Lens/" + lensMake + "/" + lensModel;
-    tags.insert(lensTag);
+    tags.insert(make_pair(lensTag, (TagData*)NULL));
 
     // Extract the timestamp
     string datetime = getTagValue(exifData, EXIF_Image_DateTimeOriginal);
@@ -261,7 +261,7 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
         tm.tm_year + 1900,
         tm.tm_mon + 1,
         tm.tm_mday);
-    tags.insert(string(datetimetag));
+    tags.insert(make_pair(string(datetimetag), (TagData*)NULL));
 
     *timestamp = tm2time(&tm);
 
@@ -294,7 +294,7 @@ bool File::getTags(set<string>& tags, time_t* timestamp)
             EXIF_Photo_BodySerialNumber,
             "Unknown");
     }
-    tags.insert("Hardware/Camera/Serial/" + serialNumber);
+    tags.insert(make_pair("Hardware/Camera/Serial/" + serialNumber, (TagData*)NULL));
 
     return true;
 }

@@ -48,6 +48,8 @@ bool Index::open()
     tagsTable.name = "tags";
     tagsTable.columns.insert(Column("pid"));
     tagsTable.columns.insert(Column("tag"));
+    tagsTable.columns.insert(Column("type"));
+    tagsTable.columns.insert(Column("data"));
     schema.push_back(tagsTable);
 
     Table propsTable;
@@ -84,15 +86,15 @@ bool Index::open()
     return true;
 }
 
-bool Index::saveTags(string pid, set<string> tags)
+bool Index::saveTags(string pid, map<string, TagData*> tags)
 {
-    set<string> parentTags;
-    set<string>::iterator it;
+    map<string, TagData*> parentTags;
+    map<string, TagData*>::iterator it;
 
     // Extract all the parent tags
     for (it = tags.begin(); it != tags.end(); it++)
     {
-        string tag = *it;
+        string tag = it->first;
         size_t pos = tag.npos;
         while (true)
         {
@@ -102,7 +104,7 @@ bool Index::saveTags(string pid, set<string> tags)
                 string parent = tag.substr(0, pos);
                 if (parent.length() > 0)
                 {
-                    parentTags.insert(parent);
+                    parentTags.insert(make_pair(parent, (TagData*)NULL));
                 }
                 pos--;
                 if (pos <= 0)
@@ -123,14 +125,41 @@ bool Index::saveTags(string pid, set<string> tags)
     }
 
     PreparedStatement* ps = m_db->prepareStatement(
-        "INSERT INTO tags (pid, tag) VALUES (?, ?)");
+        "INSERT INTO tags (pid, tag, type, data) VALUES (?, ?, ?, ?)");
 
     m_db->startTransaction();
     for (it = tags.begin(); it != tags.end(); it++)
     {
-        string tag = *it;
+        string tag = it->first;
+        TagData* tagData = it->second;
         ps->bindString(1, pid);
         ps->bindString(2, tag);
+        if (tagData != NULL)
+        {
+            ps->bindInt64(3, tagData->type);
+            switch (tagData->type)
+            {
+                case SQLITE_INTEGER:
+                    ps->bindInt64(4, tagData->data.i);
+                    break;
+
+                case SQLITE_TEXT:
+
+                case SQLITE_BLOB:
+                    ps->bindBlob(4, tagData->data.blob.data, tagData->data.blob.length);
+                    break;
+
+                default:
+                    ps->bindNull(4);
+                    break;
+            }
+            delete tagData;
+        }
+        else
+        {
+            ps->bindInt64(3, SQLITE_NULL);
+            ps->bindNull(4);
+        }
         ps->execute();
     }
     m_db->endTransaction();
@@ -525,7 +554,7 @@ bool Index::scanFile(Source* source, File* f)
         if (rs.rows.size() == 0)
         {
             // Extract details from the file
-            set<string> tags;
+            map<string, TagData*> tags;
             time_t timestamp;
             bool valid;
 
@@ -538,7 +567,7 @@ bool Index::scanFile(Source* source, File* f)
                 return false;
             }
 
-            tags.insert("Fotofing/Visible");
+            tags.insert(make_pair("Fotofing/Visible", new TagData(1)));
 
 #if 0
             printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
@@ -685,5 +714,33 @@ vector<Source*> Index::getSources()
     delete ps;
 
     return sources;
+}
+
+TagData::TagData()
+{
+    type = SQLITE_NULL;
+    data.blob.data = NULL;
+    data.blob.length = 0;
+}
+
+TagData::TagData(int64_t i)
+{
+    type = SQLITE_INTEGER;
+    data.i = i;
+}
+
+TagData::TagData(const char* str)
+{
+    type = SQLITE_TEXT;
+    data.blob.data = strdup(str);
+    data.blob.length = strlen(str);
+}
+
+TagData::~TagData()
+{
+    if ((type == SQLITE_BLOB || type == SQLITE_TEXT) && data.blob.data != NULL)
+    {
+        free(data.blob.data);
+    }
 }
 

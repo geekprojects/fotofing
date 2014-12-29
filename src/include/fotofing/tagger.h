@@ -3,13 +3,14 @@
 
 #include <string>
 #include <vector>
-#include <set>
+#include <map>
 
 #include <geek/gfx-surface.h>
 
 #include <fotofing/photo.h>
 
 class Tagger;
+struct TagData;
 
 typedef Tagger*(*newTagger_t)();
 
@@ -32,7 +33,7 @@ class Tagger
     Tagger();
     virtual ~Tagger();
 
-    virtual bool tag(std::string path, Geek::Gfx::Surface* image, std::set<std::string>& tags);
+    virtual bool tag(std::string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags);
 
     static std::vector<TaggerInfo*> findTaggers();
 };

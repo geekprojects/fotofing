@@ -18,7 +18,7 @@ Tagger::~Tagger()
 {
 }
 
-bool Tagger::tag(string path, Geek::Gfx::Surface* image, std::set<std::string>& tags)
+bool Tagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags)
 {
     return false;
 }

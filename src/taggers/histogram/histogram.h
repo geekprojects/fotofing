@@ -11,7 +11,7 @@ class HistogramTagger : public Tagger
     HistogramTagger();
     virtual ~HistogramTagger();
 
-    virtual bool tag(std::string path, Geek::Gfx::Surface* image, std::set<std::string>& tags);
+    virtual bool tag(std::string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags);
 };
 
 #endif

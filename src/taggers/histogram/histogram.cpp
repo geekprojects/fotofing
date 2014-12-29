@@ -19,10 +19,10 @@ HistogramTagger::~HistogramTagger()
 
 //#define MAX(_a, _b) (((_a) > (_b)) ? (_a) : (_b))
 
-bool HistogramTagger::tag(string path, Geek::Gfx::Surface* image, std::set<std::string>& tags)
+bool HistogramTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags)
 {
     printf("HistogramTagger::tag: Here!\n");
-    tags.insert("Hello/world");
+    tags.insert(make_pair("Hello/world", (TagData*)NULL));
 
     float hist_r[256];
     float hist_g[256];

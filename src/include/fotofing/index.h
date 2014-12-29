@@ -3,8 +3,10 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include <time.h>
+#include <stdlib.h>
 
 #include "database.h"
 #include "photo.h"
@@ -32,12 +34,31 @@ class IndexClient
     }
 };
 
+struct TagData
+{
+    int type;
+    union
+    {
+        int64_t i;
+        struct
+        {
+            void* data;
+            int length;
+        } blob;
+    } data;
+
+    TagData();
+    TagData(int64_t i);
+    TagData(const char* str);
+
+    ~TagData();
+};
+
 class Index
 {
  private:
     std::string m_path;
     Database* m_db;
-
 
  public:
     Index(std::string path);
@@ -47,7 +68,7 @@ class Index
 
     Database* getDatabase() { return m_db; }
 
-    bool saveTags(std::string pid, std::set<std::string> tags);
+    bool saveTags(std::string pid, std::map<std::string, TagData*> tags);
     std::set<std::string> getAllTags();
     std::set<std::string> getTags(std::string pid);
     std::set<std::string> getChildTags(std::string tag);
