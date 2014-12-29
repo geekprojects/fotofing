@@ -1,3 +1,3 @@
 
-SUBDIRS=features histogram
+SUBDIRS=features histogram exif
 

@@ -30,7 +30,7 @@ class File
 
     Geek::Gfx::Surface* getThumbnail() { return m_thumbnail; }
     std::string getFingerprint() { return m_fingerprint; }
-    bool getTags(std::map<std::string, TagData*>& tags, time_t* timestamp);
+    bool getTags(std::map<std::string, TagData*>& tags);
 };
 
 #endif

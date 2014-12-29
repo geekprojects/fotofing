@@ -555,10 +555,9 @@ bool Index::scanFile(Source* source, File* f)
         {
             // Extract details from the file
             map<string, TagData*> tags;
-            time_t timestamp;
             bool valid;
 
-            valid = f->getTags(tags, &timestamp);
+            valid = f->getTags(tags);
             if (!valid)
             {
                 // Unable to extract tags!
@@ -567,11 +566,21 @@ bool Index::scanFile(Source* source, File* f)
                 return false;
             }
 
-            tags.insert(make_pair("Fotofing/Visible", new TagData(1)));
-
+            // Look for the Date tag. It should contain the timestamp as data
+            map<string, TagData*>::iterator it;
+            time_t timestamp = 0;
+            it = tags.find("Date");
+            if (it != tags.end() && it->second != NULL)
+            {
+                timestamp = it->second->data.i;
+            }
 #if 0
             printf("Index::scanDirectory: timestamp=%ld\n", timestamp);
 #endif
+
+            // Mark the photo as visible
+            tags.insert(make_pair("Fotofing/Visible", new TagData(1)));
+
             Surface* thumbnail = f->getThumbnail();
 
             uint8_t* thumbData = NULL;

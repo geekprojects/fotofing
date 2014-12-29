@@ -6,8 +6,6 @@
 #include <fotofing/tagger.h>
 #include "sha1.h"
 
-#include "exiftags.h"
-
 using namespace std;
 using namespace Geek::Gfx;
 
@@ -179,19 +177,7 @@ int blockDelta = (imageWidthi - stepXi) * 4;
     return fingerprintSurface;
 }
 
-static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, string def = "")
-{
-    string value = def;
-    Exiv2::ExifData::const_iterator it;
-    it = exifData.findKey(Exiv2::ExifKey(tag, group));
-    if (it != exifData.end())
-    {
-        value = it->toString();
-    }
-    return value;
-}
-
-bool File::getTags(map<string, TagData*>& tags, time_t* timestamp)
+bool File::getTags(map<string, TagData*>& tags)
 {
     vector<TaggerInfo*> taggers = Tagger::findTaggers();
     vector<TaggerInfo*>::iterator it;
@@ -210,91 +196,6 @@ bool File::getTags(map<string, TagData*>& tags, time_t* timestamp)
             tags.insert(make_pair(string("Fotofing/Taggers/") + info->name, (TagData*)NULL));
         }
     }
-
-    // Derive tags from the EXIF data
-    Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(m_path);
-    image->readMetadata();
-
-    Exiv2::ExifData &exifData = image->exifData();
-    if (exifData.empty())
-    {
-        return false;
-    }
-
-    string make = getTagValue(exifData, EXIF_Image_Make, "Unknown");
-    string model = getTagValue(exifData, EXIF_Image_Model, "Unknown");
-
-    // Remove the make from the start of the model, if it's there
-    // (It is with Canon)
-    if (model.find(make) == 0)
-    {
-        model = model.substr(make.length());
-        if (model.at(0) == ' ')
-        {
-            model = model.substr(1);
-        }
-    }
-
-    string cameraTag = "Hardware/Camera/" + make + "/" + model;
-    tags.insert(make_pair(cameraTag, (TagData*)NULL));
-
-    // Lens details
-    string lensMake = getTagValue(exifData, EXIF_Photo_LensMake, "Unknown");
-    string lensModel = getTagValue(exifData, EXIF_Photo_LensModel, "Unknown");
-    string lensTag = "Hardware/Lens/" + lensMake + "/" + lensModel;
-    tags.insert(make_pair(lensTag, (TagData*)NULL));
-
-    // Extract the timestamp
-    string datetime = getTagValue(exifData, EXIF_Image_DateTimeOriginal);
-    if (datetime == "")
-    {
-        datetime = getTagValue(exifData, EXIF_Image_DateTime);
-    }
-
-    struct tm tm;
-    memset(&tm, 0, sizeof(tm));
-    strptime(datetime.c_str(), "%Y:%m:%d %H:%M%S", &tm);
-    char datetimetag[128];
-    sprintf(
-        datetimetag,
-        "Date/%d/%02d/%02d",
-        tm.tm_year + 1900,
-        tm.tm_mon + 1,
-        tm.tm_mday);
-    tags.insert(make_pair(string(datetimetag), (TagData*)NULL));
-
-    *timestamp = tm2time(&tm);
-
-    string serialNumber = "";
-    if (make == "Canon")
-    {
-        serialNumber = getTagValue(exifData, EXIF_Canon_SerialNumber);
-        if (serialNumber == "")
-        {
-            // In some Canon cameras (newer?) such as the 70D, we have to use
-            // the Internal Serial Number
-            serialNumber = getTagValue(
-                exifData,
-                EXIF_Canon_InternalSerialNumber);
-        }
-    }
-    else if (make == "Panasonic")
-    {
-        serialNumber = getTagValue(
-            exifData,
-            EXIF_Panasonic_InternalSerialNumber);
-    }
-
-    if (serialNumber == "")
-    {
-        // If all else fails, try the generic "BodySerialNumber" tag
-        // (Often empty if the manufacturer specific tag has a value)
-        serialNumber = getTagValue(
-            exifData,
-            EXIF_Photo_BodySerialNumber,
-            "Unknown");
-    }
-    tags.insert(make_pair("Hardware/Camera/Serial/" + serialNumber, (TagData*)NULL));
 
     return true;
 }
