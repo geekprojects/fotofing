@@ -111,8 +111,8 @@ void Library::onTagButton()
     if (res == Gtk::RESPONSE_OK)
     {
         string tag = tagDialog->getTag();
-        set<string> tags;
-        tags.insert(tag);
+        std::map<std::string, TagData*> tags;
+        tags.insert(make_pair(tag, (TagData*)NULL));
 
         vector<Photo*> selected = m_photoView.getSelectedPhotos();
         vector<Photo*>::iterator it;
