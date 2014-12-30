@@ -87,8 +87,11 @@ class PreparedStatement
     PreparedStatement(Database* db, sqlite3_stmt* stmt);
     ~PreparedStatement();
 
+    bool bindString(int i, const char* str, int length);
     bool bindString(int i, std::string str);
     bool bindInt64(int i, int64_t v);
+    bool bindBlob(int i, void* data, int length);
+    bool bindNull(int i);
 
     int getColumnCount();
     std::string getColumnName(int i);

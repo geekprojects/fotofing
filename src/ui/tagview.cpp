@@ -96,6 +96,11 @@ void TagView::treeify(Tag* parent, string remainder, int level)
         part = remainder.substr(0, pos);
     }
 
+    if (parent == m_tagRoot && part == "Fotofing")
+    {
+        return;
+    }
+
     Tag* tag;
 
     std::map<std::string,Tag*>::iterator it;

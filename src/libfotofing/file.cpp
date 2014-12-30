@@ -3,9 +3,8 @@
 
 #include <fotofing/file.h>
 #include <fotofing/utils.h>
+#include <fotofing/tagger.h>
 #include "sha1.h"
-
-#include "exiftags.h"
 
 using namespace std;
 using namespace Geek::Gfx;
@@ -14,17 +13,13 @@ using namespace Geek::Gfx;
 
 typedef int v4si __attribute__ ((vector_size (16)));
 
-union pixel_t
-{
-    uint32_t p;
-    uint8_t rgb[4];
-};
-
 File::File(int64_t sourceId, string path)
 {
     m_sourceId = sourceId;
     m_path = path;
     m_thumbnail = NULL;
+
+    m_image = NULL;
 }
 
 File::~File()
@@ -33,16 +28,19 @@ File::~File()
     {
         delete m_thumbnail;
     }
+
+    if (m_image != NULL)
+    {
+        delete m_image;
+    }
 }
 
 bool File::scan()
 {
-    Surface* image = Surface::loadJPEG(m_path);
+    m_image = Surface::loadJPEG(m_path);
 
-    float imageWidth = (float)image->getWidth();
-    float imageHeight = (float)image->getHeight();
-
-    // Generate Thumbnail
+    float imageWidth = (float)m_image->getWidth();
+    float imageHeight = (float)m_image->getHeight();
     float ratio = imageHeight / imageWidth;
 
     int thumbWidth = 150;
@@ -58,64 +56,9 @@ bool File::scan()
     {
         thumbHeight = (int)((float)thumbWidth * ratio);
     }
-#if 0
-    printf("File::generateThumbnail: thumbWidth=%d\n", thumbWidth);
-#endif
 
-    m_thumbnail = new Surface(thumbWidth, thumbHeight, 4);
-
-    float stepX = (float)imageWidth / (float)thumbWidth;
-    float stepY = (float)imageHeight / (float)thumbHeight;
-
-    float oy = 0;
-    int y;
-    int x;
-    for (y = 0; y < thumbHeight; y++)
-    {
-        float ox = 0;
-        for (x = 0; x < thumbWidth; x++)
-        {
-            uint32_t c = image->getPixel((int)ox, (int)oy);
-            m_thumbnail->drawPixel(x, y, c);
-            ox += stepX;
-        }
-        oy += stepY;
-    }
-
-    // Generate fingerprint
-    stepX = (float)imageWidth / (float)FINGERPRINT_SIZE;
-    stepY = (float)imageHeight / (float)FINGERPRINT_SIZE;
-    int stepXi = (int)round(stepX);
-    int stepYi = (int)round(stepY);
-    int blockCount = (stepXi * stepYi);
-
-    Surface* fingerprintSurface = new Surface(FINGERPRINT_SIZE, FINGERPRINT_SIZE, 4);
-    for (y = 0; y < FINGERPRINT_SIZE; y++)
-    {
-        for (x = 0; x < FINGERPRINT_SIZE; x++)
-        {
-
-            int blockX = floor((float)x * stepX);
-            int blockY = floor((float)y * stepY);
-            int bx;
-            int by;
-            v4si totals = {0, 0, 0, 0};
-            for (by = 0; by < stepYi; by++)
-            {
-                for (bx = 0; bx < stepXi; bx++)
-                {
-                    pixel_t p;
-                    p.p = image->getPixel(blockX + bx, blockY + by);
-                    v4si pv = {p.rgb[0], p.rgb[1], p.rgb[2], p.rgb[3]};
-                    totals += pv;
-                }
-            }
-            v4si avg = totals / blockCount;
-            avg &= 0xc0;
-
-            fingerprintSurface->drawPixel(x, y, 0xff000000 | (avg[0] << 16) | (avg[1] << 8) | (avg[2] << 0));
-        }
-    }
+    m_thumbnail = generateThumbnail(m_image, thumbWidth, thumbHeight, false);
+    Surface* fingerprintSurface = generateThumbnail(m_image, FINGERPRINT_SIZE, FINGERPRINT_SIZE, true);
 
 #if 0
     size_t pos = m_path.rfind('/');
@@ -127,7 +70,11 @@ bool File::scan()
 
     string fingerprintFile = "fingerprint_" + file + ".jpg";
     fingerprintSurface->saveJPEG(fingerprintFile);
+
+    string thumbnailFile = "thumbnail_" + file + ".jpg";
+    m_thumbnail->saveJPEG(thumbnailFile);
 #endif
+
     SHA1Context sha;
     uint8_t digest[20];
     memset(digest, 0, 20);
@@ -164,110 +111,91 @@ bool File::scan()
 
     m_fingerprint = string(digestStr);
 
-    delete image;
-
     return true;
 }
 
-static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, string def = "")
+Surface* File::generateThumbnail(Surface* image, int thumbWidth, int thumbHeight, bool fingerprint)
 {
-    string value = def;
-    Exiv2::ExifData::const_iterator it;
-    it = exifData.findKey(Exiv2::ExifKey(tag, group));
-    if (it != exifData.end())
+    int imageWidthi = image->getWidth();
+    float imageWidth = (float)image->getWidth();
+    float imageHeight = (float)image->getHeight();
+
+    // Generate fingerprint
+    float stepX = (float)imageWidth / (float)thumbWidth;
+    float stepY = (float)imageHeight / (float)thumbHeight;
+    int stepXi = (int)round(stepX);
+    int stepYi = (int)round(stepY);
+    int blockCount = (stepXi * stepYi);
+
+    Surface* fingerprintSurface = new Surface(thumbWidth, thumbHeight, 4);
+
+    uint32_t* data = (uint32_t*)fingerprintSurface->getData();
+    uint8_t* srcdata = (uint8_t*)image->getData();
+
+int blockDelta = (imageWidthi - stepXi) * 4;
+
+    int y;
+    for (y = 0; y < thumbHeight; y++)
     {
-        value = it->toString();
+        int blockY = floor((float)y * stepY);
+        int x;
+        for (x = 0; x < thumbWidth; x++)
+        {
+
+            int blockX = floor((float)x * stepX);
+            int bx;
+            int by;
+            v4si totals = {0, 0, 0, 0};
+
+            uint8_t* imgrow = srcdata;
+            imgrow += ((imageWidthi * blockY) + (blockX)) * 4;
+
+            for (by = 0; by < stepYi; by++)
+            {
+                for (bx = 0; bx < stepXi; bx++)
+                {
+                    v4si pv = {
+                        imgrow[3],
+                        imgrow[2],
+                        imgrow[1],
+                        imgrow[0]};
+                    totals += pv;
+                    imgrow += 4;
+                }
+                imgrow += blockDelta;
+            }
+            v4si avg = totals / blockCount;
+            if (fingerprint)
+            {
+                avg &= 0xc0;
+            }
+
+            *(data++) = 0xff000000 | (avg[1] << 16) | (avg[2] << 8) | (avg[3] << 0);
+        }
     }
-    return value;
+
+    return fingerprintSurface;
 }
 
-bool File::getTags(set<string>& tags, time_t* timestamp)
+bool File::getTags(map<string, TagData*>& tags)
 {
-    // Derive tags from the EXIF data
-
-    Exiv2::Image::AutoPtr image = Exiv2::ImageFactory::open(m_path);
-    image->readMetadata();
-
-    Exiv2::ExifData &exifData = image->exifData();
-    if (exifData.empty())
+    vector<TaggerInfo*> taggers = Tagger::findTaggers();
+    vector<TaggerInfo*>::iterator it;
+    for (it = taggers.begin(); it != taggers.end(); it++)
     {
-        return false;
-    }
-
-    string make = getTagValue(exifData, EXIF_Image_Make, "Unknown");
-    string model = getTagValue(exifData, EXIF_Image_Model, "Unknown");
-
-    // Remove the make from the start of the model, if it's there
-    // (It is with Canon)
-    if (model.find(make) == 0)
-    {
-        model = model.substr(make.length());
-        if (model.at(0) == ' ')
+        TaggerInfo* info = *it;
+        if (info->tagger == NULL)
         {
-            model = model.substr(1);
+            info->tagger = info->newTagger();
+        }
+
+        bool res;
+        res = info->tagger->tag(m_path, m_image, tags);
+        if (res)
+        {
+            tags.insert(make_pair(string("Fotofing/Taggers/") + info->name, (TagData*)NULL));
         }
     }
-
-    string cameraTag = "Hardware/Camera/" + make + "/" + model;
-    tags.insert(cameraTag);
-
-    // Lens details
-    string lensMake = getTagValue(exifData, EXIF_Photo_LensMake, "Unknown");
-    string lensModel = getTagValue(exifData, EXIF_Photo_LensModel, "Unknown");
-    string lensTag = "Hardware/Lens/" + lensMake + "/" + lensModel;
-    tags.insert(lensTag);
-
-    // Extract the timestamp
-    string datetime = getTagValue(exifData, EXIF_Image_DateTimeOriginal);
-    if (datetime == "")
-    {
-        datetime = getTagValue(exifData, EXIF_Image_DateTime);
-    }
-
-    struct tm tm;
-    memset(&tm, 0, sizeof(tm));
-    strptime(datetime.c_str(), "%Y:%m:%d %H:%M%S", &tm);
-    char datetimetag[128];
-    sprintf(
-        datetimetag,
-        "Date/%d/%02d/%02d",
-        tm.tm_year + 1900,
-        tm.tm_mon + 1,
-        tm.tm_mday);
-    tags.insert(string(datetimetag));
-
-    *timestamp = tm2time(&tm);
-
-    string serialNumber = "";
-    if (make == "Canon")
-    {
-        serialNumber = getTagValue(exifData, EXIF_Canon_SerialNumber);
-        if (serialNumber == "")
-        {
-            // In some Canon cameras (newer?) such as the 70D, we have to use
-            // the Internal Serial Number
-            serialNumber = getTagValue(
-                exifData,
-                EXIF_Canon_InternalSerialNumber);
-        }
-    }
-    else if (make == "Panasonic")
-    {
-        serialNumber = getTagValue(
-            exifData,
-            EXIF_Panasonic_InternalSerialNumber);
-    }
-
-    if (serialNumber == "")
-    {
-        // If all else fails, try the generic "BodySerialNumber" tag
-        // (Often empty if the manufacturer specific tag has a value)
-        serialNumber = getTagValue(
-            exifData,
-            EXIF_Photo_BodySerialNumber,
-            "Unknown");
-    }
-    tags.insert("Hardware/Camera/Serial/" + serialNumber);
 
     return true;
 }
