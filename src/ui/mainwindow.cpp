@@ -18,6 +18,7 @@ MainWindow::MainWindow(Index* index) :
     set_title("Fotofing");
     set_default_size(600, 400);
 
+    m_tabs.set_name("ff-content");
     m_tabs.append_page(m_library, "Library");
     m_tabs.append_page(m_edit, "Edit");
 
@@ -39,16 +40,10 @@ MainWindow::MainWindow(Index* index) :
     Glib::RefPtr<Gtk::CssProvider> refStyleProvider = Gtk::CssProvider::create();
 
     refStyleProvider->load_from_data(
-        "* { background-color: #101010; color: #ffffff; text-shadow: 1 1 black; }"
-        "GtkIconView { border: 5px solid #ff0000 }"
-        "GtkIconView.view.cell { color: #ffffff; text-shadow: 1 1 black; }"
-        "GtkToolbar { background-image: none; }"
-        ".notebook tab { border: none; background-image: none; }"
-        ".notebook tab:active { border: none; }"
-        ".notebook tab GtkLabel { color: #ffffff; font-weight: bold; font-size: 150%; }"
-        ".notebook tab:active GtkLabel { color: #ff0000; background-color: #ff0000 }"
-        ".notebook { border-top: 2px solid black; }"
-        "column-header .button { background-image: none; }"
+        "#ff-content GtkIconView { background-color: #080808; }"
+        "#ff-content GtkIconView { border: 1px solid #ffffff }"
+        "#ff-content GtkIconView.view.cell { color: #ffffff; text-shadow: 1 1 black; }"
+        "#ff-content GtkIconView.view.cell:selected { background-color: #101010; background-image: none; text-shadow: 1 1 black; }"
     );
 
     Gtk::StyleContext::add_provider_for_screen(get_screen(), refStyleProvider, 800);
