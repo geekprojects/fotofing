@@ -52,13 +52,6 @@ bool Index::open()
     tagsTable.columns.insert(Column("data"));
     schema.push_back(tagsTable);
 
-    Table propsTable;
-    propsTable.name = "properties";
-    propsTable.columns.insert(Column("pid"));
-    propsTable.columns.insert(Column("name"));
-    propsTable.columns.insert(Column("value"));
-    schema.push_back(propsTable);
-
     Table sourcesTable;
     sourcesTable.name = "sources";
     sourcesTable.columns.insert(Column("source_id", "INTEGER", true));
@@ -81,7 +74,6 @@ bool Index::open()
     {
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS tags_uni_idx ON tags (pid, tag)");
         m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS sources_uni_idx ON sources (host, path)");
-        m_db->execute("CREATE UNIQUE INDEX IF NOT EXISTS props_uni_idx ON properties (pid, name)");
     }
     return true;
 }
@@ -125,7 +117,7 @@ bool Index::saveTags(string pid, map<string, TagData*> tags)
     }
 
     PreparedStatement* ps = m_db->prepareStatement(
-        "INSERT INTO tags (pid, tag, type, data) VALUES (?, ?, ?, ?)");
+        "INSERT OR REPLACE INTO tags (pid, tag, type, data) VALUES (?, ?, ?, ?)");
 
     m_db->startTransaction();
     for (it = tags.begin(); it != tags.end(); it++)
@@ -144,6 +136,7 @@ bool Index::saveTags(string pid, map<string, TagData*> tags)
                     break;
 
                 case SQLITE_TEXT:
+                    ps->bindString(4, (const char*)tagData->data.blob.data, tagData->data.blob.length);
 
                 case SQLITE_BLOB:
                     ps->bindBlob(4, tagData->data.blob.data, tagData->data.blob.length);
@@ -269,10 +262,50 @@ set<string> Index::getChildTags(string tag)
     {
         tags.insert(ps->getString(0));
     }
+    delete ps;
 
     return tags;
 }
 
+TagData* Index::getTagData(string pid, string tag)
+{
+    TagData* data = new TagData();
+printf("Index::getTagData: pid=%s, tag=%s\n", pid.c_str(), tag.c_str());
+
+    PreparedStatement* ps = m_db->prepareStatement("SELECT type, data FROM tags WHERE pid = ? AND tag = ?");
+    ps->bindString(1, pid);
+    ps->bindString(2, tag);
+
+    ps->executeQuery();
+    if (ps->step())
+    {
+        int type = ps->getInt(0);
+printf("Index::getTagData: type: %d\n", type);
+        switch (type)
+        {
+            case SQLITE_INTEGER:
+                data->type = SQLITE_INTEGER;
+                data->data.i = ps->getInt(1);
+                break;
+
+            case SQLITE_TEXT:
+            {
+                data->type = SQLITE_TEXT;
+                string text = ps->getString(1);
+                data->data.blob.data = strdup(text.c_str());
+                data->data.blob.length = text.length();
+printf("Index::getTagData: data=%s\n", (char*)data->data.blob.data);
+            } break;
+
+            default:
+                printf("Index::getTagData: ERROR: Unhandled type: %d\n", type);
+                break;
+        }
+    }
+    delete ps;
+
+    return data;
+}
 
 bool Index::removeTag(string tag)
 {
@@ -441,62 +474,28 @@ Photo* Index::getPhoto(string pid)
 
 bool Index::setProperty(string pid, string name, string value)
 {
-    string sql =
-        "INSERT OR REPLACE INTO properties (pid, name, value) VALUES (?, ?, ?)";
-
-    PreparedStatement* ps = m_db->prepareStatement(sql);
-    ps->bindString(1, pid);
-    ps->bindString(2, name);
-    ps->bindString(3, value);
-
-    bool res;
-    res = ps->execute();
-    if (!res)
-    {
-        printf("Index::setProperty: Failed to set property\n");
-    }
-    delete ps;
-
-    return res;
+    map<string, TagData*> tags;
+    tags.insert(make_pair("Fotofing/Properties/" + name, new TagData(value)));
+    return saveTags(pid, tags);
 }
 
 string Index::getProperty(string pid, string name)
 {
-    string sql = "SELECT value FROM properties WHERE pid = ? AND name = ?";
-    PreparedStatement* ps = m_db->prepareStatement(sql);
-    ps->bindString(1, pid);
-    ps->bindString(2, name);
+    TagData* data = getTagData(pid, "Fotofing/Properties/" + name);
 
     string result = "";
-    ps->executeQuery();
-    if (ps->step())
+
+    if (data != NULL)
     {
-        result = ps->getString(0);
+        if ( data->type == SQLITE_TEXT)
+        {
+            result = string((const char*)data->data.blob.data, data->data.blob.length);
+        }
+        delete data;
     }
-    delete ps;
 
     return result;
 }
-
-map<string, string> Index::getProperties(string pid)
-{
-    string sql = "SELECT name, value FROM properties WHERE pid = ?";
-    PreparedStatement* ps = m_db->prepareStatement(sql);
-    ps->bindString(1, pid);
-
-    map<string, string> result;
-    ps->executeQuery();
-    while (ps->step())
-    {
-        string name = ps->getString(1);
-        string value = ps->getString(2);
-        result.insert(make_pair(name, value));
-    }
-    delete ps;
-
-    return result;
-}
-
 
 vector<File*> Index::getFiles(string pid)
 {
@@ -743,6 +742,13 @@ TagData::TagData(const char* str)
     type = SQLITE_TEXT;
     data.blob.data = strdup(str);
     data.blob.length = strlen(str);
+}
+
+TagData::TagData(string str)
+{
+    type = SQLITE_TEXT;
+    data.blob.data = strdup(str.c_str());
+    data.blob.length = str.length();
 }
 
 TagData::~TagData()

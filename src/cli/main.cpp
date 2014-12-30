@@ -190,19 +190,6 @@ void photos(Index* index, int argc, char** argv)
             printf("%ld %s\n", f->getSourceId(), f->getPath().c_str());
         }
     }
-    else if (!strcmp(argv[1], "props"))
-    {
-        if (argc < 3)
-        {
-            return;
-        }
-        map<string,string> props = index->getProperties(argv[2]);
-        map<string, string>::iterator it;
-        for (it = props.begin(); it != props.end(); it++)
-        {
-            printf("%s=%s\n", it->first.c_str(), it->second.c_str());
-        }
-    }
 }
 
 void sources(Index* index, int argc, char** argv)

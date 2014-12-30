@@ -50,6 +50,7 @@ struct TagData
     TagData();
     TagData(int64_t i);
     TagData(const char* str);
+    TagData(std::string str);
 
     ~TagData();
 };
@@ -72,6 +73,7 @@ class Index
     std::set<std::string> getAllTags();
     std::set<std::string> getTags(std::string pid);
     std::set<std::string> getChildTags(std::string tag);
+    TagData* getTagData(std::string pid, std::string tag);
 
     // Remove a tag from a photo
     bool removeTag(std::string pid, std::string tag);
@@ -85,7 +87,6 @@ class Index
 
     bool setProperty(std::string pid, std::string name, std::string value);
     std::string getProperty(std::string pid, std::string name);
-    std::map<std::string, std::string> getProperties(std::string pid);
 
     std::vector<File*> getFiles(std::string pid);
 
