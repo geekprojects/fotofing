@@ -41,20 +41,20 @@ bool File::scan()
 
     float imageWidth = (float)m_image->getWidth();
     float imageHeight = (float)m_image->getHeight();
-    float ratio = imageHeight / imageWidth;
+    float ratio = imageWidth / imageHeight;
 
     int thumbWidth = 150;
     int thumbHeight = 150;
-    if (ratio > 1)
+    if (ratio > 1.0f)
     {
         printf(
             "File::generateThumbnail: Warning, ratio=%0.2f, please check\n",
             ratio);
-        thumbWidth = (int)((float)thumbWidth * ratio);
+        thumbHeight = (int)((float)thumbHeight / ratio);
     }
     else
     {
-        thumbHeight = (int)((float)thumbWidth * ratio);
+        thumbWidth = (int)((float)thumbWidth * ratio);
     }
 
     m_thumbnail = generateThumbnail(m_image, thumbWidth, thumbHeight, false);
