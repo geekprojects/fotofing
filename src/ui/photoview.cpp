@@ -98,7 +98,7 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             true,
             8,
             thumbnail->getWidth(),
-            thumbnail->getHeight(),
+            thumbnail->getHeight() - 1,
             thumbnail->getWidth() * 4);
 
         string title = m_library->getIndex()->getProperty(
