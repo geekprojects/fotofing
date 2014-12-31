@@ -18,6 +18,7 @@ MainWindow::MainWindow(Index* index) :
     set_title("Fotofing");
     set_default_size(600, 400);
 
+    m_tabs.set_name("ff-content");
     m_tabs.append_page(m_library, "Library");
     m_tabs.append_page(m_edit, "Edit");
 
@@ -33,6 +34,19 @@ MainWindow::MainWindow(Index* index) :
     add(m_vBox);
 
     show_all();
+
+    Glib::RefPtr<Gtk::StyleContext> styleContext = get_style_context();
+
+    Glib::RefPtr<Gtk::CssProvider> refStyleProvider = Gtk::CssProvider::create();
+
+    refStyleProvider->load_from_data(
+        "#ff-content GtkIconView { background-color: #080808; }"
+        "#ff-content GtkIconView { border: 1px solid #ffffff }"
+        "#ff-content GtkIconView.view.cell { color: #ffffff; text-shadow: 1 1 black; }"
+        "#ff-content GtkIconView.view.cell:selected { background-color: #101010; background-image: none; text-shadow: 1 1 black; }"
+    );
+
+    Gtk::StyleContext::add_provider_for_screen(get_screen(), refStyleProvider, 800);
 
     m_library.updateSources();
 }
