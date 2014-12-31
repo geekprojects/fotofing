@@ -47,9 +47,6 @@ bool File::scan()
     int thumbHeight = 150;
     if (ratio > 1.0f)
     {
-        printf(
-            "File::generateThumbnail: Warning, ratio=%0.2f, please check\n",
-            ratio);
         thumbHeight = (int)((float)thumbHeight / ratio);
     }
     else
