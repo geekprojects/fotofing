@@ -278,6 +278,7 @@ TagData* Index::getTagData(string pid, string tag)
     ps->executeQuery();
     if (ps->step())
     {
+        int type = ps->getInt(0);
         switch (type)
         {
             case SQLITE_INTEGER:
