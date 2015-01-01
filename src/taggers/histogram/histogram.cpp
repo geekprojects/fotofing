@@ -9,21 +9,16 @@ using namespace std;
 
 HistogramTagger::HistogramTagger()
 {
-    printf("HistogramTagger::HistogramTagger: Here!\n");
 }
 
 HistogramTagger::~HistogramTagger()
 {
-    printf("HistogramTagger::~HistogramTagger: Here!\n");
 }
 
 //#define MAX(_a, _b) (((_a) > (_b)) ? (_a) : (_b))
 
 bool HistogramTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags)
 {
-    printf("HistogramTagger::tag: Here!\n");
-    tags.insert(make_pair("Hello/world", (TagData*)NULL));
-
     float hist_r[256];
     float hist_g[256];
     float hist_b[256];

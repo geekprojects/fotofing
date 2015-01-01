@@ -16,12 +16,10 @@ using namespace std;
 
 ExifTagger::ExifTagger()
 {
-    printf("ExifTagger::ExifTagger: Here!\n");
 }
 
 ExifTagger::~ExifTagger()
 {
-    printf("ExifTagger::~ExifTagger: Here!\n");
 }
 
 static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, string def = "")
@@ -38,8 +36,6 @@ static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, stri
 
 bool ExifTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags)
 {
-    printf("ExifTagger::tag: Here!\n");
-
     // Derive tags from the EXIF data
     Exiv2::Image::AutoPtr exifImage = Exiv2::ImageFactory::open(path);
     exifImage->readMetadata();
