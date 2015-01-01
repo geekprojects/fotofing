@@ -270,7 +270,6 @@ set<string> Index::getChildTags(string tag)
 TagData* Index::getTagData(string pid, string tag)
 {
     TagData* data = new TagData();
-printf("Index::getTagData: pid=%s, tag=%s\n", pid.c_str(), tag.c_str());
 
     PreparedStatement* ps = m_db->prepareStatement("SELECT type, data FROM tags WHERE pid = ? AND tag = ?");
     ps->bindString(1, pid);
@@ -279,8 +278,6 @@ printf("Index::getTagData: pid=%s, tag=%s\n", pid.c_str(), tag.c_str());
     ps->executeQuery();
     if (ps->step())
     {
-        int type = ps->getInt(0);
-printf("Index::getTagData: type: %d\n", type);
         switch (type)
         {
             case SQLITE_INTEGER:
@@ -294,7 +291,6 @@ printf("Index::getTagData: type: %d\n", type);
                 string text = ps->getString(1);
                 data->data.blob.data = strdup(text.c_str());
                 data->data.blob.length = text.length();
-printf("Index::getTagData: data=%s\n", (char*)data->data.blob.data);
             } break;
 
             default:
