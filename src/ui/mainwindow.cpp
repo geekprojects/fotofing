@@ -132,6 +132,11 @@ Gtk::MenuBar* MainWindow::createMenu()
     return Gtk::manage(new Gtk::MenuBar(gmenu));
 }
 
+void MainWindow::setStatusMessage(string message)
+{
+    m_statusBar.push(message);
+}
+
 void MainWindow::startProgress()
 {
     m_progressActive = true;

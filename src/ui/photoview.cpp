@@ -18,7 +18,7 @@ PhotoView::PhotoView(Library* library)
         &PhotoView::onIconViewSort));
     m_model->set_sort_column(
         Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID,
-        Gtk::SORT_ASCENDING);
+        Gtk::SORT_DESCENDING);
 
     m_iconView.set_model(m_model);
     m_iconView.set_selection_mode(Gtk::SELECTION_MULTIPLE);
@@ -85,10 +85,11 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
         m_photos = m_library->getIndex()->getPhotos(&from, &to);
     }
 
+    unsigned int max = 500;
+    unsigned int i;
     vector<Photo*>::iterator it;
-    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    for (it = m_photos.begin(), i = 0; it != m_photos.end() && i < max; it++, i++)
     {
-
         Photo* photo = *it;
         Surface* thumbnail = photo->getThumbnail();
 
@@ -117,6 +118,24 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
         row[m_photoColumns.pixbuf] = pixbuf;
         row[m_photoColumns.photo] = photo;
     }
+
+    char message[1024];
+    if (i < m_photos.size())
+    {
+        sprintf(message, "Displaying %d of %lu photos", i, m_photos.size());
+    }
+    else
+    {
+        if (i == 1)
+        {
+            sprintf(message, "Displaying %lu photo", m_photos.size());
+        }
+        else
+        {
+            sprintf(message, "Displaying %lu photos", m_photos.size());
+        }
+    }
+    m_library->getMainWindow()->setStatusMessage(message);
 }
 
 void PhotoView::selectAll()

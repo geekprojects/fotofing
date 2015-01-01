@@ -43,6 +43,7 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     Index* getIndex() { return m_index; }
 
+    void setStatusMessage(std::string message);
     void startProgress();
     void endProgress();
     void updateProgress(
