@@ -294,6 +294,17 @@ TagData* Index::getTagData(string pid, string tag)
                 data->data.blob.length = text.length();
             } break;
 
+            case SQLITE_BLOB:
+            {
+                const void* blobData;
+                uint32_t blobLength;
+                ps->getBlob(1, &blobData, &blobLength);
+                data->type = SQLITE_BLOB;
+                data->data.blob.data = malloc(blobLength);
+                memcpy(data->data.blob.data, blobData, blobLength);
+                data->data.blob.length = blobLength;
+            } break;
+
             default:
                 printf("Index::getTagData: ERROR: Unhandled type: %d\n", type);
                 break;
@@ -746,6 +757,14 @@ TagData::TagData(string str)
     type = SQLITE_TEXT;
     data.blob.data = strdup(str.c_str());
     data.blob.length = str.length();
+}
+
+TagData::TagData(void* tagdata, int length)
+{
+    type = SQLITE_BLOB;
+    data.blob.data = malloc(length);
+    memcpy(data.blob.data, tagdata, length);
+    data.blob.length = length;
 }
 
 TagData::~TagData()

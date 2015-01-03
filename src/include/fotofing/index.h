@@ -51,6 +51,7 @@ struct TagData
     TagData(int64_t i);
     TagData(const char* str);
     TagData(std::string str);
+    TagData(void* data, int length);
 
     ~TagData();
 };
