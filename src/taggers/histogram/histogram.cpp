@@ -3,6 +3,8 @@
 
 #include "histogram.h"
 
+#include <fotofing/index.h>
+
 DECLARE_TAGGER("Histogram", HistogramTagger);
 
 using namespace std;
@@ -56,8 +58,21 @@ bool HistogramTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::
         hist_r[i] /= max;
         hist_g[i] /= max;
         hist_b[i] /= max;
-        printf("%-3d: %f %f %f\n", i, hist_r[i], hist_g[i], hist_b[i]);
+        //printf("%-3d: %f %f %f\n", i, hist_r[i], hist_g[i], hist_b[i]);
     }
+
+    tags.insert(
+        make_pair(
+            "Fotofing/Taggers/Histogram/Red",
+            new TagData(hist_r, sizeof(float) * 256)));
+    tags.insert(
+        make_pair(
+            "Fotofing/Taggers/Histogram/Green",
+            new TagData(hist_g, sizeof(float) * 256)));
+    tags.insert(
+        make_pair(
+            "Fotofing/Taggers/Histogram/Blue",
+            new TagData(hist_b, sizeof(float) * 256)));
 
     return true;
 }
