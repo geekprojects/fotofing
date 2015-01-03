@@ -6,6 +6,7 @@
 #include <gtkmm.h>
 
 #include "tagview.h"
+#include "histogramwidget.h"
 
 class PhotoPropColumns : public Gtk::TreeModelColumnRecord
 {
@@ -29,12 +30,16 @@ class PhotoDetails : public Gtk::Paned
     Library* m_library;
     Photo* m_photo;
 
+    Gtk::VBox m_vbox;
+
     // Photo properties
     Gtk::ScrolledWindow m_photoPropScrollWindow;
     Gtk::TreeView m_photoPropTreeView;
     Glib::RefPtr<Gtk::ListStore> m_photoPropListStore;
     const PhotoPropColumns m_photoPropColumns;
     Gtk::Frame m_photoPropFrame;
+
+    HistogramWidget m_histogram;
 
     // Photo tags
     TagView m_tagView;
