@@ -43,7 +43,24 @@ bool ExifTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::strin
     Exiv2::ExifData &exifData = exifImage->exifData();
     if (exifData.empty())
     {
+        // No EXIF data for this image
+        tags.insert(make_pair("Date/Unknown", (TagData*)NULL));
         return false;
+    }
+
+    string orientation = getTagValue(exifData, EXIF_Image_Orientation, "Unknown");
+
+    if (orientation == "1")
+    {
+        tags.insert(make_pair("Photo/Orientation/Landscape", (TagData*)NULL));
+    }
+    else if (orientation == "8")
+    {
+        tags.insert(make_pair("Photo/Orientation/Portrait", (TagData*)NULL));
+    }
+    else
+    {
+        tags.insert(make_pair("Photo/Orientation/Unknown", (TagData*)NULL));
     }
 
     string make = getTagValue(exifData, EXIF_Image_Make, "Unknown");
