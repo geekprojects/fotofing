@@ -315,6 +315,23 @@ TagData* Index::getTagData(string pid, string tag)
     return data;
 }
 
+bool Index::hasTag(string pid, string tag)
+{
+    bool hasTag = false;
+    PreparedStatement* ps = m_db->prepareStatement(
+        "SELECT tag FROM tags WHERE pid = ? AND tag = ?");
+    ps->bindString(1, pid);
+    ps->bindString(2, tag);
+    ps->executeQuery();
+    if (ps->step())
+    {
+        hasTag = true;
+    }
+    delete ps;
+
+    return hasTag;
+}
+
 bool Index::removeTag(string tag)
 {
     PreparedStatement* ps = m_db->prepareStatement("DELETE FROM tags WHERE tag LIKE ?");
