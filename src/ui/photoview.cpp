@@ -102,6 +102,14 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             thumbnail->getHeight() - 1,
             thumbnail->getWidth() * 4);
 
+        bool portrait = m_library->getIndex()->hasTag(
+            photo->getId(),
+            "Photo/Orientation/Portrait");
+        if (portrait)
+        {
+            pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_COUNTERCLOCKWISE);
+        }
+
         string title = m_library->getIndex()->getProperty(
             photo->getId(),
             "Title");
