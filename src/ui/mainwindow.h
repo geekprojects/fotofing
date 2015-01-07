@@ -10,6 +10,7 @@
 
 #include "dialogs/about.h"
 #include "library/library.h"
+#include "edit/edit.h"
 
 class MainWindow : public Gtk::Window, public IndexClient
 {
@@ -24,7 +25,7 @@ class MainWindow : public Gtk::Window, public IndexClient
     Library m_library;
 
     /* Edit Tab */
-    Gtk::Label m_edit;
+    Edit m_edit;
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;

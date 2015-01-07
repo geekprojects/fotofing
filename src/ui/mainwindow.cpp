@@ -10,8 +10,7 @@
 using namespace std;
 
 MainWindow::MainWindow(Index* index) :
-    m_library(this),
-    m_edit("Edit tab")
+    m_library(this)
 {
     m_index = index;
 
