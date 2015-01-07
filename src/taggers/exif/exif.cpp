@@ -34,6 +34,19 @@ static string getTagValue(Exiv2::ExifData& exifData, string group, int tag, stri
     return value;
 }
 
+static int getTagValueInt(Exiv2::ExifData& exifData, string group, int tag, int def = -1)
+{
+    int value = def;
+    Exiv2::ExifData::const_iterator it;
+    it = exifData.findKey(Exiv2::ExifKey(tag, group));
+    if (it != exifData.end())
+    {
+        value = (int)it->toLong();
+    }
+    return value;
+}
+
+
 bool ExifTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::string, TagData*>& tags)
 {
     // Derive tags from the EXIF data
@@ -48,19 +61,24 @@ bool ExifTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::strin
         return false;
     }
 
-    string orientation = getTagValue(exifData, EXIF_Image_Orientation, "Unknown");
+    int orientation = getTagValueInt(exifData, EXIF_Image_Orientation, -1);
 
-    if (orientation == "1")
+    tags.insert(make_pair("Photo/Orientation", (TagData*)new TagData(orientation)));
+    switch (orientation)
     {
-        tags.insert(make_pair("Photo/Orientation/Landscape", (TagData*)NULL));
-    }
-    else if (orientation == "8")
-    {
-        tags.insert(make_pair("Photo/Orientation/Portrait", (TagData*)NULL));
-    }
-    else
-    {
-        tags.insert(make_pair("Photo/Orientation/Unknown", (TagData*)NULL));
+        case EXIF_Image_Orientation_TopLeft:
+            tags.insert(make_pair("Photo/Orientation/Landscape", (TagData*)NULL));
+            break;
+        case EXIF_Image_Orientation_RightTop:
+        case EXIF_Image_Orientation_LeftBottom:
+            tags.insert(make_pair("Photo/Orientation/Portrait", (TagData*)NULL));
+            break;
+        default:
+        {
+            char tagname[1024];
+            sprintf(tagname, "Photo/Orientation/Unknown %d\n", orientation);
+            tags.insert(make_pair(tagname, (TagData*)NULL));
+        } break;
     }
 
     string make = getTagValue(exifData, EXIF_Image_Make, "Unknown");
