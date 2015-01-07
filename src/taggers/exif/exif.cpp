@@ -66,6 +66,10 @@ bool ExifTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::strin
     tags.insert(make_pair("Photo/Orientation", (TagData*)new TagData(orientation)));
     switch (orientation)
     {
+        case -1:
+            tags.insert(make_pair("Photo/Orientation/Unknown", (TagData*)NULL));
+            break;
+
         case EXIF_Image_Orientation_TopLeft:
             tags.insert(make_pair("Photo/Orientation/Landscape", (TagData*)NULL));
             break;
@@ -76,7 +80,7 @@ bool ExifTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::strin
         default:
         {
             char tagname[1024];
-            sprintf(tagname, "Photo/Orientation/Unknown %d\n", orientation);
+            sprintf(tagname, "Photo/Orientation/Unknown (%d)\n", orientation);
             tags.insert(make_pair(tagname, (TagData*)NULL));
         } break;
     }
