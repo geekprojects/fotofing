@@ -3,7 +3,7 @@
 
 #include "photodetails.h"
 #include "photoview.h"
-#include "tagview.h"
+#include "widgets/tagview.h"
 
 class MainWindow;
 

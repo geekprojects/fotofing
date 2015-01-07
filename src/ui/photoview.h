@@ -7,7 +7,7 @@
 
 #include <fotofing/photo.h>
 
-#include "tagview.h"
+#include "widgets/tagview.h"
 
 class Library;
 

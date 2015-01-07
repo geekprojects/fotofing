@@ -5,8 +5,8 @@
 
 #include <gtkmm.h>
 
-#include "tagview.h"
-#include "histogramwidget.h"
+#include "widgets/tagview.h"
+#include "widgets/histogramwidget.h"
 
 class PhotoPropColumns : public Gtk::TreeModelColumnRecord
 {
