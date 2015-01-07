@@ -102,13 +102,22 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             thumbnail->getHeight() - 1,
             thumbnail->getWidth() * 4);
 
-        bool portrait = m_library->getIndex()->hasTag(
+        TagData* orientation = m_library->getIndex()->getTagData(
             photo->getId(),
-            "Photo/Orientation/Portrait");
-        if (portrait)
+            "Photo/Orientation");
+        if (orientation->type == SQLITE_INTEGER)
         {
-            pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_COUNTERCLOCKWISE);
+            switch (orientation->data.i)
+            {
+                case 6:
+                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_CLOCKWISE);
+                    break;
+                case 8:
+                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_COUNTERCLOCKWISE);
+                    break;
+            }
         }
+        delete orientation;
 
         string title = m_library->getIndex()->getProperty(
             photo->getId(),
