@@ -174,7 +174,9 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
             const char* argv[] =
             {
                 "/usr/bin/qiv",
-                "-fm",
+                "--fullscreen",
+                "--maxpect",
+                "--autorotate",
                 files.at(0)->getPath().c_str(),
                 (const char*)NULL
             };
