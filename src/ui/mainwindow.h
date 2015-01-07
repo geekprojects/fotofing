@@ -8,7 +8,7 @@
 
 #include <fotofing/index.h>
 
-#include "about.h"
+#include "dialogs/about.h"
 #include "library/library.h"
 
 class MainWindow : public Gtk::Window, public IndexClient

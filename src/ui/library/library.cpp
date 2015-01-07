@@ -1,10 +1,10 @@
 
 #include <fotofing/utils.h>
 
+#include "dialogs/calendarpopup.h"
+#include "dialogs/sourcesdialog.h"
+#include "dialogs/tagdialog.h"
 #include "mainwindow.h"
-#include "calendarpopup.h"
-#include "sourcesdialog.h"
-#include "tagdialog.h"
 #include "uiutils.h"
 
 using namespace std;
