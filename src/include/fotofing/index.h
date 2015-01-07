@@ -75,6 +75,7 @@ class Index
     std::set<std::string> getTags(std::string pid);
     std::set<std::string> getChildTags(std::string tag);
     TagData* getTagData(std::string pid, std::string tag);
+    bool hasTag(std::string pid, std::string tag);
 
     // Remove a tag from a photo
     bool removeTag(std::string pid, std::string tag);

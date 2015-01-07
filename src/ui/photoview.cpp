@@ -102,6 +102,23 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             thumbnail->getHeight() - 1,
             thumbnail->getWidth() * 4);
 
+        TagData* orientation = m_library->getIndex()->getTagData(
+            photo->getId(),
+            "Photo/Orientation");
+        if (orientation->type == SQLITE_INTEGER)
+        {
+            switch (orientation->data.i)
+            {
+                case 6:
+                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_CLOCKWISE);
+                    break;
+                case 8:
+                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_COUNTERCLOCKWISE);
+                    break;
+            }
+        }
+        delete orientation;
+
         string title = m_library->getIndex()->getProperty(
             photo->getId(),
             "Title");
@@ -157,7 +174,9 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
             const char* argv[] =
             {
                 "/usr/bin/qiv",
-                "-fm",
+                "--fullscreen",
+                "--maxpect",
+                "--autorotate",
                 files.at(0)->getPath().c_str(),
                 (const char*)NULL
             };
