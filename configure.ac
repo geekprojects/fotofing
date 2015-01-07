@@ -45,6 +45,7 @@ AC_CONFIG_FILES([Makefile
                  src/tests/taggers/Makefile
                  src/ui/Makefile
                  src/ui/widgets/Makefile
+                 src/ui/library/Makefile
                  src/taggers/Makefile
                  src/taggers/histogram/Makefile
                  src/taggers/exif/Makefile
