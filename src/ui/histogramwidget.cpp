@@ -48,13 +48,13 @@ bool HistogramWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
         switch (channel)
         {
             case 0:
-                cr->set_source_rgba(1.0, 0.0, 0.0, 0.8);
+                cr->set_source_rgba(1.0, 0.0, 0.0, 0.5);
                 break;
             case 1:
-                cr->set_source_rgba(0.0, 1.0, 0.0, 0.8);
+                cr->set_source_rgba(0.0, 1.0, 0.0, 0.5);
                 break;
             case 2:
-                cr->set_source_rgba(0.0, 0.0, 1.0, 0.8);
+                cr->set_source_rgba(0.0, 0.0, 1.0, 0.5);
                 break;
         }
         for (i = 0; i < 256; i++)
