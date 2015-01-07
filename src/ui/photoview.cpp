@@ -177,6 +177,7 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
                 "--fullscreen",
                 "--maxpect",
                 "--autorotate",
+                "--browse",
                 files.at(0)->getPath().c_str(),
                 (const char*)NULL
             };
