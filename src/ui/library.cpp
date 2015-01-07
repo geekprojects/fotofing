@@ -246,7 +246,7 @@ void Library::updateSources()
 
 void Library::updateSourcesThread(Library* arg)
 {
-    m_mainWindow->getIndex()->scanSources(m_mainWindow);
+    m_mainWindow->getIndex()->scanSources(this);
     m_workerThread = NULL;
 
     updateTags();
