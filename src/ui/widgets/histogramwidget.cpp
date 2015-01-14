@@ -5,6 +5,8 @@ HistogramWidget::HistogramWidget()
 {
     m_valid = false;
     set_size_request(256, 100);
+
+    override_background_color(Gdk::RGBA("#101010"));
 }
 
 HistogramWidget::~HistogramWidget()
@@ -31,8 +33,6 @@ void HistogramWidget::clearHistogram()
 
 bool HistogramWidget::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-    override_background_color(Gdk::RGBA("#101010"));
-
     if (!m_valid)
     {
         return true;
