@@ -54,8 +54,9 @@ bool File::scan()
         thumbWidth = (int)((float)thumbWidth * ratio);
     }
 
-    m_thumbnail = generateThumbnail(m_image, thumbWidth, thumbHeight, false);
-    Surface* fingerprintSurface = generateThumbnail(m_image, FINGERPRINT_SIZE, FINGERPRINT_SIZE, true);
+    m_thumbnail = m_image->scaleToFit(150, 150, false);
+
+    Surface* fingerprintSurface = m_image->scaleToFit(FINGERPRINT_SIZE, FINGERPRINT_SIZE, true);
 
 #if 0
     size_t pos = m_path.rfind('/');
@@ -109,69 +110,6 @@ bool File::scan()
     m_fingerprint = string(digestStr);
 
     return true;
-}
-
-Surface* File::generateThumbnail(Surface* image, int thumbWidth, int thumbHeight, bool fingerprint)
-{
-    int imageWidthi = image->getWidth();
-    float imageWidth = (float)image->getWidth();
-    float imageHeight = (float)image->getHeight();
-
-    // Generate fingerprint
-    float stepX = (float)imageWidth / (float)thumbWidth;
-    float stepY = (float)imageHeight / (float)thumbHeight;
-    int stepXi = (int)round(stepX);
-    int stepYi = (int)round(stepY);
-    int blockCount = (stepXi * stepYi);
-
-    Surface* fingerprintSurface = new Surface(thumbWidth, thumbHeight, 4);
-
-    uint32_t* data = (uint32_t*)fingerprintSurface->getData();
-    uint8_t* srcdata = (uint8_t*)image->getData();
-
-int blockDelta = (imageWidthi - stepXi) * 4;
-
-    int y;
-    for (y = 0; y < thumbHeight; y++)
-    {
-        int blockY = floor((float)y * stepY);
-        int x;
-        for (x = 0; x < thumbWidth; x++)
-        {
-
-            int blockX = floor((float)x * stepX);
-            int bx;
-            int by;
-            v4si totals = {0, 0, 0, 0};
-
-            uint8_t* imgrow = srcdata;
-            imgrow += ((imageWidthi * blockY) + (blockX)) * 4;
-
-            for (by = 0; by < stepYi; by++)
-            {
-                for (bx = 0; bx < stepXi; bx++)
-                {
-                    v4si pv = {
-                        imgrow[3],
-                        imgrow[2],
-                        imgrow[1],
-                        imgrow[0]};
-                    totals += pv;
-                    imgrow += 4;
-                }
-                imgrow += blockDelta;
-            }
-            v4si avg = totals / blockCount;
-            if (fingerprint)
-            {
-                avg &= 0xc0;
-            }
-
-            *(data++) = 0xff000000 | (avg[1] << 16) | (avg[2] << 8) | (avg[3] << 0);
-        }
-    }
-
-    return fingerprintSurface;
 }
 
 bool File::getTags(map<string, TagData*>& tags)
