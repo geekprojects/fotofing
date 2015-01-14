@@ -4,6 +4,7 @@
 #include "dialogs/calendarpopup.h"
 #include "dialogs/sourcesdialog.h"
 #include "dialogs/tagdialog.h"
+#include "edit/edit.h"
 #include "mainwindow.h"
 #include "uiutils.h"
 
@@ -19,7 +20,7 @@ MainWindow::MainWindow(Index* index) :
 
     m_tabs.set_name("ff-content");
     m_tabs.append_page(m_library, "Library");
-    m_tabs.append_page(m_edit, "Edit");
+    //m_tabs.append_page(m_edit, "Edit");
 
     m_progressBar.set_show_text(true);
     m_progressBar.set_ellipsize(Pango::ELLIPSIZE_START);
@@ -129,6 +130,14 @@ Gtk::MenuBar* MainWindow::createMenu()
     Glib::RefPtr<Gio::Menu> gmenu = Glib::RefPtr<Gio::Menu>::cast_dynamic(object);
 
     return Gtk::manage(new Gtk::MenuBar(gmenu));
+}
+
+void MainWindow::editPhoto(Photo* photo)
+{
+    Edit* editTab = (Edit*)Gtk::manage(new Edit(this, photo));
+
+    int page = m_tabs.append_page(*editTab, *(editTab->getTabLabel()));
+    m_tabs.set_current_page(page);
 }
 
 void MainWindow::setStatusMessage(string message)

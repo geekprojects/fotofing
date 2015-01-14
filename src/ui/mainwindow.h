@@ -10,7 +10,6 @@
 
 #include "dialogs/about.h"
 #include "library/library.h"
-#include "edit/edit.h"
 
 class MainWindow : public Gtk::Window, public IndexClient
 {
@@ -23,9 +22,6 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     /* Library Tab */
     Library m_library;
-
-    /* Edit Tab */
-    Edit m_edit;
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
@@ -43,6 +39,8 @@ class MainWindow : public Gtk::Window, public IndexClient
     virtual ~MainWindow();
 
     Index* getIndex() { return m_index; }
+
+    void editPhoto(Photo* photo);
 
     void setStatusMessage(std::string message);
     void startProgress();
