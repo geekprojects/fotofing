@@ -46,9 +46,9 @@ bool HistogramTagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::
         {
             uint32_t p = *(data++);
 
-            uint8_t r = (p >> 16) & 0xff;
+            uint8_t r = (p >>  0) & 0xff;
             uint8_t g = (p >>  8) & 0xff;
-            uint8_t b = (p >>  0) & 0xff;
+            uint8_t b = (p >> 16) & 0xff;
             hist_r[r]++;
             hist_g[g]++;
             hist_b[b]++;
