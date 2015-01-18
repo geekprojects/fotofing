@@ -412,6 +412,12 @@ PreparedStatement::~PreparedStatement()
     sqlite3_finalize(m_stmt);
 }
 
+bool PreparedStatement::bindString(int i, const char* str, int length)
+{
+    sqlite3_bind_text(m_stmt, i, str, length, SQLITE_TRANSIENT);
+    return true;
+}
+
 bool PreparedStatement::bindString(int i, string str)
 {
     sqlite3_bind_text(m_stmt, i, str.c_str(), str.length(), SQLITE_TRANSIENT);
@@ -421,6 +427,18 @@ bool PreparedStatement::bindString(int i, string str)
 bool PreparedStatement::bindInt64(int i, int64_t value)
 {
     sqlite3_bind_int64(m_stmt, i, value);
+    return true;
+}
+
+bool PreparedStatement::bindBlob(int i, void* data, int length)
+{
+    sqlite3_bind_blob(m_stmt, i, data, length, SQLITE_TRANSIENT);
+    return true;
+}
+
+bool PreparedStatement::bindNull(int i)
+{
+    sqlite3_bind_null(m_stmt, i);
     return true;
 }
 

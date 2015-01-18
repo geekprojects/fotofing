@@ -8,22 +8,27 @@
 
 using namespace std;
 
-PhotoDetails::PhotoDetails(MainWindow* mainWindow) :
+PhotoDetails::PhotoDetails(Library* library) :
     Gtk::Paned(Gtk::ORIENTATION_VERTICAL)
 {
-    m_mainWindow = mainWindow;
+    m_library = library;
     m_photo = NULL;
 
     // Photo properties
     m_photoPropListStore = Gtk::ListStore::create(m_photoPropColumns);
     m_photoPropTreeView.set_model(m_photoPropListStore);
-    m_photoPropTreeView.append_column_editable("Property", m_photoPropColumns.property);
-    m_photoPropTreeView.append_column_editable("Value", m_photoPropColumns.value);
+    m_photoPropTreeView.append_column("Property", m_photoPropColumns.property);
+
+
+    m_photoPropTreeView.append_column("Value", m_photoPropColumns.value);
 
     m_photoPropScrollWindow.add(m_photoPropTreeView);
     m_photoPropFrame.set_shadow_type(Gtk::SHADOW_IN);
     m_photoPropFrame.add(m_photoPropScrollWindow);
-    pack1(m_photoPropFrame, true, false);
+
+    m_vbox.pack_start(m_photoPropFrame, Gtk::PACK_EXPAND_WIDGET);
+    m_vbox.pack_start(m_histogram, Gtk::PACK_SHRINK);
+    pack1(m_vbox, true, false);
 
     // Photo tags
     m_tagView.signal_delete_tags().connect(sigc::mem_fun(
@@ -53,7 +58,7 @@ void PhotoDetails::displayDetails(Photo* photo)
     localtime_r(&ts, &tm);
 
     char tsbuf[64];
-    strftime(tsbuf, 64, "%x", &tm);
+    strftime(tsbuf, 64, "%Ex", &tm);
     propRow = *(m_photoPropListStore->append());
     propRow[m_photoPropColumns.property] = "Date";
     propRow[m_photoPropColumns.value] = string(tsbuf);
@@ -68,9 +73,33 @@ void PhotoDetails::displayDetails(Photo* photo)
     if (tags.size() == 0)
     {
         // Only do this if we haven't already retrieved the tags
-        tags = m_mainWindow->getIndex()->getTags(photo->getId());
+        tags = m_library->getIndex()->getTags(photo->getId());
         photo->setTags(tags);
     }
+
+    TagData* redData = m_library->getIndex()->getTagData(
+        photo->getId(),
+        "Fotofing/Taggers/Histogram/Red");
+    TagData* greenData = m_library->getIndex()->getTagData(
+        photo->getId(),
+        "Fotofing/Taggers/Histogram/Green");
+    TagData* blueData = m_library->getIndex()->getTagData(
+        photo->getId(),
+        "Fotofing/Taggers/Histogram/Blue");
+
+    if (redData->type != SQLITE_NULL &&
+        greenData->type != SQLITE_NULL &&
+        blueData->type != SQLITE_NULL)
+    {
+        m_histogram.setHistogram(
+            (float*)redData->data.blob.data,
+            (float*)greenData->data.blob.data,
+            (float*)blueData->data.blob.data);
+    }
+
+    delete redData;
+    delete greenData;
+    delete blueData;
 
     m_tagView.update(tags);
 }
@@ -84,7 +113,7 @@ void PhotoDetails::updateTags()
 
     // Refresh the photo's tags
     set<string> updatedTags;
-    updatedTags = m_mainWindow->getIndex()->getTags(m_photo->getId());
+    updatedTags = m_library->getIndex()->getTags(m_photo->getId());
     m_photo->setTags(updatedTags);
     m_tagView.update(updatedTags);
 
@@ -99,7 +128,7 @@ void PhotoDetails::onDeleteTags(vector<Tag*> tags)
 
     int res;
     res = UIUtils::confirm(
-        *m_mainWindow,
+        *m_library->getMainWindow(),
         "Remove selected tags?",
         "Are you sure you wish to remove the selected tags?");
     if (res)
@@ -111,13 +140,13 @@ void PhotoDetails::onDeleteTags(vector<Tag*> tags)
             printf(
                 "MainWindow::onDeleteTags: Deleting tag: %s\n",
                 tag->getTagName().c_str());
-            m_mainWindow->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
+            m_library->getIndex()->removeTag(m_photo->getId(), tag->getTagName());
         }
 
         updateTags();
 
         // Just in case this we just removed the last instance of a tags
-        m_mainWindow->updateTags();
+        m_library->updateTags();
     }
 }
 

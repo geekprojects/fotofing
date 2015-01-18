@@ -5,7 +5,8 @@
 
 #include <gtkmm.h>
 
-#include "tagview.h"
+#include "widgets/tagview.h"
+#include "widgets/histogramwidget.h"
 
 class PhotoPropColumns : public Gtk::TreeModelColumnRecord
 {
@@ -21,12 +22,15 @@ class PhotoPropColumns : public Gtk::TreeModelColumnRecord
 };
 
 class MainWindow;
+class Library;
 
 class PhotoDetails : public Gtk::Paned
 {
  private:
-    MainWindow* m_mainWindow;
+    Library* m_library;
     Photo* m_photo;
+
+    Gtk::VBox m_vbox;
 
     // Photo properties
     Gtk::ScrolledWindow m_photoPropScrollWindow;
@@ -34,6 +38,8 @@ class PhotoDetails : public Gtk::Paned
     Glib::RefPtr<Gtk::ListStore> m_photoPropListStore;
     const PhotoPropColumns m_photoPropColumns;
     Gtk::Frame m_photoPropFrame;
+
+    HistogramWidget m_histogram;
 
     // Photo tags
     TagView m_tagView;
@@ -43,7 +49,7 @@ class PhotoDetails : public Gtk::Paned
 
  public:
 
-    PhotoDetails(MainWindow* mainWindow);
+    PhotoDetails(Library* library);
     ~PhotoDetails();
 
     void displayDetails(Photo* photo);

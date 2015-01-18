@@ -8,9 +8,9 @@
 using namespace std;
 using namespace Geek::Gfx;
 
-PhotoView::PhotoView(MainWindow* mainWindow)
+PhotoView::PhotoView(Library* library)
 {
-    m_mainWindow = mainWindow;
+    m_library = library;
 
     m_model = Gtk::ListStore::create(m_photoColumns);
     m_model->set_default_sort_func(sigc::mem_fun(
@@ -18,7 +18,7 @@ PhotoView::PhotoView(MainWindow* mainWindow)
         &PhotoView::onIconViewSort));
     m_model->set_sort_column(
         Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID,
-        Gtk::SORT_ASCENDING);
+        Gtk::SORT_DESCENDING);
 
     m_iconView.set_model(m_model);
     m_iconView.set_selection_mode(Gtk::SELECTION_MULTIPLE);
@@ -78,17 +78,18 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
         {
             tagStrings.push_back((*it)->getTagName());
         }
-        m_photos = m_mainWindow->getIndex()->getPhotos(tagStrings, &from, &to);
+        m_photos = m_library->getIndex()->getPhotos(tagStrings, &from, &to);
     }
     else
     {
-        m_photos = m_mainWindow->getIndex()->getPhotos(&from, &to);
+        m_photos = m_library->getIndex()->getPhotos(&from, &to);
     }
 
+    unsigned int max = 500;
+    unsigned int i;
     vector<Photo*>::iterator it;
-    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    for (it = m_photos.begin(), i = 0; it != m_photos.end() && i < max; it++, i++)
     {
-
         Photo* photo = *it;
         Surface* thumbnail = photo->getThumbnail();
 
@@ -98,10 +99,27 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
             true,
             8,
             thumbnail->getWidth(),
-            thumbnail->getHeight(),
+            thumbnail->getHeight() - 1,
             thumbnail->getWidth() * 4);
 
-        string title = m_mainWindow->getIndex()->getProperty(
+        TagData* orientation = m_library->getIndex()->getTagData(
+            photo->getId(),
+            "Photo/Orientation");
+        if (orientation->type == SQLITE_INTEGER)
+        {
+            switch (orientation->data.i)
+            {
+                case 6:
+                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_CLOCKWISE);
+                    break;
+                case 8:
+                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_COUNTERCLOCKWISE);
+                    break;
+            }
+        }
+        delete orientation;
+
+        string title = m_library->getIndex()->getProperty(
             photo->getId(),
             "Title");
 
@@ -117,6 +135,24 @@ void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
         row[m_photoColumns.pixbuf] = pixbuf;
         row[m_photoColumns.photo] = photo;
     }
+
+    char message[1024];
+    if (i < m_photos.size())
+    {
+        sprintf(message, "Displaying %d of %lu photos", i, m_photos.size());
+    }
+    else
+    {
+        if (i == 1)
+        {
+            sprintf(message, "Displaying %lu photo", m_photos.size());
+        }
+        else
+        {
+            sprintf(message, "Displaying %lu photos", m_photos.size());
+        }
+    }
+    m_library->getMainWindow()->setStatusMessage(message);
 }
 
 void PhotoView::selectAll()
@@ -127,9 +163,9 @@ void PhotoView::selectAll()
 void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
 {
     Photo* photo = getPhotoFromPath(path);
-    m_mainWindow->displayDetails(photo);
+    m_library->displayDetails(photo);
 
-    vector<File*> files = m_mainWindow->getIndex()->getFiles(photo->getId());
+    vector<File*> files = m_library->getIndex()->getFiles(photo->getId());
     if (files.size() > 0)
     {
         pid_t childPid = fork();
@@ -138,7 +174,10 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
             const char* argv[] =
             {
                 "/usr/bin/qiv",
-                "-fm",
+                "--fullscreen",
+                "--maxpect",
+                "--autorotate",
+                "--browse",
                 files.at(0)->getPath().c_str(),
                 (const char*)NULL
             };
@@ -165,7 +204,7 @@ void PhotoView::onIconViewSelectionChanged()
     vector<Gtk::TreePath> selected = m_iconView.get_selected_items();
     if (selected.size() > 0)
     {
-        m_mainWindow->displayDetails(getPhotoFromPath(selected.at(0)));
+        m_library->displayDetails(getPhotoFromPath(selected.at(0)));
     }
 }
 
@@ -248,24 +287,24 @@ void PhotoView::rename()
     {
         Photo* photo = photos.at(0);
 
-        string title = m_mainWindow->getIndex()->getProperty(
+        string title = m_library->getIndex()->getProperty(
             photo->getId(),
             "Title");
 
         bool res;
         res = UIUtils::promptString(
-            *m_mainWindow,
+            *m_library->getMainWindow(),
             "Photo Title",
             "Please give this photo a title",
             title,
             title);
         if (res)
         {
-            m_mainWindow->getIndex()->setProperty(
+            m_library->getIndex()->setProperty(
                 photo->getId(),
                 "Title",
                 title);
-            m_mainWindow->update();
+            m_library->update();
         }
     }
 }

@@ -19,6 +19,7 @@ AC_CHECK_LIB([exiv2], [_ZN5Exiv212ImageFactory4openERKSs])
 AC_CHECK_LIB([m], [pow])
 AC_CHECK_LIB([sqlite3], [sqlite3_open])
 AC_CHECK_LIB([geek-gfx], _ZN4Geek3Gfx7Surface8loadJPEGESs)
+AC_CHECK_LIB([xml2], [xmlReadFile])
 
 # Checks for header files.
 AC_CHECK_HEADERS([limits.h stdint.h stdlib.h string.h unistd.h])
@@ -41,5 +42,14 @@ AC_CONFIG_FILES([Makefile
                  src/tests/Makefile
                  src/tests/database/Makefile
                  src/tests/database/schema/Makefile
-                 src/ui/Makefile])
+                 src/tests/taggers/Makefile
+                 src/ui/Makefile
+                 src/ui/widgets/Makefile
+                 src/ui/dialogs/Makefile
+                 src/ui/library/Makefile
+                 src/ui/edit/Makefile
+                 src/taggers/Makefile
+                 src/taggers/histogram/Makefile
+                 src/taggers/exif/Makefile
+                 src/taggers/features/Makefile])
 AC_OUTPUT

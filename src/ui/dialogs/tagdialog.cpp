@@ -10,6 +10,7 @@ TagDialog::TagDialog(MainWindow* mainWindow) :
     m_tagTextCombo(true)
 {
 
+    m_tagTypeCombo.append("Event");
     m_tagTypeCombo.append("Trip");
     m_tagTypeCombo.append("Location");
     m_tagTypeCombo.append("People");
