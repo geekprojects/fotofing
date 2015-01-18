@@ -4,20 +4,45 @@
 #include <gtkmm.h>
 
 #include <fotofing/photo.h>
+#include <fotofing/workflow.h>
 
 #include "mainwindow.h"
 #include "editpreview.h"
-#include "workflow.h"
 
-class Edit : public Gtk::VBox
+class OpsModelColumns : public Gtk::TreeModelColumnRecord
+{
+ public:
+    Gtk::TreeModelColumn<Glib::ustring> opText;
+
+    OpsModelColumns()
+    {
+        add(opText);
+    }
+};
+
+
+class Edit : public Gtk::HBox
 {
  private:
     MainWindow* m_mainWindow;
 
     Workflow* m_workflow;
 
-    Gtk::Label m_label;
     EditPreview m_preview;
+
+    Gtk::VBox m_opsBox;
+
+    Gtk::ScrolledWindow m_opsMenuWindow;
+    Gtk::Frame m_opsMenuFrame;
+    OpsModelColumns m_opsMenuColumns;
+    Gtk::TreeView m_opsMenuView;
+    Glib::RefPtr<Gtk::TreeStore> m_opsMenuViewStore;
+
+    Gtk::ScrolledWindow m_opsWindow;
+    Gtk::Frame m_opsFrame;
+    OpsModelColumns m_opsColumns;
+    Gtk::TreeView m_opsView;
+    Glib::RefPtr<Gtk::TreeStore> m_opsViewStore;
 
     Gtk::HBox m_tabLabel;
     Gtk::Label m_tabLabelText;

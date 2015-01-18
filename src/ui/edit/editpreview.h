@@ -3,7 +3,7 @@
 
 #include <gtkmm.h>
 
-#include "workflow.h"
+#include <fotofing/workflow.h>
 
 class EditPreview : public Gtk::DrawingArea
 {
