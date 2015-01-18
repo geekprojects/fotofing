@@ -16,6 +16,7 @@
 #define DEFAULT_DB_PATH "/.fotofing/fotofing.db"
 
 class Index;
+class Workflow;
 
 class IndexClient
 {
@@ -98,7 +99,11 @@ class Index
     bool scanSource(Source* s, IndexClient* client = NULL);
     bool scanSources(IndexClient* client = NULL);
     bool removeSource(Source* s);
+    Source* getSource(std::string sourceId);
     std::vector<Source*> getSources();
+
+    /* Workflows */
+    Workflow* getWorkflow(std::string pid);
 };
 
 #endif
