@@ -1,3 +1,3 @@
 
-SUBDIRS=libfotofing ui cli taggers tests
+SUBDIRS=libfotofing ui cli plugins tests
 

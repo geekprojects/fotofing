@@ -48,8 +48,9 @@ AC_CONFIG_FILES([Makefile
                  src/ui/dialogs/Makefile
                  src/ui/library/Makefile
                  src/ui/edit/Makefile
-                 src/taggers/Makefile
-                 src/taggers/histogram/Makefile
-                 src/taggers/exif/Makefile
-                 src/taggers/features/Makefile])
+                 src/plugins/Makefile
+                 src/plugins/taggers/Makefile
+                 src/plugins/taggers/histogram/Makefile
+                 src/plugins/taggers/exif/Makefile
+                 src/plugins/taggers/features/Makefile])
 AC_OUTPUT

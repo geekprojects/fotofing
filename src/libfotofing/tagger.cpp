@@ -24,8 +24,8 @@ bool Tagger::tag(string path, Geek::Gfx::Surface* image, std::map<std::string, T
 }
 
 const char* taggerPaths[] = {
-    "src/taggers/exif/.libs/",
-    "src/taggers/histogram/.libs/",
+    "src/plugins/taggers/exif/.libs/",
+    "src/plugins/taggers/histogram/.libs/",
     "/usr/lib",
     "/usr/local/lib",
     NULL
