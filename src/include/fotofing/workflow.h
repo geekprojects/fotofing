@@ -3,10 +3,14 @@
 
 #include <fotofing/photo.h>
 #include <fotofing/file.h>
+#include <fotofing/utils.h>
+
+#include <geek/core-matrix.h>
 
 #include <vector>
+#include <string>
 
-class WorkflowOperation;
+class OperationInstance;
 
 class Workflow
 {
@@ -14,7 +18,7 @@ class Workflow
     Photo* m_photo;
     File* m_file;
 
-    std::vector<WorkflowOperation*> m_operations;
+    std::vector<OperationInstance*> m_operations;
 
  public:
     Workflow(Photo* photo, File* file)
@@ -31,15 +35,48 @@ class Workflow
     File* getFile() { return m_file; }
 };
 
-class WorkflowOperation
+struct OperationAttribute
+{
+    std::string name;
+    std::string label;
+    std::string description;
+    int type;
+};
+
+class Operation
+{
+    Operation();
+    virtual ~Operation();
+
+    virtual std::string getName();
+    virtual std::string getDescription();
+
+    virtual std::vector<OperationAttribute> getAttributes();
+};
+
+class OperationInstance
 {
  private:
 
  public:
-    WorkflowOperation();
-    virtual ~WorkflowOperation();
+    OperationInstance();
+    virtual ~OperationInstance();
 
-    virtual void apply(Geek::Gfx::Surface* surface);
+    virtual void setAttribute(std::string name, int i);
+    virtual void setAttribute(std::string name, double d);
+
+    virtual void apply(
+        Geek::Gfx::Surface* surface,
+        ProgressListener* prog);
+
+    // Common utility methods
+    void convolution(Geek::Gfx::Surface* surface, Geek::CentredMatrix* matrix);
 };
+
+#define DECLARE_OPERATION(_class) \
+    Operation* fotofing_operator_new() \
+    { \
+        return new _class(); \
+    }
 
 #endif

@@ -1,3 +1,3 @@
 
-SUBDIRS=libfotofing ui cli plugins tests
+SUBDIRS=libfotofing libfotofing-workflow ui cli plugins tests
 

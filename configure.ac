@@ -38,6 +38,7 @@ AC_CHECK_FUNCS([floor gethostname localtime_r memset])
 AC_CONFIG_FILES([Makefile
                  src/Makefile
                  src/libfotofing/Makefile
+                 src/libfotofing-workflow/Makefile
                  src/cli/Makefile
                  src/tests/Makefile
                  src/tests/database/Makefile
@@ -52,5 +53,7 @@ AC_CONFIG_FILES([Makefile
                  src/plugins/taggers/Makefile
                  src/plugins/taggers/histogram/Makefile
                  src/plugins/taggers/exif/Makefile
-                 src/plugins/taggers/features/Makefile])
+                 src/plugins/taggers/features/Makefile
+                 src/plugins/operations/Makefile
+                 src/plugins/operations/refocus/Makefile])
 AC_OUTPUT

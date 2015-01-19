@@ -1,3 +1,3 @@
 
-SUBDIRS=taggers
+SUBDIRS=taggers operations
 
