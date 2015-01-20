@@ -1,4 +1,9 @@
-
+/*
+ * Refocus operation for FotoFing
+ *
+ * Based on the GIMP refocus plugin by
+ * Ernst Lippe <ernstl@users.sourceforge.net>
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -12,8 +17,12 @@ extern "C" {
 #include <geek/gfx-surface.h>
 #include <geek/core-matrix.h>
 
+#include "refocus.h"
+
 using namespace Geek;
 using namespace Geek::Gfx;
+
+DECLARE_OPERATION(RefocusOperation)
 
 int dgesv (
     const int N,
@@ -157,13 +166,22 @@ void make_circle_convolution(CentredMatrix* cmatrix, int matrixWidth)
     cmatrix->fill(circle_intensity, matrixWidth);
 }
 
-double correlation (const int x, const int y, const double gamma, const double musq)
+double correlation(
+    const int x,
+    const int y,
+    const double gamma,
+    const double musq)
 {
-  return (musq + pow (gamma, sqrt (SQR (x) + SQR (y))));
+    return (musq + pow (gamma, sqrt (SQR (x) + SQR (y))));
 }
 
-CentredMatrix* compute_g (const CentredMatrix* const convolution, const int m, const double gamma,
-           const double noise_factor, const double musq, const bool symmetric)
+CentredMatrix* compute_g (
+    const CentredMatrix* const convolution,
+    const int m,
+    const double gamma,
+    const double noise_factor,
+    const double musq,
+    const bool symmetric)
 {
     CentredMatrix h_conv_ruv(3 * m);
     CentredMatrix a(2 * m);
@@ -233,15 +251,33 @@ CentredMatrix* compute_g_matrix(
     return (g);
 }
 
-
-int main(int argc, char** argv)
+RefocusOperation::RefocusOperation()
 {
-    Surface* srcSurface = Surface::loadJPEG("test.jpg");
-    Surface* dstSurface = new Surface(srcSurface->getWidth(), srcSurface->getHeight(), 4);
+}
 
+RefocusOperation::~RefocusOperation()
+{
+}
+
+
+OperationInstance* RefocusOperation::createInstance()
+{
+    return new RefocusInstance();
+}
+
+RefocusInstance::RefocusInstance()
+{
+}
+
+RefocusInstance::~RefocusInstance()
+{
+}
+
+void RefocusInstance::apply(Surface* surface, ProgressListener* prog)
+{
     int matrix_width = 5;
     double radius = 1;
-    double alpha = 0.0;
+    double alpha = 0.1;
     double gamma = 0.5;
     double noiseFactor = 0.01;
 
@@ -252,79 +288,28 @@ int main(int argc, char** argv)
     make_circle_convolution(&cmatrix, radius);
     make_gaussian_convolution(&gmatrix, alpha);
 
-    CentredMatrix convolution(matrix_width);
-    convolution.convolve_star_mat(&gmatrix, &cmatrix);
+    CentredMatrix conv(matrix_width);
+    conv.convolve_star_mat(&gmatrix, &cmatrix);
 
-    convolution.dump();
+    conv.dump();
     printf("\n");
 
-CentredMatrix* matrix;
-      matrix = compute_g_matrix (&convolution, matrix_width,
-                                 gamma,
-                                 noiseFactor, 0.0, true);
+    CentredMatrix* matrix;
+    matrix = compute_g_matrix(
+        &conv,
+        matrix_width,
+        gamma,
+        noiseFactor,
+        0.0,
+        true);
 
     matrix->dump();
     printf("\n");
 
-    int matOffset = matrix->m_stride / 2;
-    int border = matrix->m_stride / 2;
-    uint8_t* dst = dstSurface->getData();
-
-    int y1;
-    for (y1 = 0; y1 < (int)srcSurface->getHeight(); y1++)
-    {
-        bool yborder = false;
-        if (y1 < border || y1 >= (int)srcSurface->getHeight() - border)
-        {
-            yborder = true;
-        }
-        int x1;
-        for (x1 = 0; x1 < (int)srcSurface->getWidth(); x1++)
-        {
-            double val[4] = {0.0, 0.0, 0.0, 0.0};
-
-            double* mp = matrix->m_data;
-
-            if (x1 > border && x1 < (int)srcSurface->getWidth() - border && !yborder)
-            {
-uint8_t* src = srcSurface->getData() + srcSurface->getOffset(x1 - matOffset, y1 - matOffset);
-                int y2;
-                for (y2 = -matOffset; y2 <= matOffset; y2++)
-                {
-                    int x2;
-                    for (x2 = -matOffset; x2 <= matOffset; x2++)
-                    {
-                        val[0] += *(mp) * (double)*(src++);
-                        val[1] += *(mp) * (double)*(src++);
-                        val[2] += *(mp) * (double)*(src++);
-                        val[3] += *(mp) * (double)*(src++);
-                        mp++;
-                    }
-src += (srcSurface->getWidth() - matrix->m_stride) * 4;
-                }
-                *(dst++) = CLAMP(val[2], 0, 255);
-                *(dst++) = CLAMP(val[1], 0, 255);
-                *(dst++) = CLAMP(val[0], 0, 255);
-                *(dst++) = 255;
-            }
-            else
-            {
-                uint8_t* src = srcSurface->getData() + srcSurface->getOffset(x1, y1);
-                *(dst++) = *(src++);
-                *(dst++) = *(src++);
-                *(dst++) = *(src++);
-                *(dst++) = *(src++);
-            }
-
-        }
-    }
-
-    delete matrix;
-
-    dstSurface->saveJPEG("output.jpg");
-
-    delete srcSurface;
-    delete dstSurface;
+    // Apply the convolution
+    Surface* dst = new Surface(surface->getWidth(), surface->getHeight(), 4);
+    convolution(surface, dst, matrix);
+    surface->swapData(dst);
+    delete dst;
 }
-
 
