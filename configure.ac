@@ -44,6 +44,7 @@ AC_CONFIG_FILES([Makefile
                  src/tests/database/Makefile
                  src/tests/database/schema/Makefile
                  src/tests/taggers/Makefile
+                 src/tests/workflow/Makefile
                  src/ui/Makefile
                  src/ui/widgets/Makefile
                  src/ui/dialogs/Makefile

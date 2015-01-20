@@ -1,3 +1,3 @@
 
-SUBDIRS=database taggers
+SUBDIRS=database taggers workflow
 
