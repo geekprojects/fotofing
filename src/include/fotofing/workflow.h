@@ -45,6 +45,7 @@ struct OperationAttribute
 
 class Operation
 {
+ public:
     Operation();
     virtual ~Operation();
 
@@ -52,11 +53,19 @@ class Operation
     virtual std::string getDescription();
 
     virtual std::vector<OperationAttribute> getAttributes();
+
+    virtual OperationInstance* createInstance();
 };
 
 class OperationInstance
 {
- private:
+ protected:
+
+    // Common utility methods
+    void convolution(
+        Geek::Gfx::Surface* src,
+        Geek::Gfx::Surface* dst,
+        Geek::CentredMatrix* matrix);
 
  public:
     OperationInstance();
@@ -69,12 +78,12 @@ class OperationInstance
         Geek::Gfx::Surface* surface,
         ProgressListener* prog);
 
-    // Common utility methods
-    void convolution(Geek::Gfx::Surface* surface, Geek::CentredMatrix* matrix);
 };
 
+typedef Operation*(*newOperation_t)();
+
 #define DECLARE_OPERATION(_class) \
-    Operation* fotofing_operator_new() \
+    extern "C" Operation* fotofing_operation_create() \
     { \
         return new _class(); \
     }

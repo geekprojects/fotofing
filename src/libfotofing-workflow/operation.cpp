@@ -21,3 +21,14 @@ string Operation::getDescription()
     return "";
 }
 
+vector<OperationAttribute> Operation::getAttributes()
+{
+    vector<OperationAttribute> attrs;
+    return attrs;
+}
+
+OperationInstance* Operation::createInstance()
+{
+    return NULL;
+}
+
