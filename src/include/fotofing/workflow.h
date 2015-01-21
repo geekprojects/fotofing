@@ -4,6 +4,7 @@
 #include <fotofing/photo.h>
 #include <fotofing/file.h>
 #include <fotofing/utils.h>
+#include <fotofing/plugin.h>
 
 #include <geek/core-matrix.h>
 
@@ -43,7 +44,7 @@ struct OperationAttribute
     int type;
 };
 
-class Operation
+class Operation : public FotofingPlugin
 {
  public:
     Operation();
@@ -82,10 +83,6 @@ class OperationInstance
 
 typedef Operation*(*newOperation_t)();
 
-#define DECLARE_OPERATION(_class) \
-    extern "C" Operation* fotofing_operation_create() \
-    { \
-        return new _class(); \
-    }
+#define DECLARE_OPERATION(_class) DECLARE_PLUGIN(operation, _class)
 
 #endif

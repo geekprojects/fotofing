@@ -32,3 +32,15 @@ OperationInstance* Operation::createInstance()
     return NULL;
 }
 
+const char* operationPaths[] = {
+    "src/plugins/operations/refocus/.libs/",
+    "/usr/lib",
+    "/usr/local/lib",
+    NULL
+};
+
+vector<Operation*> Operation::findOperations()
+{
+
+}
+
