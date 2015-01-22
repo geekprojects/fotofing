@@ -14,12 +14,10 @@ using namespace std;
 map<string, vector<FotofingPlugin*> > g_plugins;
 
 const char* pluginPaths[] = {
-    "src/plugins/operations/refocus/.libs/",
-    "src/plugins/taggers/exif/.libs/",
-    "src/plugins/taggers/histogram/.libs/",
+    "src/plugins/operations/*/.libs/",
+    "src/plugins/taggers/*/.libs/",
     "/usr/lib",
     "/usr/local/lib",
-    NULL
 };
 
 #define PLUGIN_LIB_PREFIX "libfotofing-"
@@ -48,13 +46,54 @@ vector<FotofingPlugin*> FotofingPlugin::getPlugins(string type)
         return pluginIt->second;
     }
 
-    vector<FotofingPlugin*> results;
-
+    // Expand the plugin paths
+    vector<string> expandedPaths;
     int i;
     for (i = 0; pluginPaths[i] != NULL; i++)
     {
-        const char* path = pluginPaths[i];
-        printf("FotofingPlugin::getPlugins: Checking %s\n", path);
+        string path = string(pluginPaths[i]);
+        unsigned int pos = path.find("/*/");
+        if (pos != -1)
+        {
+            string scanPath = path.substr(0, pos);
+            string subDir = path.substr(pos + 3);
+
+            DIR* dir = opendir(scanPath.c_str());
+
+            while (true)
+            {
+                struct dirent* dirent;
+                dirent = readdir(dir);
+                if (dirent == NULL)
+                {
+                    break;
+                }
+
+                if (dirent->d_name[0] == '.' || dirent->d_type != DT_DIR)
+                {
+                    continue;
+                }
+
+                path = scanPath + "/" + string(dirent->d_name) + "/" + subDir;
+                expandedPaths.push_back(path);
+            }
+
+            closedir(dir);
+        }
+        else
+        {
+            expandedPaths.push_back(path);
+        }
+    }
+
+    vector<FotofingPlugin*> results;
+    vector<string>::iterator pathIt;
+    for (
+        pathIt = expandedPaths.begin();
+        pathIt != expandedPaths.end();
+        pathIt++)
+    {
+        const char* path = pathIt->c_str();
 
         struct dirent** namelist;
         int n;
