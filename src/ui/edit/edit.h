@@ -32,7 +32,7 @@ class Edit : public Gtk::HBox
 
     EditPreview m_preview;
 
-    Gtk::VBox m_opsBox;
+    Gtk::VBox m_workflowBox;
 
     Gtk::ScrolledWindow m_opsMenuWindow;
     Gtk::Frame m_opsMenuFrame;
@@ -41,11 +41,14 @@ class Edit : public Gtk::HBox
     Glib::RefPtr<Gtk::TreeStore> m_opsMenuViewStore;
     Glib::RefPtr<Gtk::TreeSelection> m_opsMenuSelection;
 
+    Gtk::VBox m_opsBox;
     Gtk::ScrolledWindow m_opsWindow;
     Gtk::Frame m_opsFrame;
+#if 0
     OpsModelColumns m_opsColumns;
     Gtk::TreeView m_opsView;
     Glib::RefPtr<Gtk::TreeStore> m_opsViewStore;
+#endif
 
     Gtk::HBox m_tabLabel;
     Gtk::Label m_tabLabelText;

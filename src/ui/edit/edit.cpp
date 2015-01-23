@@ -20,22 +20,19 @@ Edit::Edit(MainWindow* mainWindow, Workflow* workflow)
     m_opsMenuWindow.add(m_opsMenuView);
     m_opsMenuFrame.set_shadow_type(Gtk::SHADOW_IN);
     m_opsMenuFrame.add(m_opsMenuWindow);
-    m_opsBox.pack_start(m_opsMenuFrame, Gtk::PACK_EXPAND_WIDGET);
+    m_workflowBox.pack_start(m_opsMenuFrame, Gtk::PACK_EXPAND_WIDGET);
 
     m_opsMenuView.signal_row_activated().connect(sigc::mem_fun(
         *this,
         &Edit::onOpsMenuRowActivate));
 
     // Workflow Operations
-    m_opsViewStore = Gtk::TreeStore::create(m_opsColumns);
-    m_opsView.set_model(m_opsViewStore);
-    m_opsView.set_reorderable();
-    m_opsView.append_column("Operation", m_opsColumns.opText);
-    m_opsWindow.add(m_opsView);
+    m_opsWindow.add(m_opsBox);
     m_opsFrame.set_shadow_type(Gtk::SHADOW_IN);
     m_opsFrame.add(m_opsWindow);
-    m_opsBox.pack_start(m_opsFrame, Gtk::PACK_EXPAND_WIDGET);
-    pack_start(m_opsBox, Gtk::PACK_SHRINK);
+    m_workflowBox.pack_start(m_opsFrame, Gtk::PACK_EXPAND_WIDGET);
+
+    pack_start(m_workflowBox, Gtk::PACK_SHRINK);
 
     m_tabLabelText.set_label("Edit " + workflow->getPhoto()->getId().substr(0, 6));
     m_tabLabelClose.set_relief(Gtk::RELIEF_NONE);
@@ -77,19 +74,36 @@ void Edit::updateOperations()
 
 void Edit::updateWorkflow()
 {
-    m_opsViewStore->clear();
-)
-    vectoOperationInstance*>::iteratornt v4si __attribute__ ((vector_size (16)));
-<<8) it;
-    for (
-        it = m_workflow->getOperations().begin();
-        it != m_workflow->getOperations().end();
-        it++)
+    // Clear the VBox. THere's got to be a better way?
+    vector<Gtk::Widget*> children = m_opsBox.get_children();
+    vector<Gtk::Widget*>::iterator it;
+    for (it = children.begin(); it != children.end(); it++)
     {
-        OperationInstance* op = *it;
-        Gtk::TreeRow opRow;
-        opRow = *(m_opsViewStore->append());
-        opRow[m_opsColumns.opText] = op->getOperation()->getName().c_str();
+        Gtk::Widget* w = *it;
+        m_opsBox.remove(*w);
+    }
+
+    if (m_workflow->getOperations().size() == 0)
+    {
+        Gtk::Label* label = Gtk::manage(new Gtk::Label("No operations"));
+        m_opsBox.pack_start(*label, Gtk::PACK_SHRINK);
+    }
+    else
+    {
+        vector<OperationInstance*>::iterator it;
+        for (
+            it = m_workflow->getOperations().begin();
+            it != m_workflow->getOperations().end();
+            it++)
+        {
+            OperationInstance* op = *it;
+            Gtk::Expander* expander = Gtk::manage(new Gtk::Expander());
+            Gtk::Label* attrs = Gtk::manage(new Gtk::Label("attributes"));
+            expander->set_label(op->getOperation()->getName());
+            expander->add(*attrs);
+            expander->show_all();
+            m_opsBox.pack_start(*expander, Gtk::PACK_SHRINK);
+        }
     }
 
     m_preview.render();
