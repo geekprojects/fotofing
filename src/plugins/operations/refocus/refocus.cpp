@@ -19,6 +19,7 @@ extern "C" {
 
 #include "refocus.h"
 
+using namespace std;
 using namespace Geek;
 using namespace Geek::Gfx;
 
@@ -259,6 +260,58 @@ RefocusOperation::~RefocusOperation()
 {
 }
 
+vector<OperationAttribute> RefocusOperation::getAttributes()
+{
+    vector<OperationAttribute> attrs;
+
+    OperationAttribute attr;
+    attr.name = "matrix_size";
+    attr.label = "Matrix Size";
+    attr.description = "Size of the Matrix";
+    attr.type = OPERATION_ATTR_TYPE_INT;
+    attr.min.i = 1;
+    attr.max.i = 25;
+    attr.def.i = 5;
+    attrs.push_back(attr);
+
+    attr.name = "radius";
+    attr.label = "Radius";
+    attr.description = "Radius for the Circle Convolution";
+    attr.type = OPERATION_ATTR_TYPE_DOUBLE;
+    attr.min.d = 0.0;
+    attr.max.d = 25.0;
+    attr.def.d = 1.0;
+    attrs.push_back(attr);
+
+    attr.name = "gauss";
+    attr.label = "Gauss";
+    attr.description = "Gauss Convolution Value";
+    attr.type = OPERATION_ATTR_TYPE_DOUBLE;
+    attr.min.d = 0.0;
+    attr.max.d = 25.0;
+    attr.def.d = 0.0;
+    attrs.push_back(attr);
+
+    attr.name = "correlation";
+    attr.label = "Correlation";
+    attr.description = "Correlation";
+    attr.type = OPERATION_ATTR_TYPE_DOUBLE;
+    attr.min.d = 0.0;
+    attr.max.d = 25.0;
+    attr.def.d = 0.5;
+    attrs.push_back(attr);
+
+    attr.name = "noise";
+    attr.label = "Noise";
+    attr.description = "Signal to Noise Ratio";
+    attr.type = OPERATION_ATTR_TYPE_DOUBLE;
+    attr.min.d = 0.0;
+    attr.max.d = 25.0;
+    attr.def.d = 0.01;
+    attrs.push_back(attr);
+
+    return attrs;
+}
 
 OperationInstance* RefocusOperation::createInstance()
 {

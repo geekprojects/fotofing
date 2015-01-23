@@ -18,38 +18,20 @@ int main(int argc, char** argv)
     for (it = operations.begin(); it != operations.end(); it++)
     {
         Operation* op = (Operation*)*it;
-printf("Name: %s\n", op->getName().c_str());
-printf("Description: %s\n", op->getDescription().c_str());
+        printf("Name: %s\n", op->getName().c_str());
+        printf("Description: %s\n", op->getDescription().c_str());
+        vector<OperationAttribute> attrs = op->getAttributes();
+        vector<OperationAttribute>::iterator attrIt;
+        for (
+            attrIt = attrs.begin();
+            attrIt != attrs.end();
+            attrIt++)
+        {
+            OperationAttribute attr = *attrIt;
+            printf("Attribute: %s\n", attr.name.c_str());
+        }
     }
 
-#if 0
-void* handle = dlopen("../../plugins/operations/refocus/.libs/libfotofing-operation-refocus.so", RTLD_LAZY);
-
-printf("workflow: handle=%p\n", handle);
-
-if (handle == NULL)
-{
-printf("workflow: error: %s\n", dlerror());
-return 0;
-}
-
-newOperation_t createOperation = (newOperation_t)dlsym(handle, "fotofing_operation_create");
-printf("fotofing_operation_new: %p\n", createOperation);
-
-Operation* op = createOperation();
-printf("Name: %s\n", op->getName().c_str());
-printf("Description: %s\n", op->getDescription().c_str());
-
-OperationInstance* instance = op->createInstance();
-
-Surface* srcSurface = Surface::loadJPEG("test.jpg");
-instance->apply(srcSurface, NULL);
-srcSurface->saveJPEG("output.jpg");
-delete srcSurface;
-
-
-dlclose(handle);
-#endif
     return 0;
 }
 

@@ -16,6 +16,8 @@ class RefocusOperation : public Operation
     std::string getName() { return "Refocus"; }
     std::string getDescription() { return "Refocus with FIR Wiener Deconvolution"; }
 
+    std::vector<OperationAttribute> getAttributes();
+
     OperationInstance* createInstance();
 };
 

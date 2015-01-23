@@ -15,6 +15,9 @@ class Workflow;
 class OperationInstance;
 class Index;
 
+#define OPERATION_ATTR_TYPE_INT 1
+#define OPERATION_ATTR_TYPE_DOUBLE 2
+
 class WorkflowIndex
 {
  private:
@@ -56,12 +59,22 @@ class Workflow
     static bool init();
 };
 
+union AttributeValue
+{
+    int i;
+    double d;
+};
+
 struct OperationAttribute
 {
     std::string name;
     std::string label;
     std::string description;
     int type;
+
+    AttributeValue min;
+    AttributeValue max;
+    AttributeValue def;
 };
 
 class Operation : public FotofingPlugin
