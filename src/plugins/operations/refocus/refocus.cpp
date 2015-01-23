@@ -262,10 +262,11 @@ RefocusOperation::~RefocusOperation()
 
 OperationInstance* RefocusOperation::createInstance()
 {
-    return new RefocusInstance();
+    return new RefocusInstance(this);
 }
 
-RefocusInstance::RefocusInstance()
+RefocusInstance::RefocusInstance(RefocusOperation* op)
+    : OperationInstance(op)
 {
 }
 
