@@ -1,3 +1,3 @@
 
-SUBDIRS=refocus
+SUBDIRS=refocus colourify
 

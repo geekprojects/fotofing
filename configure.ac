@@ -56,5 +56,6 @@ AC_CONFIG_FILES([Makefile
                  src/plugins/taggers/exif/Makefile
                  src/plugins/taggers/features/Makefile
                  src/plugins/operations/Makefile
-                 src/plugins/operations/refocus/Makefile])
+                 src/plugins/operations/refocus/Makefile
+                 src/plugins/operations/colourify/Makefile])
 AC_OUTPUT
