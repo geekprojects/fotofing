@@ -11,7 +11,21 @@
 #include <vector>
 #include <string>
 
+class Workflow;
 class OperationInstance;
+class Index;
+
+class WorkflowIndex
+{
+ private:
+    Index* m_index;
+
+ public:
+    WorkflowIndex(Index* index);
+    ~WorkflowIndex();
+
+    Workflow* getWorkflow(Photo* photo);
+};
 
 class Workflow
 {
@@ -34,6 +48,12 @@ class Workflow
 
     Photo* getPhoto() { return m_photo; }
     File* getFile() { return m_file; }
+
+    void addOperation(OperationInstance* op);
+
+    std::vector<OperationInstance*>& getOperations() { return m_operations; }
+
+    static bool init();
 };
 
 struct OperationAttribute
@@ -61,6 +81,7 @@ class Operation : public FotofingPlugin
 class OperationInstance
 {
  protected:
+     Operation* m_operation;
 
     // Common utility methods
     void convolution(
@@ -69,8 +90,10 @@ class OperationInstance
         Geek::CentredMatrix* matrix);
 
  public:
-    OperationInstance();
+    OperationInstance(Operation* op);
     virtual ~OperationInstance();
+
+    Operation* getOperation() { return m_operation; }
 
     virtual void setAttribute(std::string name, int i);
     virtual void setAttribute(std::string name, double d);

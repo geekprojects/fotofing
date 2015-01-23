@@ -5,8 +5,9 @@ using namespace std;
 using namespace Geek;
 using namespace Geek::Gfx;
 
-OperationInstance::OperationInstance()
+OperationInstance::OperationInstance(Operation* op)
 {
+    m_operation = op;
 }
 
 OperationInstance::~OperationInstance()
@@ -68,11 +69,11 @@ void OperationInstance::convolution(
                         val[3] += *(mp) * (double)*(src++);
                         mp++;
                     }
-src += (srcSurface->getWidth() - matrix->m_stride) * 4;
+                    src += (srcSurface->getWidth() - matrix->m_stride) * 4;
                 }
-                *(dst++) = CLAMP(val[2], 0, 255);
-                *(dst++) = CLAMP(val[1], 0, 255);
                 *(dst++) = CLAMP(val[0], 0, 255);
+                *(dst++) = CLAMP(val[1], 0, 255);
+                *(dst++) = CLAMP(val[2], 0, 255);
                 *(dst++) = 255;
             }
             else

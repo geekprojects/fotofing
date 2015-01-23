@@ -24,7 +24,7 @@ class RefocusInstance : public OperationInstance
  private:
 
  public:
-    RefocusInstance();
+    RefocusInstance(RefocusOperation* op);
     virtual ~RefocusInstance();
 
     virtual void apply(

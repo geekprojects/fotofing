@@ -102,8 +102,6 @@ class Index
     Source* getSource(std::string sourceId);
     std::vector<Source*> getSources();
 
-    /* Workflows */
-    Workflow* getWorkflow(std::string pid);
 };
 
 #endif

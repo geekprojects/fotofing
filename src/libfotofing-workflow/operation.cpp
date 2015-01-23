@@ -39,8 +39,3 @@ const char* operationPaths[] = {
     NULL
 };
 
-vector<Operation*> Operation::findOperations()
-{
-
-}
-
