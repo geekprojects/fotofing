@@ -9,7 +9,8 @@ class EditPreview : public Gtk::DrawingArea
 {
  private:
     Workflow* m_workflow;
-    Geek::Gfx::Surface* m_surface;
+    Geek::Gfx::Surface* m_original;
+    Geek::Gfx::Surface* m_rendered;
 
  public:
     EditPreview();
@@ -19,6 +20,7 @@ class EditPreview : public Gtk::DrawingArea
 
     void render();
 
+    virtual void on_size_allocate(Gtk::Allocation& allocation);
     virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 };
 

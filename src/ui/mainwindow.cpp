@@ -14,6 +14,7 @@ MainWindow::MainWindow(Index* index) :
     m_library(this)
 {
     m_index = index;
+    m_workflowIndex = new WorkflowIndex(index);
 
     set_title("Fotofing");
     set_default_size(600, 400);
@@ -134,7 +135,8 @@ Gtk::MenuBar* MainWindow::createMenu()
 
 void MainWindow::editPhoto(Photo* photo)
 {
-    Edit* editTab = (Edit*)Gtk::manage(new Edit(this, photo));
+    Workflow* workflow = m_workflowIndex->getWorkflow(photo);
+    Edit* editTab = (Edit*)Gtk::manage(new Edit(this, workflow));
 
     int page = m_tabs.append_page(*editTab, *(editTab->getTabLabel()));
     m_tabs.set_current_page(page);

@@ -7,6 +7,7 @@
 #include <gtkmm.h>
 
 #include <fotofing/index.h>
+#include <fotofing/workflow.h>
 
 #include "dialogs/about.h"
 #include "library/library.h"
@@ -22,6 +23,9 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     /* Library Tab */
     Library m_library;
+
+    /* Workflow */
+    WorkflowIndex* m_workflowIndex;
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
@@ -39,6 +43,7 @@ class MainWindow : public Gtk::Window, public IndexClient
     virtual ~MainWindow();
 
     Index* getIndex() { return m_index; }
+    WorkflowIndex* getWorkflowIndex() { return m_workflowIndex; }
 
     void editPhoto(Photo* photo);
 

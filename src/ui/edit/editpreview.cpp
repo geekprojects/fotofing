@@ -3,12 +3,14 @@
 
 #include <cairomm/xlib_surface.h>
 
+using namespace std;
 using namespace Geek::Gfx;
 
 EditPreview::EditPreview()
 {
     m_workflow = NULL;
-    m_surface = NULL;
+    m_original = NULL;
+    m_rendered = NULL;
 
     override_background_color(Gdk::RGBA("#101010"));
 }
@@ -20,19 +22,55 @@ EditPreview::~EditPreview()
 void EditPreview::setWorkflow(Workflow* workflow)
 {
     m_workflow = workflow;
+
+    m_original = Surface::loadJPEG(m_workflow->getFile()->getPath());
+
     render();
 }
 
 void EditPreview::render()
 {
-    m_surface = Surface::loadJPEG(m_workflow->getFile()->getPath());
+    if (m_original == NULL)
+    {
+        return;
+    }
+
+    Gtk::Allocation allocation = get_allocation();
+    const int width = allocation.get_width();
+    const int height = allocation.get_height();
+
+    if (m_rendered != NULL)
+    {
+        delete m_rendered;
+    }
+
+    m_rendered = m_original->scaleToFit(width, height, false);
+
+    vector<OperationInstance*>::iterator it;
+    for (
+        it = m_workflow->getOperations().begin();
+        it != m_workflow->getOperations().end();
+        it++)
+    {
+        OperationInstance* op = *it;
+        printf("EditPreview::render:  -> applying %s\n", op->getOperation()->getName().c_str());
+        op->apply(m_rendered, NULL);
+        printf("EditPreview::render:  -> finished applying %s\n", op->getOperation()->getName().c_str());
+    }
 
     queue_draw();
 }
 
+void EditPreview::on_size_allocate(Gtk::Allocation& allocation)
+{
+    Gtk::DrawingArea::on_size_allocate(allocation);
+
+    render();
+}
+
 bool EditPreview::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-    if (m_workflow == NULL || m_surface == NULL)
+    if (m_workflow == NULL || m_rendered == NULL)
     {
         return true;
     }
@@ -43,27 +81,23 @@ bool EditPreview::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 
     Cairo::RefPtr<Cairo::Surface> surface = cr->get_group_target();
 
-    Surface* resized = m_surface->scaleToFit(width, height, false);
-
     Cairo::RefPtr<Cairo::ImageSurface> cairoSurface;
     cairoSurface = Cairo::ImageSurface::create(
-        resized->getData(),
+        m_rendered->getData(),
         Cairo::FORMAT_RGB24,
-        resized->getWidth(),
-        resized->getHeight(),
+        m_rendered->getWidth(),
+        m_rendered->getHeight(),
         Cairo::ImageSurface::format_stride_for_width(
             Cairo::FORMAT_RGB24,
-            resized->getWidth()));
+            m_rendered->getWidth()));
 
     // Center the preview
-    float x = ((float)width / 2.0f) - (resized->getWidth() / 2.0f);
-    float y = ((float)height / 2.0f) - (resized->getHeight() / 2.0f);
+    float x = ((float)width / 2.0f) - (m_rendered->getWidth() / 2.0f);
+    float y = ((float)height / 2.0f) - (m_rendered->getHeight() / 2.0f);
 
     cr->set_source(cairoSurface, x, y);
 
     cr->paint();
-
-    delete resized;
 
     return true;
 }

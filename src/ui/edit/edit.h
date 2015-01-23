@@ -13,10 +13,12 @@ class OpsModelColumns : public Gtk::TreeModelColumnRecord
 {
  public:
     Gtk::TreeModelColumn<Glib::ustring> opText;
+    Gtk::TreeModelColumn<Operation*> operation;
 
     OpsModelColumns()
     {
         add(opText);
+        add(operation);
     }
 };
 
@@ -37,6 +39,7 @@ class Edit : public Gtk::HBox
     OpsModelColumns m_opsMenuColumns;
     Gtk::TreeView m_opsMenuView;
     Glib::RefPtr<Gtk::TreeStore> m_opsMenuViewStore;
+    Glib::RefPtr<Gtk::TreeSelection> m_opsMenuSelection;
 
     Gtk::ScrolledWindow m_opsWindow;
     Gtk::Frame m_opsFrame;
@@ -48,11 +51,19 @@ class Edit : public Gtk::HBox
     Gtk::Label m_tabLabelText;
     Gtk::Button m_tabLabelClose;
 
+    void updateOperations();
+    void updateWorkflow();
+
  public:
-    Edit(MainWindow* mainWindow, Photo* photo);
+    Edit(MainWindow* mainWindow, Workflow* workflow);
     ~Edit();
 
     Gtk::Widget* getTabLabel() { return &m_tabLabel; }
+
+    void onOpsMenuRowActivate(
+        const Gtk::TreeModel::Path& path,
+        Gtk::TreeViewColumn* column);
+
 };
 
 #endif
