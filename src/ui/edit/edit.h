@@ -61,6 +61,8 @@ class Edit : public Gtk::HBox
     Edit(MainWindow* mainWindow, Workflow* workflow);
     ~Edit();
 
+    void close();
+
     Gtk::Widget* getTabLabel() { return &m_tabLabel; }
 
     void onOpsMenuRowActivate(

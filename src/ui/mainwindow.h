@@ -47,6 +47,7 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     void editPhoto(Photo* photo);
 
+    void closeTab(Gtk::Widget* w);
     bool isTabVisible(Gtk::Widget* w);
 
     void setStatusMessage(std::string message);

@@ -41,6 +41,8 @@ Edit::Edit(MainWindow* mainWindow, Workflow* workflow) :
     m_tabLabelClose.set_image_from_icon_name(
         "window-close",
         Gtk::ICON_SIZE_MENU);
+    m_tabLabelClose.signal_clicked().connect(
+        sigc::mem_fun(*this, &Edit::close));
 
     m_tabLabel.pack_start(m_tabLabelText, Gtk::PACK_EXPAND_WIDGET);
     m_tabLabel.pack_start(m_tabLabelClose, Gtk::PACK_SHRINK);
@@ -54,6 +56,16 @@ Edit::Edit(MainWindow* mainWindow, Workflow* workflow) :
 
 Edit::~Edit()
 {
+    printf("Edit::~Edit: Here!\n");
+    if (m_workflow != NULL)
+    {
+        delete m_workflow;
+    }
+}
+
+void Edit::close()
+{
+    m_mainWindow->closeTab(this);
 }
 
 void Edit::updateOperations()

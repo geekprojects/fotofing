@@ -19,6 +19,14 @@ EditPreview::EditPreview(Edit* edit)
 
 EditPreview::~EditPreview()
 {
+    if (m_original != NULL)
+    {
+        delete m_original;
+    }
+    if (m_rendered != NULL)
+    {
+        delete m_rendered;
+    }
 }
 
 void EditPreview::setWorkflow(Workflow* workflow)
