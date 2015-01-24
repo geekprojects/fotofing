@@ -142,6 +142,11 @@ void MainWindow::editPhoto(Photo* photo)
     m_tabs.set_current_page(page);
 }
 
+bool MainWindow::isTabVisible(Gtk::Widget* w)
+{
+    return (m_tabs.page_num(*w) == m_tabs.get_current_page());
+}
+
 void MainWindow::setStatusMessage(string message)
 {
     m_statusBar.push(message);

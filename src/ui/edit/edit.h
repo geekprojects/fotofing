@@ -67,6 +67,9 @@ class Edit : public Gtk::HBox
         const Gtk::TreeModel::Path& path,
         Gtk::TreeViewColumn* column);
 
+    void onAttrAdjustmentChanged();
+
+    bool isVisible() { return m_mainWindow->isTabVisible(this); }
 };
 
 #endif

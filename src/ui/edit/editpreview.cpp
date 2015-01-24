@@ -1,13 +1,15 @@
 
 #include "editpreview.h"
+#include "edit.h"
 
 #include <cairomm/xlib_surface.h>
 
 using namespace std;
 using namespace Geek::Gfx;
 
-EditPreview::EditPreview()
+EditPreview::EditPreview(Edit* edit)
 {
+    m_edit = edit;
     m_workflow = NULL;
     m_original = NULL;
     m_rendered = NULL;
@@ -25,13 +27,19 @@ void EditPreview::setWorkflow(Workflow* workflow)
 
     m_original = Surface::loadJPEG(m_workflow->getFile()->getPath());
 
-    render();
+    render(true);
 }
 
-void EditPreview::render()
+void EditPreview::render(bool opsChanged)
 {
     if (m_original == NULL)
     {
+        return;
+    }
+
+    if (!m_edit->isVisible())
+    {
+        printf("EditPreview::render: Not visible, no point\n");
         return;
     }
 
@@ -39,12 +47,24 @@ void EditPreview::render()
     const int width = allocation.get_width();
     const int height = allocation.get_height();
 
+    float zx = (float)width / (float)m_original->getWidth();
+    float zy = (float)height / (float)m_original->getHeight();
+    float scale = MIN(zx, zy);
+
+    if (!opsChanged &&
+        m_rendered != NULL &&
+        m_rendered->getWidth() == (int)((float)m_original->getWidth() * scale))
+    {
+        printf("EditPreview::render: Skipping render\n");
+        return;
+    }
+
     if (m_rendered != NULL)
     {
         delete m_rendered;
     }
 
-    m_rendered = m_original->scaleToFit(width, height, false);
+    m_rendered = m_original->scale(scale, false);
 
     vector<OperationInstance*>::iterator it;
     for (
@@ -65,7 +85,7 @@ void EditPreview::on_size_allocate(Gtk::Allocation& allocation)
 {
     Gtk::DrawingArea::on_size_allocate(allocation);
 
-    render();
+    render(false);
 }
 
 bool EditPreview::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
