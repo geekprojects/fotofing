@@ -1,5 +1,6 @@
 
 #include "edit.h"
+#include "operationwidget.h"
 
 using namespace std;
 
@@ -110,59 +111,10 @@ void Edit::updateWorkflow()
             it++)
         {
             OperationInstance* op = *it;
-            Gtk::Expander* expander = Gtk::manage(new Gtk::Expander());
-            Gtk::VBox* attrsBox = Gtk::manage(new Gtk::VBox());
 
-            vector<OperationAttribute> attrs;
-            attrs = op->getOperation()->getAttributes();
-            vector<OperationAttribute>::iterator attrIt;
-            for (attrIt = attrs.begin(); attrIt != attrs.end(); attrIt++)
-            {
-                OperationAttribute attr = *attrIt;
-                Gtk::Label* attrLabel = Gtk::manage(new Gtk::Label(attr.label));
-                attrsBox->pack_start(*attrLabel, Gtk::PACK_SHRINK);
-
-                if (attr.type == OPERATION_ATTR_TYPE_INT)
-                {
-                    Glib::RefPtr<Gtk::Adjustment> adjustment(
-                        Gtk::Adjustment::create(
-                            attr.def.i,
-                            attr.min.i,
-                            attr.max.i,
-                            1,
-                            10.0,
-                            0.0) );
-                    Gtk::Scale* attrScale = Gtk::manage(new Gtk::Scale(adjustment, Gtk::ORIENTATION_HORIZONTAL));
-                    attrScale->set_digits(0);
-
-                    attrScale->set_value_pos(Gtk::POS_TOP);
-                    attrScale->set_draw_value();
-                    adjustment->signal_value_changed().connect(sigc::mem_fun(*this, &Edit::onAttrAdjustmentChanged));
-                    attrsBox->pack_start(*attrScale, Gtk::PACK_SHRINK);
-                }
-                else if (attr.type == OPERATION_ATTR_TYPE_DOUBLE)
-                {
-                    Glib::RefPtr<Gtk::Adjustment> adjustment(
-                        Gtk::Adjustment::create(
-                            attr.def.d,
-                            attr.min.d,
-                            attr.max.d,
-                            0.01,
-                            10.0,
-                            0.0) );
-                    Gtk::Scale* attrScale = Gtk::manage(new Gtk::Scale(adjustment, Gtk::ORIENTATION_HORIZONTAL));
-                    attrScale->set_digits(2);
-
-                    attrScale->set_value_pos(Gtk::POS_TOP);
-                    attrScale->set_draw_value();
-                    attrsBox->pack_start(*attrScale, Gtk::PACK_SHRINK);
-                }
-            }
-
-            expander->set_label(op->getOperation()->getName());
-            expander->add(*attrsBox);
-            expander->show_all();
-            m_opsBox.pack_start(*expander, Gtk::PACK_SHRINK);
+            OperationWidget* opWidget = Gtk::manage(
+                new OperationWidget(this, op));
+            m_opsBox.pack_start(*opWidget, Gtk::PACK_SHRINK);
         }
     }
 
@@ -191,8 +143,8 @@ void Edit::onOpsMenuRowActivate(
     }
 }
 
-void Edit::onAttrAdjustmentChanged()
+void Edit::onAttrChanged()
 {
-    printf("Edit::onAttrAdjustmentChanged: Here!\n");
+    m_preview.render(true);
 }
 

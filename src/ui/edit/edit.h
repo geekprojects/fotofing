@@ -14,11 +14,13 @@ class OpsModelColumns : public Gtk::TreeModelColumnRecord
  public:
     Gtk::TreeModelColumn<Glib::ustring> opText;
     Gtk::TreeModelColumn<Operation*> operation;
+    Gtk::TreeModelColumn<OperationAttribute> attrs;
 
     OpsModelColumns()
     {
         add(opText);
         add(operation);
+        add(attrs);
     }
 };
 
@@ -69,7 +71,7 @@ class Edit : public Gtk::HBox
         const Gtk::TreeModel::Path& path,
         Gtk::TreeViewColumn* column);
 
-    void onAttrAdjustmentChanged();
+    void onAttrChanged();
 
     bool isVisible() { return m_mainWindow->isTabVisible(this); }
 };
