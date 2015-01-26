@@ -75,6 +75,11 @@ struct OperationAttribute
     AttributeValue min;
     AttributeValue max;
     AttributeValue def;
+
+    bool operator < (const OperationAttribute& rhs) const
+    {
+        return name < rhs.name;
+    }
 };
 
 class Operation : public FotofingPlugin
@@ -108,6 +113,8 @@ class OperationInstance
 
     Operation* getOperation() { return m_operation; }
 
+    virtual int getAttributeInt(std::string name);
+    virtual double getAttributeDouble(std::string name);
     virtual void setAttribute(std::string name, int i);
     virtual void setAttribute(std::string name, double d);
 

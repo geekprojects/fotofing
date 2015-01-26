@@ -14,6 +14,15 @@ OperationInstance::~OperationInstance()
 {
 }
 
+int OperationInstance::getAttributeInt(std::string name)
+{
+    return 0;
+}
+
+double OperationInstance::getAttributeDouble(std::string name)
+{
+    return 0.0;
+}
 
 void OperationInstance::setAttribute(std::string name, int i)
 {
