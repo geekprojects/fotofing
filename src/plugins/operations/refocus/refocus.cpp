@@ -265,7 +265,7 @@ vector<OperationAttribute> RefocusOperation::getAttributes()
     vector<OperationAttribute> attrs;
 
     OperationAttribute attr;
-    attr.name = "matrix_size";
+    attr.name = REFOCUS_ATTR_MATRIXSIZE;
     attr.label = "Matrix Size";
     attr.description = "Size of the Matrix";
     attr.type = OPERATION_ATTR_TYPE_INT;
@@ -274,7 +274,7 @@ vector<OperationAttribute> RefocusOperation::getAttributes()
     attr.def.i = 5;
     attrs.push_back(attr);
 
-    attr.name = "radius";
+    attr.name = REFOCUS_ATTR_RADIUS;
     attr.label = "Radius";
     attr.description = "Radius for the Circle Convolution";
     attr.type = OPERATION_ATTR_TYPE_DOUBLE;
@@ -283,7 +283,7 @@ vector<OperationAttribute> RefocusOperation::getAttributes()
     attr.def.d = 1.0;
     attrs.push_back(attr);
 
-    attr.name = "gauss";
+    attr.name = REFOCUS_ATTR_GAUSS;
     attr.label = "Gauss";
     attr.description = "Gauss Convolution Value";
     attr.type = OPERATION_ATTR_TYPE_DOUBLE;
@@ -292,7 +292,7 @@ vector<OperationAttribute> RefocusOperation::getAttributes()
     attr.def.d = 0.0;
     attrs.push_back(attr);
 
-    attr.name = "correlation";
+    attr.name = REFOCUS_ATTR_CORRELATION;
     attr.label = "Correlation";
     attr.description = "Correlation";
     attr.type = OPERATION_ATTR_TYPE_DOUBLE;
@@ -301,7 +301,7 @@ vector<OperationAttribute> RefocusOperation::getAttributes()
     attr.def.d = 0.5;
     attrs.push_back(attr);
 
-    attr.name = "noise";
+    attr.name = REFOCUS_ATTR_NOISE;
     attr.label = "Noise";
     attr.description = "Signal to Noise Ratio";
     attr.type = OPERATION_ATTR_TYPE_DOUBLE;
@@ -321,44 +321,119 @@ OperationInstance* RefocusOperation::createInstance()
 RefocusInstance::RefocusInstance(RefocusOperation* op)
     : OperationInstance(op)
 {
+    m_matrixWidth = 5;
+    m_radius = 1;
+    m_gauss = 0.1;
+    m_correlation = 0.5;
+    m_noiseFactor = 0.01;
 }
 
 RefocusInstance::~RefocusInstance()
 {
 }
 
+int RefocusInstance::getAttributeInt(std::string name)
+{
+    if (name == REFOCUS_ATTR_MATRIXSIZE)
+    {
+        return m_matrixWidth;
+    }
+}
+
+double RefocusInstance::getAttributeDouble(std::string name)
+{
+    if (name == REFOCUS_ATTR_RADIUS)
+    {
+        return m_radius;
+    }
+    else if (name == REFOCUS_ATTR_GAUSS)
+    {
+        return m_gauss;
+    }
+    else if (name == REFOCUS_ATTR_CORRELATION)
+    {
+        return m_correlation;
+    }
+    else if (name == REFOCUS_ATTR_NOISE)
+    {
+        return m_noiseFactor;
+    }
+    else
+    {
+        printf("RefocusInstance::getAttribute: Unknown double attribute: %s\n", name.c_str());
+    }
+}
+
+
+void RefocusInstance::setAttribute(std::string name, int i)
+{
+    printf("RefocusInstance::setAttribute: %s = %d\n", name.c_str(), i);
+    if (name == REFOCUS_ATTR_MATRIXSIZE)
+    {
+        m_matrixWidth = i;
+    }
+    else
+    {
+        printf("RefocusInstance::setAttribute: Unknown int attribute: %s\n", name.c_str());
+    }
+}
+
+void RefocusInstance::setAttribute(std::string name, double d)
+{
+
+printf("RefocusInstance::setAttribute: %s = %0.4f\n", name.c_str(), d);
+    if (name == REFOCUS_ATTR_RADIUS)
+    {
+        m_radius = d;
+    }
+    else if (name == REFOCUS_ATTR_GAUSS)
+    {
+        m_gauss = d;
+    }
+    else if (name == REFOCUS_ATTR_CORRELATION)
+    {
+        m_correlation = d;
+    }
+    else if (name == REFOCUS_ATTR_NOISE)
+    {
+        m_noiseFactor = d;
+    }
+    else
+    {
+        printf("RefocusInstance::setAttribute: Unknown double attribute: %s\n", name.c_str());
+    }
+}
+
 void RefocusInstance::apply(Surface* surface, ProgressListener* prog)
 {
-    int matrix_width = 5;
-    double radius = 1;
-    double alpha = 0.1;
-    double gamma = 0.5;
-    double noiseFactor = 0.01;
-
     // Circular
-    CentredMatrix cmatrix(matrix_width);
-    CentredMatrix gmatrix(matrix_width);
+    CentredMatrix cmatrix(m_matrixWidth);
+    CentredMatrix gmatrix(m_matrixWidth);
 
-    make_circle_convolution(&cmatrix, radius);
-    make_gaussian_convolution(&gmatrix, alpha);
+    make_circle_convolution(&cmatrix, m_radius);
+    make_gaussian_convolution(&gmatrix, m_gauss);
 
-    CentredMatrix conv(matrix_width);
+    CentredMatrix conv(m_matrixWidth);
     conv.convolve_star_mat(&gmatrix, &cmatrix);
 
+#if 0
     conv.dump();
     printf("\n");
+#endif
 
     CentredMatrix* matrix;
     matrix = compute_g_matrix(
         &conv,
-        matrix_width,
-        gamma,
-        noiseFactor,
+        m_matrixWidth,
+        m_correlation,
+        m_noiseFactor,
         0.0,
         true);
 
+#if 0
     matrix->dump();
     printf("\n");
+#endif
 
     // Apply the convolution
     Surface* dst = new Surface(surface->getWidth(), surface->getHeight(), 4);
