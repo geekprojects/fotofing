@@ -10,13 +10,40 @@ OperationWidget::OperationWidget(Edit* edit, OperationInstance* op)
 {
     m_edit = edit;
     m_op = op;
+    m_expanded = false;
 
-    set_label(op->getOperation()->getName());
-    add(m_attrsBox);
+    m_labelText.set_label(op->getOperation()->getName());
+    m_labelDelete.set_relief(Gtk::RELIEF_NONE);
+    m_labelDelete.set_border_width(0);
+    m_labelDelete.set_image_from_icon_name(
+        "window-close",
+        Gtk::ICON_SIZE_MENU);
+    m_labelDelete.signal_clicked().connect(
+        sigc::mem_fun(*this, &OperationWidget::onDelete));
+
+    m_expandButton.set_relief(Gtk::RELIEF_NONE);
+    m_expandButton.set_border_width(0);
+    m_expandButton.set_image_from_icon_name(
+        "document-properties",
+        Gtk::ICON_SIZE_MENU);
+    m_expandButton.signal_clicked().connect(
+        sigc::mem_fun(*this, &OperationWidget::onExpand));
+
+    m_labelBox.pack_start(m_expandButton, Gtk::PACK_SHRINK);
+    m_labelBox.pack_start(m_labelText, Gtk::PACK_EXPAND_WIDGET);
+    m_labelBox.pack_start(m_labelDelete, Gtk::PACK_SHRINK);
+
+    m_labelFrame.add(m_labelBox);
+
+    pack_start(m_labelFrame, Gtk::PACK_SHRINK);
+    pack_start(m_attrsBox, Gtk::PACK_EXPAND_WIDGET);
+
 
     createAttributes();
 
     show_all();
+
+    m_attrsBox.hide();
 }
 
 OperationWidget::~OperationWidget()
@@ -93,6 +120,25 @@ bool OperationWidget::onAttrButtonRelease(GdkEventButton* event)
     updateValues();
     m_edit->onAttrChanged();
     return false;
+}
+
+void OperationWidget::onDelete()
+{
+    m_edit->deleteOperation(m_op);
+}
+
+void OperationWidget::onExpand()
+{
+    if (m_expanded)
+    {
+        m_expanded = false;
+        m_attrsBox.hide();
+    }
+    else
+    {
+        m_expanded = true;
+        m_attrsBox.show();
+    }
 }
 
 void OperationWidget::updateValues()

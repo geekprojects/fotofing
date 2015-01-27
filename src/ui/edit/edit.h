@@ -67,6 +67,8 @@ class Edit : public Gtk::HBox
 
     Gtk::Widget* getTabLabel() { return &m_tabLabel; }
 
+    void deleteOperation(OperationInstance* op);
+
     void onOpsMenuRowActivate(
         const Gtk::TreeModel::Path& path,
         Gtk::TreeViewColumn* column);

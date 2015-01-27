@@ -121,6 +121,12 @@ void Edit::updateWorkflow()
     m_preview.render(true);
 }
 
+void Edit::deleteOperation(OperationInstance* op)
+{
+    m_workflow->deleteOperation(op);
+    updateWorkflow();
+}
+
 void Edit::onOpsMenuRowActivate(
     const Gtk::TreeModel::Path& path,
     Gtk::TreeViewColumn* column)
