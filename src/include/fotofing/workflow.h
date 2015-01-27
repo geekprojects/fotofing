@@ -53,6 +53,7 @@ class Workflow
     File* getFile() { return m_file; }
 
     void addOperation(OperationInstance* op);
+    void deleteOperation(OperationInstance* op);
 
     std::vector<OperationInstance*>& getOperations() { return m_operations; }
 
