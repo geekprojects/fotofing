@@ -88,6 +88,8 @@ void Edit::updateOperations()
 
 void Edit::updateWorkflow()
 {
+    m_mainWindow->getWorkflowIndex()->saveWorkflow(m_workflow);
+
     // Clear the VBox. THere's got to be a better way?
     vector<Gtk::Widget*> children = m_opsBox.get_children();
     vector<Gtk::Widget*>::iterator it;
@@ -152,5 +154,6 @@ void Edit::onOpsMenuRowActivate(
 void Edit::onAttrChanged()
 {
     m_preview.render(true);
+    m_mainWindow->getWorkflowIndex()->saveWorkflow(m_workflow);
 }
 
