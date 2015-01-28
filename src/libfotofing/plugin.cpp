@@ -144,3 +144,18 @@ vector<FotofingPlugin*> FotofingPlugin::getPlugins(string type)
     return results;
 }
 
+FotofingPlugin* FotofingPlugin::getPlugin(string type, string name)
+{
+    vector<FotofingPlugin*> plugins = getPlugins(type);
+    vector<FotofingPlugin*>::iterator it;
+    for (it = plugins.begin(); it !=plugins.end(); it++)
+    {
+        FotofingPlugin* plugin = *it;
+        if (plugin->getName() == name)
+        {
+            return plugin;
+        }
+    }
+    return NULL;
+}
+

@@ -14,9 +14,12 @@ class FotofingPlugin
 
  public:
     FotofingPlugin();
-    ~FotofingPlugin();
+    virtual ~FotofingPlugin();
+
+    virtual std::string getName() = 0;
 
     static std::vector<FotofingPlugin*> getPlugins(std::string type);
+    static FotofingPlugin* getPlugin(std::string type, std::string name);
 };
 
 typedef FotofingPlugin*(*createPlugin_t)();
