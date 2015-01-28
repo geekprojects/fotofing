@@ -28,19 +28,31 @@ class WorkflowIndex
     ~WorkflowIndex();
 
     Workflow* getWorkflow(Photo* photo);
+
+    bool saveWorkflow(Workflow* w);
 };
 
 class Workflow
 {
  private:
+    int64_t m_id;
     Photo* m_photo;
     File* m_file;
 
     std::vector<OperationInstance*> m_operations;
 
  public:
+
     Workflow(Photo* photo, File* file)
     {
+        m_id = -1;
+        m_photo = photo;
+        m_file = file;
+    }
+
+    Workflow(int64_t id, Photo* photo, File* file)
+    {
+        m_id = id;
         m_photo = photo;
         m_file = file;
     }
@@ -49,6 +61,8 @@ class Workflow
     {
     }
 
+    int64_t getId() { return m_id; }
+    void setId(int64_t id) { m_id = id; }
     Photo* getPhoto() { return m_photo; }
     File* getFile() { return m_file; }
 
