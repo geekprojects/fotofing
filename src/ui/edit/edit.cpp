@@ -2,6 +2,7 @@
 #include "edit.h"
 #include "operationwidget.h"
 
+using namespace Geek::Gfx;
 using namespace std;
 
 Edit::Edit(MainWindow* mainWindow, Workflow* workflow) :
@@ -196,6 +197,43 @@ void Edit::onAttrChanged()
 
 void Edit::onExport()
 {
-    printf("Edit::onExport: Here!\n");
+    Gtk::FileChooserDialog dialog("Export...",
+        Gtk::FILE_CHOOSER_ACTION_SAVE);
+    //dialog.set_transient_for(*this);
+
+  Glib::RefPtr<Gtk::FileFilter> filter_cpp = Gtk::FileFilter::create();
+  filter_cpp->set_name("JPEG Image");
+  filter_cpp->add_mime_type("image/jpeg");
+  dialog.add_filter(filter_cpp);
+
+
+    dialog.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
+    dialog.add_button("_Export", Gtk::RESPONSE_OK);
+
+    int result;
+    result = dialog.run();
+    if (result == Gtk::RESPONSE_OK)
+    {
+        string filename = dialog.get_filename();
+        if (filename.find('.') == filename.npos)
+        {
+            filename = filename += ".jpg";
+        }
+        printf("Edit::onExport: Exporting to %s\n", filename.c_str());
+
+        Surface* image = Surface::loadJPEG(m_workflow->getFile()->getPath());
+
+        vector<OperationInstance*>::iterator it;
+        for (
+            it = m_workflow->getOperations().begin();
+            it != m_workflow->getOperations().end();
+            it++)
+        {
+            OperationInstance* op = *it;
+            op->apply(image, NULL);
+        }
+        image->saveJPEG(filename);
+        delete image;
+    }
 }
 
