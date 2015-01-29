@@ -9,7 +9,7 @@ class RefocusInstance;
 #define REFOCUS_ATTR_RADIUS "radius"
 #define REFOCUS_ATTR_GAUSS "gauss"
 #define REFOCUS_ATTR_CORRELATION "correlation"
-#define REFOCUS_ATTR_NOISE "gauss"
+#define REFOCUS_ATTR_NOISE "noise"
 
 class RefocusOperation : public Operation
 {
