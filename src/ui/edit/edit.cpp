@@ -5,6 +5,7 @@
 using namespace std;
 
 Edit::Edit(MainWindow* mainWindow, Workflow* workflow) :
+    Tab(Gtk::ORIENTATION_HORIZONTAL),
     m_preview(this)
 {
     m_mainWindow = mainWindow;
@@ -52,6 +53,8 @@ Edit::Edit(MainWindow* mainWindow, Workflow* workflow) :
     updateOperations();
     updateWorkflow();
 
+    createMenu();
+
     show_all();
 }
 
@@ -62,6 +65,40 @@ Edit::~Edit()
     {
         delete m_workflow;
     }
+}
+
+void Edit::createMenu()
+{
+    Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create();
+
+    Glib::ustring ui_info =
+        "<interface>"
+        "  <menu id='main-menu'>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_File</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>Export...</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.edit_export</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_Help</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>About</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.about</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "  </menu>"
+        "</interface>";
+
+    builder->add_from_string(ui_info);
+
+    Glib::RefPtr<Glib::Object> object = builder->get_object("main-menu");
+    m_menu = Glib::RefPtr<Gio::Menu>::cast_dynamic(object);
 }
 
 void Edit::close()
@@ -155,5 +192,10 @@ void Edit::onAttrChanged()
 {
     m_preview.render(true);
     m_mainWindow->getWorkflowIndex()->saveWorkflow(m_workflow);
+}
+
+void Edit::onExport()
+{
+    printf("Edit::onExport: Here!\n");
 }
 

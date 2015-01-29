@@ -10,6 +10,8 @@
 using namespace std;
 
 Library::Library(MainWindow* mainWindow) :
+    Tab(Gtk::ORIENTATION_VERTICAL),
+    m_tabLabel("Library"),
     m_dateSeparator("-"),
     m_tagSearchButton("Search"),
     m_photoView(this),
@@ -77,6 +79,8 @@ Library::Library(MainWindow* mainWindow) :
     pack_start(m_toolbarBox, Gtk::PACK_SHRINK);
     pack_start(m_hBox, Gtk::PACK_EXPAND_WIDGET);
 
+    createMenu();
+
     show_all();
 }
 
@@ -95,6 +99,80 @@ void Library::update()
     updateDateButtons();
 
     m_mainWindow->endProgress();
+}
+
+void Library::createMenu()
+{
+/*
+    Glib::RefPtr<Gio::SimpleActionGroup> actionGroup;
+    actionGroup = Gio::SimpleActionGroup::create();
+    actionGroup->add_action(
+        "about",
+        sigc::mem_fun(m_about, &About::open));
+
+    actionGroup->add_action(
+        "sources",
+        sigc::mem_fun(m_library, &Library::openSourcesDialog));
+
+    actionGroup->add_action(
+        "selectAll",
+        sigc::mem_fun(m_photoView, &PhotoView::selectAll));
+
+    insert_action_group("fotofing", actionGroup);
+*/
+
+    Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create();
+
+    Glib::ustring ui_info =
+        "<interface>"
+        "  <menu id='main-menu'>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_File</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>_Import Index</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.importindex</attribute>"
+        "          </item>"
+        "        </section>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>_Sources...</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.sources</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_Edit</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>Select _All</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.selectAll</attribute>"
+        "            <attribute name='accel'>&lt;Primary&gt;a</attribute>"
+        "          </item>"
+        "        </section>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>Preferences</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.preferences</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "    <submenu>"
+        "      <attribute name='label' translatable='yes'>_Help</attribute>"
+        "        <section>"
+        "          <item>"
+        "            <attribute name='label' translatable='yes'>About</attribute>"
+        "            <attribute name='action' translatable='yes'>fotofing.about</attribute>"
+        "          </item>"
+        "        </section>"
+        "    </submenu>"
+        "  </menu>"
+        "</interface>";
+
+    builder->add_from_string(ui_info);
+
+    Glib::RefPtr<Glib::Object> object = builder->get_object("main-menu");
+    m_menu = Glib::RefPtr<Gio::Menu>::cast_dynamic(object);
 }
 
 void Library::displayDetails(Photo* photo)

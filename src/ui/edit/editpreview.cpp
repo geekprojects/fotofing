@@ -33,6 +33,8 @@ void EditPreview::setWorkflow(Workflow* workflow)
 {
     m_workflow = workflow;
 
+    m_edit->getMainWindow()->setStatusMessage(
+        "Opening " + m_workflow->getFile()->getPath());
     m_original = Surface::loadJPEG(m_workflow->getFile()->getPath());
 
     render(true);
@@ -72,6 +74,7 @@ void EditPreview::render(bool opsChanged)
         delete m_rendered;
     }
 
+    m_edit->getMainWindow()->setStatusMessage("Rendering preview...");
     m_rendered = m_original->scale(scale, false);
 
     vector<OperationInstance*>::iterator it;
@@ -85,6 +88,7 @@ void EditPreview::render(bool opsChanged)
         op->apply(m_rendered, NULL);
         printf("EditPreview::render:  -> finished applying %s\n", op->getOperation()->getName().c_str());
     }
+    m_edit->getMainWindow()->setStatusMessage("Done");
 
     queue_draw();
 }

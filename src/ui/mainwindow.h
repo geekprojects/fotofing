@@ -19,6 +19,7 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     Glib::RefPtr<Gtk::Builder> m_refBuilder;
 
+    Gtk::MenuBar m_menuBar;
     Gtk::Notebook m_tabs;
 
     /* Library Tab */
@@ -29,14 +30,14 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     /* *** Status Bar *** */
     Gtk::HBox m_statusBox;
-    Gtk::Statusbar m_statusBar;
+    Gtk::Label m_statusBar;
     Gtk::ProgressBar m_progressBar;
     bool m_progressActive;
     bool progressTimeout();
 
     About m_about;
 
-    Gtk::MenuBar* createMenu();
+    void initActions();
 
  public:
     MainWindow(Index* index);
@@ -47,8 +48,12 @@ class MainWindow : public Gtk::Window, public IndexClient
 
     void editPhoto(Photo* photo);
 
-    void closeTab(Gtk::Widget* w);
+    void openTab(Tab* w);
+    void closeTab(Tab* w);
     bool isTabVisible(Gtk::Widget* w);
+    void onTabSwitch(Gtk::Widget* w, guint pageNum);
+
+    void onExport();
 
     void setStatusMessage(std::string message);
     void startProgress();

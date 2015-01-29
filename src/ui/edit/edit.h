@@ -7,6 +7,7 @@
 #include <fotofing/workflow.h>
 
 #include "mainwindow.h"
+#include "tab.h"
 #include "editpreview.h"
 
 class OpsModelColumns : public Gtk::TreeModelColumnRecord
@@ -25,7 +26,7 @@ class OpsModelColumns : public Gtk::TreeModelColumnRecord
 };
 
 
-class Edit : public Gtk::HBox
+class Edit : public Tab
 {
  private:
     MainWindow* m_mainWindow;
@@ -52,9 +53,12 @@ class Edit : public Gtk::HBox
     Glib::RefPtr<Gtk::TreeStore> m_opsViewStore;
 #endif
 
+    Glib::RefPtr<Gio::Menu> m_menu;
     Gtk::HBox m_tabLabel;
     Gtk::Label m_tabLabelText;
     Gtk::Button m_tabLabelClose;
+
+    void createMenu();
 
     void updateOperations();
     void updateWorkflow();
@@ -66,8 +70,13 @@ class Edit : public Gtk::HBox
     void close();
 
     Gtk::Widget* getTabLabel() { return &m_tabLabel; }
+    Glib::RefPtr< Gio::Menu >& getMenu(){ return m_menu; }
+
+    MainWindow* getMainWindow() { return m_mainWindow; }
 
     void deleteOperation(OperationInstance* op);
+
+    void onExport();
 
     void onOpsMenuRowActivate(
         const Gtk::TreeModel::Path& path,
