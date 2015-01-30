@@ -430,6 +430,12 @@ bool PreparedStatement::bindInt64(int i, int64_t value)
     return true;
 }
 
+bool PreparedStatement::bindDouble(int i, double value)
+{
+    sqlite3_bind_double(m_stmt, i, value);
+    return true;
+}
+
 bool PreparedStatement::bindBlob(int i, void* data, int length)
 {
     sqlite3_bind_blob(m_stmt, i, data, length, SQLITE_TRANSIENT);
@@ -460,6 +466,11 @@ int PreparedStatement::getInt(int i)
 int64_t PreparedStatement::getInt64(int i)
 {
    return sqlite3_column_int64(m_stmt, i);
+}
+
+double PreparedStatement::getDouble(int i)
+{
+   return sqlite3_column_double(m_stmt, i);
 }
 
 string PreparedStatement::getString(int i)

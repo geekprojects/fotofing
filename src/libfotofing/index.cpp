@@ -551,7 +551,7 @@ bool Index::addFileSource(string path)
 
 bool Index::scanFile(Source* source, File* f)
 {
-#if 1
+#if 0
     printf("Index::scanFile: file=%s\n", f->getPath().c_str());
 #endif
     vector<string> args;

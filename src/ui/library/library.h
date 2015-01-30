@@ -1,17 +1,20 @@
 #ifndef __FOTOFING_UI_LIBRARY_H_
 #define __FOTOFING_UI_LIBRARY_H_
 
+#include "tab.h"
 #include "photodetails.h"
 #include "photoview.h"
 #include "widgets/tagview.h"
 
 class MainWindow;
 
-class Library : public Gtk::VBox, public IndexClient
+class Library : public Tab, public IndexClient
 {
  private:
     MainWindow* m_mainWindow;
 
+    Gtk::Label m_tabLabel;
+    Glib::RefPtr<Gio::Menu> m_menu;
     Gtk::HBox m_hBox;
 
     // Toolbar and Menu
@@ -49,6 +52,8 @@ class Library : public Gtk::VBox, public IndexClient
     /* *** Photo detail panel *** */
     PhotoDetails m_photoDetails;
 
+    void createMenu();
+
  public:
     Library(MainWindow* mainWindow);
     ~Library();
@@ -73,6 +78,9 @@ class Library : public Gtk::VBox, public IndexClient
 
     MainWindow* getMainWindow() { return m_mainWindow; }
     Index* getIndex();
+
+    Gtk::Widget* getTabLabel() { return &m_tabLabel; }
+    Glib::RefPtr< Gio::Menu >& getMenu() { return m_menu; }
 };
 
 #endif

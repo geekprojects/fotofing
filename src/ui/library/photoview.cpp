@@ -168,6 +168,8 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
     vector<File*> files = m_library->getIndex()->getFiles(photo->getId());
     if (files.size() > 0)
     {
+        m_library->getMainWindow()->editPhoto(photo);
+#if 0
         pid_t childPid = fork();
         if (childPid == 0)
         {
@@ -196,6 +198,7 @@ void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
             }
             while (tpid != childPid);
         }
+#endif
     }
 }
 
