@@ -5,14 +5,14 @@
 #include <fotofing/index.h>
 #include <fotofing/utils.h>
 
+#include "ui.h"
 #include "mainwindow.h"
 
 using namespace std;
 
 int main(int argc, char** argv)
 {
-    Glib::RefPtr<Gtk::Application> app;
-    app = Gtk::Application::create(argc, argv, "com.geekprojects.fotofing");
+    FotofingUI app(argc, argv);
 
     string home = string(getenv("HOME"));
     string path = home + DEFAULT_DB_PATH;
@@ -21,7 +21,7 @@ int main(int argc, char** argv)
 
     MainWindow mainWindow(index);
 
-    app->run(mainWindow);
+    app.run(mainWindow);
 
     delete index;
 

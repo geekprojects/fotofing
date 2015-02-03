@@ -162,7 +162,7 @@ void Library::createMenu()
         "        <section>"
         "          <item>"
         "            <attribute name='label' translatable='yes'>About</attribute>"
-        "            <attribute name='action' translatable='yes'>fotofing.about</attribute>"
+        "            <attribute name='action' translatable='yes'>app.about</attribute>"
         "          </item>"
         "        </section>"
         "    </submenu>"
