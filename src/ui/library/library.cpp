@@ -72,8 +72,11 @@ Library::Library(MainWindow* mainWindow) :
     m_tagBox.pack_start(m_tagSearchButton, Gtk::PACK_SHRINK);
     m_tagFrame.add(m_tagBox);
 
+    m_photoViewScroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+    m_photoViewScroll.add(m_photoView);
+
     m_hBox.pack_start(m_tagFrame, Gtk::PACK_SHRINK);
-    m_hBox.pack_start(m_photoView, Gtk::PACK_EXPAND_WIDGET);
+    m_hBox.pack_start(m_photoViewScroll, Gtk::PACK_EXPAND_WIDGET);
     m_hBox.pack_start(m_photoDetails, Gtk::PACK_SHRINK);
 
     pack_start(m_toolbarBox, Gtk::PACK_SHRINK);
