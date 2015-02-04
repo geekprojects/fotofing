@@ -25,7 +25,7 @@ FotofingWindow::FotofingWindow()
 
     m_vBox.pack_start(m_menuBar, Gtk::PACK_SHRINK);
     m_vBox.pack_start(m_tabs, Gtk::PACK_EXPAND_WIDGET);
-    m_vBox.pack_start(m_statusBox, Gtk::PACK_EXPAND_WIDGET);
+    m_vBox.pack_start(m_statusBox, Gtk::PACK_SHRINK);
     add(m_vBox);
 
     show_all();
