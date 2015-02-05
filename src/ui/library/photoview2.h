@@ -39,12 +39,15 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 
     void clearPhotos();
 
+    PhotoIcon* getIcon(double x, double y);
+
  public:
     PhotoView2(Library* library);
     virtual ~PhotoView2();
 
     void update(std::vector<Tag*> tags, time_t from, time_t to);
 
+    void clearSelection();
     std::vector<Photo*> getSelectedPhotos();
 
     virtual Gtk::SizeRequestMode get_request_mode_vfunc() const;
@@ -54,6 +57,8 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
         int& natural_height) const;
     virtual void on_size_allocate(Gtk::Allocation& allocation);
     virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
+
+    virtual bool on_button_press_event(GdkEventButton* event);
 };
 
 #endif

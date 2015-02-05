@@ -1,6 +1,7 @@
 
 #include "library/photoview2.h"
 #include "library/library.h"
+#include "mainwindow.h"
 
 using namespace std;
 using namespace Geek::Gfx;
@@ -16,6 +17,8 @@ PhotoView2::PhotoView2(Library* library)
 
     set_vexpand(true);
     set_vscroll_policy(Gtk::SCROLL_NATURAL);
+
+    set_events(Gdk::BUTTON_PRESS_MASK);
 }
 
 PhotoView2::~PhotoView2()
@@ -49,7 +52,15 @@ void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
     {
         PhotoIcon* icon = new PhotoIcon();
         icon->photo = *it;
+#if 0
         icon->selected = (it == photos.begin());
+        if (icon->selected)
+        {
+            m_library->displayDetails(icon->photo);
+        }
+#else
+        icon->selected = false;
+#endif
 
         Surface* thumb = icon->photo->getThumbnail();
         icon->pixbuf = Gdk::Pixbuf::create_from_data(
@@ -306,6 +317,32 @@ bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
     return true;
 }
 
+bool PhotoView2::on_button_press_event(GdkEventButton* event)
+{
+    printf("PhotoView2::on_button_press_event: x=%0.2f, y=%0.2f\n", event->x, event->y);
+
+    PhotoIcon* selected = getIcon(event->x, event->y);
+    if (selected != NULL)
+    {
+        if (!selected->selected)
+        {
+            clearSelection();
+
+            selected->selected = true;
+            queue_draw();
+
+            m_library->displayDetails(selected->photo);
+        }
+        else if (event->type == GDK_2BUTTON_PRESS)
+        {
+            printf("PhotoView2::on_button_press_event: Double click!\n");
+            m_library->getMainWindow()->editPhoto(selected->photo);
+        }
+    }
+
+    return true;
+}
+
 vector<Photo*> PhotoView2::getSelectedPhotos()
 {
     vector<Photo*> results;
@@ -324,4 +361,33 @@ void PhotoView2::clearPhotos()
     m_photos.clear();
 }
 
+void PhotoView2::clearSelection()
+{
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        icon->selected = false;
+    }
+}
+
+PhotoIcon* PhotoView2::getIcon(double x, double y)
+{
+    PhotoIcon* selected = NULL;
+
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        if (x >= icon->x &&
+            y >= icon->y &&
+            x < icon->x + icon->width  &&
+            y < icon->y + icon->height)
+        {
+            selected = icon;
+            break;
+        }
+    }
+    return selected;
+}
 
