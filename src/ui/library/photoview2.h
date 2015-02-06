@@ -30,16 +30,28 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     Library* m_library;
 
     std::vector<PhotoIcon*> m_photos;
+    std::vector<PhotoIcon*>::iterator m_photoCursor;
 
     int m_padding;
     int m_margin;
     int m_titleHeight;
+    int m_columns;
 
     int m_maxThumbWidth;
 
     void clearPhotos();
 
     PhotoIcon* getIcon(double x, double y);
+
+    Gtk::Viewport* getViewport() const;
+    Glib::RefPtr<Gtk::Adjustment> getScrollAdjustment();
+    int getScrollHeight() const;
+
+    void moveCursor(std::vector<PhotoIcon*>::iterator pos);
+    void moveCursor(int a);
+    void movePage(int a);
+    void updateCursor();
+    void scrollToCursor();
 
  public:
     PhotoView2(Library* library);
@@ -59,6 +71,7 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     virtual bool on_draw(const Cairo::RefPtr<Cairo::Context>& cr);
 
     virtual bool on_button_press_event(GdkEventButton* event);
+    virtual bool on_key_press_event(GdkEventKey* event);
 };
 
 #endif
