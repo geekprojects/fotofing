@@ -39,6 +39,8 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 
     int m_maxThumbWidth;
 
+    Gtk::Menu m_popupMenu;
+
     void clearPhotos();
 
     PhotoIcon* getIcon(double x, double y);
@@ -47,11 +49,16 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     Glib::RefPtr<Gtk::Adjustment> getScrollAdjustment();
     int getScrollHeight() const;
 
+    void moveCursor(PhotoIcon* icon);
     void moveCursor(std::vector<PhotoIcon*>::iterator pos);
     void moveCursor(int a);
     void movePage(int a);
     void updateCursor();
     void scrollToCursor();
+
+ protected:
+
+    bool onPopupMenu();
 
  public:
     PhotoView2(Library* library);

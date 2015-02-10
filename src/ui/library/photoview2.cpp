@@ -20,6 +20,28 @@ PhotoView2::PhotoView2(Library* library)
     set_vscroll_policy(Gtk::SCROLL_NATURAL);
 
     set_events(Gdk::BUTTON_PRESS_MASK | Gdk::KEY_PRESS_MASK);
+
+    // Add context menu
+    Gtk::MenuItem* item = Gtk::manage(new Gtk::MenuItem("_Add Tag", true));
+/*
+    item->signal_activate().connect(sigc::mem_fun(
+        *this,
+        &PhotoView::addTag));
+*/
+    m_popupMenu.append(*item);
+    item = Gtk::manage(new Gtk::MenuItem("_Rename", true));
+/*
+    item->signal_activate().connect(sigc::mem_fun(
+        *this,
+        &PhotoView::rename));
+*/
+    m_popupMenu.append(*item);
+    //m_popupMenu.accelerate(this);
+    m_popupMenu.show_all();
+
+    signal_popup_menu().connect(sigc::mem_fun(
+        *this,
+        &PhotoView2::onPopupMenu));
 }
 
 PhotoView2::~PhotoView2()
@@ -360,6 +382,12 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
             printf("PhotoView2::on_button_press_event: Double click!\n");
             m_library->getMainWindow()->editPhoto(selected->photo);
         }
+
+        if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
+        {
+            printf("PhotoView2::on_button_press_event: Context menu!\n");
+            m_popupMenu.popup(event->button, event->time);
+        }
     }
 
     return true;
@@ -414,6 +442,12 @@ vector<Photo*> PhotoView2::getSelectedPhotos()
 {
     vector<Photo*> results;
     return results;
+}
+
+bool PhotoView2::onPopupMenu()
+{
+printf("PhotoView2::onPopupMenu: Called!\n");
+    return true;
 }
 
 void PhotoView2::clearPhotos()
@@ -483,6 +517,18 @@ int PhotoView2::getScrollHeight() const
 
     Gtk::Allocation allocation = parent->get_allocation();
     return allocation.get_height();
+}
+
+void PhotoView2::moveCursor(PhotoIcon* icon)
+{
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        if (*it == icon)
+        {
+            return
+        }
+    }
 }
 
 void PhotoView2::moveCursor(vector<PhotoIcon*>::iterator pos)
