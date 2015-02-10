@@ -285,16 +285,23 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
         {
             cr->set_source_rgb(0.5, 0.5, 0.5);    // partially translucent
 
-        cr->rectangle(
-            icon->x,
-            icon->y,
-            icon->width,
-            icon->height);
-            cr->fill_preserve();
+            cr->rectangle(
+                icon->x,
+                icon->y,
+                icon->width,
+                icon->height);
+                cr->fill_preserve();
         }
         cr->stroke();
 
-        cr->set_source_rgb(0, 0, 0);
+        if (it != m_photoCursor)
+        {
+            cr->set_source_rgb(0, 0, 0);
+        }
+        else
+        {
+            cr->set_source_rgb(1, 1, 0);
+        }
 
         cr->rectangle(
             icon->x,
