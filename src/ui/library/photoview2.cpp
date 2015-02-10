@@ -244,12 +244,10 @@ void PhotoView2::on_size_allocate(Gtk::Allocation& allocation)
 
 bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
+    Pango::FontDescription font;
 
-
-  Pango::FontDescription font;
-
-  font.set_family("Monospace");
-  font.set_weight(Pango::WEIGHT_BOLD);
+    font.set_family("Monospace");
+    font.set_weight(Pango::WEIGHT_BOLD);
 
 
     double clipX1;
@@ -258,7 +256,9 @@ bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
     double clipY2;
 
     cr->get_clip_extents(clipX1, clipY1, clipX2, clipY2);
+#if 0
 printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
+#endif
 
     int skipped = 0;
 
@@ -338,14 +338,20 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
             photoY);
         cr->paint();
     }
+#if 0
     printf("PhotoView2::on_draw: Skipped=%d\n", skipped);
+#endif
 
     return true;
 }
 
 bool PhotoView2::on_button_press_event(GdkEventButton* event)
 {
+#if 0
     printf("PhotoView2::on_button_press_event: x=%0.2f, y=%0.2f\n", event->x, event->y);
+#endif
+
+    vector<PhotoIcon*>::iterator prevCursor = m_photoCursor;
 
     grab_focus();
 
@@ -368,14 +374,41 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
 
     if (selected != NULL)
     {
-        if (!selected->selected)
+        if (event->type == GDK_BUTTON_PRESS)
         {
-            clearSelection();
+            if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
+            {
+                clearSelection();
+                m_library->displayDetails(selected->photo);
+            }
+            else if (event->state & GDK_CONTROL_MASK &&
+                prevCursor != m_photos.end())
+            {
+                vector<PhotoIcon*>::iterator start;
+                vector<PhotoIcon*>::iterator end;
+                if (prevCursor < m_photoCursor)
+                {
+                    start = prevCursor;
+                    end = m_photoCursor;
+                }
+                else
+                {
+                    start = m_photoCursor;
+                    end = prevCursor;
+                }
+                for (it = start; it != end; it++)
+                {
+                    (*it)->selected = true;
+                }
+            }
 
-            selected->selected = true;
-            queue_draw();
+            moveCursor(selected);
 
-            m_library->displayDetails(selected->photo);
+            if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
+            {
+                printf("PhotoView2::on_button_press_event: Context menu!\n");
+                m_popupMenu.popup(event->button, event->time);
+            }
         }
         else if (event->type == GDK_2BUTTON_PRESS)
         {
@@ -383,19 +416,13 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
             m_library->getMainWindow()->editPhoto(selected->photo);
         }
 
-        if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
-        {
-            printf("PhotoView2::on_button_press_event: Context menu!\n");
-            m_popupMenu.popup(event->button, event->time);
-        }
-    }
+   }
 
     return true;
 }
 
 bool PhotoView2::on_key_press_event(GdkEventKey* event)
 {
-    printf("PhotoView2::on_key_press_event: key=0x%x\n", event->keyval);
 
     switch (event->keyval)
     {
@@ -434,6 +461,8 @@ bool PhotoView2::on_key_press_event(GdkEventKey* event)
         case GDK_KEY_Return:
             m_library->getMainWindow()->editPhoto((*m_photoCursor)->photo);
             break;
+        default:
+            printf("PhotoView2::on_key_press_event: key=0x%x\n", event->keyval);
     }
     return true;
 }
@@ -441,6 +470,17 @@ bool PhotoView2::on_key_press_event(GdkEventKey* event)
 vector<Photo*> PhotoView2::getSelectedPhotos()
 {
     vector<Photo*> results;
+
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        if (icon->selected)
+        {
+            results.push_back(icon->photo);
+        }
+    }
+
     return results;
 }
 
@@ -526,7 +566,8 @@ void PhotoView2::moveCursor(PhotoIcon* icon)
     {
         if (*it == icon)
         {
-            return
+            moveCursor(it);
+            return;
         }
     }
 }
@@ -548,7 +589,7 @@ void PhotoView2::moveCursor(int a)
         return;
     }
 
-    (*m_photoCursor)->selected = false;
+    clearSelection();
 
     int i;
     if (a > 0)
@@ -582,7 +623,7 @@ void PhotoView2::movePage(int a)
         return;
     }
 
-    (*m_photoCursor)->selected = false;
+    clearSelection();
 
     Glib::RefPtr<Gtk::Adjustment> adj = getScrollAdjustment();
     int y = adj->get_value();
@@ -634,14 +675,19 @@ void PhotoView2::scrollToCursor()
         // No where to scroll to!
         return;
     }
-    PhotoIcon* icon = *m_photoCursor;
+    scrollToIcon(*m_photoCursor);
+}
 
+void PhotoView2::scrollToIcon(PhotoIcon* icon)
+{
     Glib::RefPtr<Gtk::Adjustment> adj = getScrollAdjustment();
     int y = adj->get_value();
 
     int height = getScrollHeight();
 
+#if 0
     printf("PhotoView2::scrollToCursor: height=%d\n", height);
+#endif
 
     if (y + height < icon->y + icon->height)
     {

@@ -55,6 +55,7 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     void movePage(int a);
     void updateCursor();
     void scrollToCursor();
+    void scrollToIcon(PhotoIcon* icon);
 
  protected:
 
