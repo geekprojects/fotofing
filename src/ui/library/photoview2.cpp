@@ -281,51 +281,75 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
 
         cr->set_line_width(2.0);
 
+        // Create the linear gradient diagonal
+        Cairo::RefPtr<Cairo::LinearGradient> gradient;
+        gradient = Cairo::LinearGradient::create(
+            icon->x,
+            icon->y + 20,
+            icon->x,
+            icon->y + icon->height);
         if (icon->selected)
         {
-
-            if (it != m_photoCursor)
-            {
-                cr->set_source_rgb(0.5, 0.5, 0.5);
-            }
-            else
-            {
-                cr->set_source_rgb(0.5, 0.5, 0.75);
-            }
-
-            cr->rectangle(
-                icon->x,
-                icon->y,
-                icon->width,
-                icon->height);
-            cr->fill_preserve();
+            gradient->add_color_stop_rgb(0, 0.5, 0.5, 0.5);
+            gradient->add_color_stop_rgb(1, 0.3, 0.3, 0.3);
         }
-        cr->stroke();
+        else
+        {
+            gradient->add_color_stop_rgb(0, 0.1, 0.1, 0.1);
+            gradient->add_color_stop_rgb(1, 0.06, 0.06, 0.06);
+        }
 
-        //if (it != m_photoCursor)
-        //{
-            cr->set_source_rgb(0, 0, 0);
-        //}
-        //else
-        //{
-            //cr->set_source_rgb(1, 1, 0);
-        //}
+        cr->set_source (gradient);
 
         cr->rectangle(
             icon->x,
             icon->y,
-            icon->width,
-            icon->height);
+            icon->width - 1,
+            icon->height - 1);
+        cr->fill_preserve();
         cr->stroke();
 
-        cr->set_source_rgb(0, 0, 0);
+        Cairo::RefPtr<Cairo::LinearGradient> borderGradient;
+        borderGradient = Cairo::LinearGradient::create(
+            icon->x,
+            icon->y,
+            icon->x,
+            icon->y + icon->height);
+
+        if (it == m_photoCursor)
+        {
+            borderGradient->add_color_stop_rgb(0, 0.6, 0.6, 0.6);
+            borderGradient->add_color_stop_rgb(1, 0.3, 0.3, 0.3);
+        }
+        else if (icon->selected)
+        {
+
+            borderGradient->add_color_stop_rgb(0, 0.3, 0.3, 0.3);
+            borderGradient->add_color_stop_rgb(1, 0.1, 0.1, 0.1);
+        }
+        else
+        {
+            borderGradient->add_color_stop_rgb(0, 0.06, 0.06, 0.06);
+            borderGradient->add_color_stop_rgb(1, 0.0, 0.0, 0.0);
+        }
+
+        cr->set_source(borderGradient);
+
+        cr->rectangle(
+            icon->x,
+            icon->y,
+            icon->width - 1,
+            icon->height - 1);
+        cr->stroke();
+
+        cr->set_source_rgb(0.02, 0.02, 0.02);
 
         // Border around the photo itself
         cr->rectangle(
-            photoX + 1,
-            photoY + 1,
-            thumb->getWidth() + 0,
-            thumb->getHeight() + 0);
+            photoX + 3,
+            photoY + 3,
+            thumb->getWidth() - 2,
+            thumb->getHeight() - 2);
         cr->fill_preserve();
         cr->stroke();
 
