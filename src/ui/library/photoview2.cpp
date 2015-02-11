@@ -2,6 +2,7 @@
 #include "library/photoview2.h"
 #include "library/library.h"
 #include "mainwindow.h"
+#include "uiutils.h"
 
 using namespace std;
 using namespace Geek::Gfx;
@@ -30,11 +31,9 @@ PhotoView2::PhotoView2(Library* library)
 */
     m_popupMenu.append(*item);
     item = Gtk::manage(new Gtk::MenuItem("_Rename", true));
-/*
     item->signal_activate().connect(sigc::mem_fun(
         *this,
-        &PhotoView::rename));
-*/
+        &PhotoView2::rename));
     m_popupMenu.append(*item);
     //m_popupMenu.accelerate(this);
     m_popupMenu.show_all();
@@ -75,15 +74,16 @@ void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
     {
         PhotoIcon* icon = new PhotoIcon();
         icon->photo = *it;
-#if 0
-        icon->selected = (it == photos.begin());
-        if (icon->selected)
-        {
-            m_library->displayDetails(icon->photo);
-        }
-#else
         icon->selected = false;
-#endif
+
+        string title = m_library->getIndex()->getProperty(
+            icon->photo->getId(),
+            "Title");
+        if (title == "")
+        {
+            title = icon->photo->getId().substr(0, 6) + "...";
+        }
+        icon->title = title;
 
         Surface* thumb = icon->photo->getThumbnail();
         icon->pixbuf = Gdk::Pixbuf::create_from_data(
@@ -329,7 +329,7 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
         cr->fill_preserve();
         cr->stroke();
 
-        Glib::RefPtr<Pango::Layout> layout = create_pango_layout(icon->photo->getId().substr(0, 6));
+        Glib::RefPtr<Pango::Layout> layout = create_pango_layout(icon->title);
         //layout->set_font_description(font);
 
         int text_width;
@@ -505,6 +505,36 @@ vector<Photo*> PhotoView2::getSelectedPhotos()
     }
 
     return results;
+}
+
+void PhotoView2::rename()
+{
+    if (m_photoCursor == m_photos.end())
+    {
+        return;
+    }
+
+    Photo* photo = (*m_photoCursor)->photo;
+
+    string title = m_library->getIndex()->getProperty(
+        photo->getId(),
+        "Title");
+
+    bool res;
+    res = UIUtils::promptString(
+        *m_library->getMainWindow(),
+        "Photo Title",
+        "Please give this photo a title",
+        title,
+        title);
+    if (res)
+    {
+        m_library->getIndex()->setProperty(
+            photo->getId(),
+            "Title",
+            title);
+        m_library->update();
+    }
 }
 
 bool PhotoView2::onPopupMenu()

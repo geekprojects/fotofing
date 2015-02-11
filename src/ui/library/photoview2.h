@@ -21,6 +21,7 @@ struct PhotoIcon
     Photo* photo;
     bool selected;
 
+    std::string title;
     Glib::RefPtr<Gdk::Pixbuf> pixbuf;
 };
 
@@ -80,6 +81,8 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 
     virtual bool on_button_press_event(GdkEventButton* event);
     virtual bool on_key_press_event(GdkEventKey* event);
+
+    void rename();
 };
 
 #endif
