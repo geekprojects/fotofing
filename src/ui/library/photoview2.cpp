@@ -279,29 +279,37 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
         int photoX = icon->x + ((icon->width / 2) - (thumb->getWidth() / 2));
         int photoY = icon->y + ((icon->height / 2) - (thumb->getHeight() / 2));
 
-        cr->set_line_width(1.0);
+        cr->set_line_width(2.0);
 
         if (icon->selected)
         {
-            cr->set_source_rgb(0.5, 0.5, 0.5);    // partially translucent
+
+            if (it != m_photoCursor)
+            {
+                cr->set_source_rgb(0.5, 0.5, 0.5);
+            }
+            else
+            {
+                cr->set_source_rgb(0.5, 0.5, 0.75);
+            }
 
             cr->rectangle(
                 icon->x,
                 icon->y,
                 icon->width,
                 icon->height);
-                cr->fill_preserve();
+            cr->fill_preserve();
         }
         cr->stroke();
 
-        if (it != m_photoCursor)
-        {
+        //if (it != m_photoCursor)
+        //{
             cr->set_source_rgb(0, 0, 0);
-        }
-        else
-        {
-            cr->set_source_rgb(1, 1, 0);
-        }
+        //}
+        //else
+        //{
+            //cr->set_source_rgb(1, 1, 0);
+        //}
 
         cr->rectangle(
             icon->x,
@@ -314,10 +322,11 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
 
         // Border around the photo itself
         cr->rectangle(
-            photoX - 0,
-            photoY - 0,
-            thumb->getWidth() + 1,
-            thumb->getHeight() + 1);
+            photoX + 1,
+            photoY + 1,
+            thumb->getWidth() + 0,
+            thumb->getHeight() + 0);
+        cr->fill_preserve();
         cr->stroke();
 
         Glib::RefPtr<Pango::Layout> layout = create_pango_layout(icon->photo->getId().substr(0, 6));
@@ -430,19 +439,26 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
 
 bool PhotoView2::on_key_press_event(GdkEventKey* event)
 {
+    if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
+    {
+        printf("PhotoView2::on_key_press_event: Clearing selection\n");
+        clearSelection();
+    }
+
+    bool selectAll = (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK));
 
     switch (event->keyval)
     {
         case GDK_KEY_Left:
-            moveCursor(-1);
+            moveCursor(-1, selectAll);
             break;
 
         case GDK_KEY_Right:
-            moveCursor(1);
+            moveCursor(1, selectAll);
             break;
 
         case GDK_KEY_Up:
-            moveCursor(-m_columns);
+            moveCursor(-m_columns, selectAll);
             break;
 
         case GDK_KEY_Home:
@@ -454,15 +470,15 @@ bool PhotoView2::on_key_press_event(GdkEventKey* event)
             break;
 
         case GDK_KEY_Down:
-            moveCursor(m_columns);
+            moveCursor(m_columns, selectAll);
             break;
 
         case GDK_KEY_Page_Up:
-            movePage(-1);
+            movePage(-1, selectAll);
             break;
 
         case GDK_KEY_Page_Down:
-            movePage(1);
+            movePage(1, selectAll);
             break;
 
         case GDK_KEY_Return:
@@ -581,22 +597,16 @@ void PhotoView2::moveCursor(PhotoIcon* icon)
 
 void PhotoView2::moveCursor(vector<PhotoIcon*>::iterator pos)
 {
-    if (m_photoCursor != m_photos.end())
-    {
-        (*m_photoCursor)->selected = false;
-    }
     m_photoCursor = pos;
     updateCursor();
 }
 
-void PhotoView2::moveCursor(int a)
+void PhotoView2::moveCursor(int a, bool select)
 {
     if (m_photoCursor == m_photos.end())
     {
         return;
     }
-
-    clearSelection();
 
     int i;
     if (a > 0)
@@ -604,9 +614,12 @@ void PhotoView2::moveCursor(int a)
         for (
             i = 1;
             i <= a && (m_photoCursor + 1) != m_photos.end();
-            i++)
+            i++, m_photoCursor++)
         {
-            m_photoCursor++;
+            if (select)
+            {
+                (*m_photoCursor)->selected = true;
+            }
         }
     }
     else
@@ -614,23 +627,24 @@ void PhotoView2::moveCursor(int a)
         for (
             i = 1;
             i <= -a && (m_photoCursor) != m_photos.begin();
-            i++)
+            i++, m_photoCursor--)
         {
-            m_photoCursor--;
+            if (select)
+            {
+                (*m_photoCursor)->selected = true;
+            }
         }
     }
 
     updateCursor();
 }
 
-void PhotoView2::movePage(int a)
+void PhotoView2::movePage(int a, bool selectPage)
 {
     if (m_photoCursor == m_photos.end())
     {
         return;
     }
-
-    clearSelection();
 
     Glib::RefPtr<Gtk::Adjustment> adj = getScrollAdjustment();
     int y = adj->get_value();
@@ -644,6 +658,12 @@ void PhotoView2::movePage(int a)
         for ( ; (m_photoCursor + 1) != m_photos.end(); m_photoCursor++)
         {
             PhotoIcon* icon = *m_photoCursor;
+
+            if (selectPage)
+            {
+                icon->selected = true;
+            }
+
             if (icon->y + icon->height >= currentY + currentHeight + height &&
                 icon->x >= currentX)
             {
@@ -656,6 +676,12 @@ void PhotoView2::movePage(int a)
         for ( ; (m_photoCursor) != m_photos.begin(); m_photoCursor--)
         {
             PhotoIcon* icon = *m_photoCursor;
+
+            if (selectPage)
+            {
+                icon->selected = true;
+            }
+
             if (icon->y + icon->height < currentY - height &&
                 icon->x <= currentX)
             {

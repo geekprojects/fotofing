@@ -51,8 +51,8 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 
     void moveCursor(PhotoIcon* icon);
     void moveCursor(std::vector<PhotoIcon*>::iterator pos);
-    void moveCursor(int a);
-    void movePage(int a);
+    void moveCursor(int a, bool select);
+    void movePage(int a, bool selectPage);
     void updateCursor();
     void scrollToCursor();
     void scrollToIcon(PhotoIcon* icon);
