@@ -439,10 +439,21 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
 
 bool PhotoView2::on_key_press_event(GdkEventKey* event)
 {
-    if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
+    switch (event->keyval)
     {
-        printf("PhotoView2::on_key_press_event: Clearing selection\n");
-        clearSelection();
+        case GDK_KEY_Left:
+        case GDK_KEY_Right:
+        case GDK_KEY_Up:
+        case GDK_KEY_Home:
+        case GDK_KEY_End:
+        case GDK_KEY_Down:
+        case GDK_KEY_Page_Up:
+        case GDK_KEY_Page_Down:
+            if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
+            {
+                printf("PhotoView2::on_key_press_event: Clearing selection\n");
+                clearSelection();
+            }
     }
 
     bool selectAll = (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK));
