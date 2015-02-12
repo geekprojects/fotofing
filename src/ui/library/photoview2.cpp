@@ -86,6 +86,22 @@ void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
         icon->title = title;
 
         Surface* thumb = icon->photo->getThumbnail();
+        TagData* orientation = m_library->getIndex()->getTagData(
+            icon->photo->getId(),
+            "Photo/Orientation");
+        if (orientation->type == SQLITE_INTEGER)
+        {
+            switch (orientation->data.i)
+            {
+                case 6:
+                    thumb->rotate(90);
+                    break;
+                case 8:
+                    thumb->rotate(270);
+                    break;
+            }
+        }
+
         icon->pixbuf = Gdk::Pixbuf::create_from_data(
             thumb->getData(),
             Gdk::COLORSPACE_RGB,
