@@ -86,6 +86,8 @@ void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
         icon->title = title;
 
         Surface* thumb = icon->photo->getThumbnail();
+
+        // Rotate thumbnail if necessary
         TagData* orientation = m_library->getIndex()->getTagData(
             icon->photo->getId(),
             "Photo/Orientation");
@@ -260,12 +262,6 @@ void PhotoView2::on_size_allocate(Gtk::Allocation& allocation)
 
 bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 {
-    Pango::FontDescription font;
-
-    font.set_family("Monospace");
-    font.set_weight(Pango::WEIGHT_BOLD);
-
-
     double clipX1;
     double clipY1;
     double clipX2;
@@ -273,7 +269,7 @@ bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
 
     cr->get_clip_extents(clipX1, clipY1, clipX2, clipY2);
 #if 0
-printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
+    printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
 #endif
 
     int skipped = 0;
@@ -370,7 +366,6 @@ printf("PhotoView2::on_draw: clipY1=%0.2f\n", clipY1);
         cr->stroke();
 
         Glib::RefPtr<Pango::Layout> layout = create_pango_layout(icon->title);
-        //layout->set_font_description(font);
 
         int text_width;
         int text_height;
@@ -491,7 +486,6 @@ bool PhotoView2::on_key_press_event(GdkEventKey* event)
         case GDK_KEY_Page_Down:
             if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
             {
-                printf("PhotoView2::on_key_press_event: Clearing selection\n");
                 clearSelection();
             }
     }
@@ -536,7 +530,9 @@ bool PhotoView2::on_key_press_event(GdkEventKey* event)
             m_library->getMainWindow()->editPhoto((*m_photoCursor)->photo);
             break;
         default:
-            printf("PhotoView2::on_key_press_event: key=0x%x\n", event->keyval);
+            printf(
+                "PhotoView2::on_key_press_event: Unhandled key=0x%x\n",
+                event->keyval);
     }
     return true;
 }
