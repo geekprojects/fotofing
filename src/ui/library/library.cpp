@@ -103,8 +103,8 @@ void Library::update()
 
     vector<Tag*> tags = m_allTagsView.getSelectedTags();
 
-time_t from = m_fromDate;
-time_t to = m_toDate;
+    time_t from = m_fromDate;
+    time_t to = m_toDate;
 
     vector<Photo*> photos;
     if (tags.size() > 0)
@@ -123,6 +123,17 @@ time_t to = m_toDate;
     }
 
     m_photoView.update(photos);
+
+    char message[1024];
+    if (photos.size() == 1)
+    {
+        sprintf(message, "Displaying %lu photo", photos.size());
+    }
+    else
+    {
+        sprintf(message, "Displaying %lu photos", photos.size());
+    }
+    getMainWindow()->setStatusMessage(message);
 
     m_mainWindow->updateProgress(75, 100, "");
     updateDateButtons();
