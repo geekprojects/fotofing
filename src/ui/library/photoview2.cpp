@@ -1,15 +1,16 @@
 
 #include "library/photoview2.h"
-#include "library/library.h"
 #include "mainwindow.h"
 #include "uiutils.h"
+
+#include <fotofing/index.h>
 
 using namespace std;
 using namespace Geek::Gfx;
 
-PhotoView2::PhotoView2(Library* library)
+PhotoView2::PhotoView2(Index* index)
 {
-    m_library = library;
+    m_index = index;
     override_background_color(Gdk::RGBA("#101010"));
 
     m_padding = 20;
@@ -47,25 +48,9 @@ PhotoView2::~PhotoView2()
 {
 }
 
-void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
+void PhotoView2::update(vector<Photo*> photos)
 {
     clearPhotos();
-
-    vector<Photo*> photos;
-    if (tags.size() > 0)
-    {
-        vector<string> tagStrings;
-        vector<Tag*>::iterator it;
-        for (it = tags.begin(); it != tags.end(); it++)
-        {
-            tagStrings.push_back((*it)->getTagName());
-        }
-        photos = m_library->getIndex()->getPhotos(tagStrings, &from, &to);
-    }
-    else
-    {
-        photos = m_library->getIndex()->getPhotos(&from, &to);
-    }
 
     m_maxThumbWidth = 0;
 
@@ -76,9 +61,7 @@ void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
         icon->photo = *it;
         icon->selected = false;
 
-        string title = m_library->getIndex()->getProperty(
-            icon->photo->getId(),
-            "Title");
+        string title = m_index->getProperty(icon->photo->getId(), "Title");
         if (title == "")
         {
             title = icon->photo->getId().substr(0, 6) + "...";
@@ -88,7 +71,7 @@ void PhotoView2::update(vector<Tag*> tags, time_t from, time_t to)
         Surface* thumb = icon->photo->getThumbnail();
 
         // Rotate thumbnail if necessary
-        TagData* orientation = m_library->getIndex()->getTagData(
+        TagData* orientation = m_index->getTagData(
             icon->photo->getId(),
             "Photo/Orientation");
         if (orientation->type == SQLITE_INTEGER)
@@ -217,7 +200,6 @@ void PhotoView2::on_size_allocate(Gtk::Allocation& allocation)
     printf(
         "PhotoView2::on_size_allocate: rows=%d\n",
         rows);
-
 
     int y = m_margin;
     vector<PhotoIcon*>::iterator it;
@@ -430,7 +412,6 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
             if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
             {
                 clearSelection();
-                m_library->displayDetails(selected->photo);
             }
             else if (event->state & GDK_CONTROL_MASK &&
                 prevCursor != m_photos.end())
@@ -464,7 +445,7 @@ bool PhotoView2::on_button_press_event(GdkEventButton* event)
         else if (event->type == GDK_2BUTTON_PRESS)
         {
             printf("PhotoView2::on_button_press_event: Double click!\n");
-            m_library->getMainWindow()->editPhoto(selected->photo);
+            m_activatePhotoSignal.emit(selected->photo);
         }
 
    }
@@ -527,7 +508,7 @@ bool PhotoView2::on_key_press_event(GdkEventKey* event)
             break;
 
         case GDK_KEY_Return:
-            m_library->getMainWindow()->editPhoto((*m_photoCursor)->photo);
+            m_activatePhotoSignal.emit((*m_photoCursor)->photo);
             break;
         default:
             printf(
@@ -563,24 +544,22 @@ void PhotoView2::rename()
 
     Photo* photo = (*m_photoCursor)->photo;
 
-    string title = m_library->getIndex()->getProperty(
-        photo->getId(),
-        "Title");
+    string title = m_index->getProperty(photo->getId(), "Title");
 
     bool res;
     res = UIUtils::promptString(
-        *m_library->getMainWindow(),
+        *((Gtk::Window*)get_toplevel()),
         "Photo Title",
         "Please give this photo a title",
         title,
         title);
     if (res)
     {
-        m_library->getIndex()->setProperty(
-            photo->getId(),
-            "Title",
-            title);
-        m_library->update();
+        m_index->setProperty(photo->getId(), "Title", title);
+        m_cursorChangedSignal.emit(photo);
+
+        (*m_photoCursor)->title = title;
+        queue_draw();
     }
 }
 
@@ -773,7 +752,7 @@ void PhotoView2::movePage(int a, bool selectPage)
 void PhotoView2::updateCursor()
 {
     (*m_photoCursor)->selected = true;
-    m_library->displayDetails((*m_photoCursor)->photo);
+    m_cursorChangedSignal.emit((*m_photoCursor)->photo);
     scrollToCursor();
     queue_draw();
 }
@@ -807,5 +786,15 @@ void PhotoView2::scrollToIcon(PhotoIcon* icon)
     {
         adj->set_value(icon->y);
     }
+}
+
+sigc::signal<void, Photo*>& PhotoView2::signal_cursor_changed()
+{
+    return m_cursorChangedSignal;
+}
+
+sigc::signal<void, Photo*>& PhotoView2::signal_activate_photo()
+{
+    return m_activatePhotoSignal;
 }
 

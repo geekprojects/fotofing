@@ -11,9 +11,9 @@
 using namespace std;
 
 MainWindow::MainWindow(Index* index) :
+    m_index(index),
     m_library(this)
 {
-    m_index = index;
     m_workflowIndex = new WorkflowIndex(index);
 
     openTab(&m_library);

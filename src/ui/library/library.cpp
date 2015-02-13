@@ -14,7 +14,7 @@ Library::Library(MainWindow* mainWindow) :
     m_tabLabel("Library"),
     m_dateSeparator("-"),
     m_tagSearchButton("Search"),
-    m_photoView(this),
+    m_photoView(mainWindow->getIndex()),
     m_photoDetails(this)
 {
     m_mainWindow = mainWindow;
@@ -72,6 +72,12 @@ Library::Library(MainWindow* mainWindow) :
     m_tagBox.pack_start(m_tagSearchButton, Gtk::PACK_SHRINK);
     m_tagFrame.add(m_tagBox);
 
+    m_photoView.signal_cursor_changed().connect(sigc::mem_fun(
+        *this,
+        &Library::displayDetails));
+    m_photoView.signal_activate_photo().connect(sigc::mem_fun(
+        m_mainWindow,
+        &MainWindow::editPhoto));
     m_photoViewScroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_photoViewScroll.add(m_photoView);
 
@@ -96,7 +102,27 @@ void Library::update()
     m_mainWindow->startProgress();
 
     vector<Tag*> tags = m_allTagsView.getSelectedTags();
-    m_photoView.update(tags, m_fromDate, m_toDate);
+
+time_t from = m_fromDate;
+time_t to = m_toDate;
+
+    vector<Photo*> photos;
+    if (tags.size() > 0)
+    {
+        vector<string> tagStrings;
+        vector<Tag*>::iterator it;
+        for (it = tags.begin(); it != tags.end(); it++)
+        {
+            tagStrings.push_back((*it)->getTagName());
+        }
+        photos = getIndex()->getPhotos(tagStrings, &from, &to);
+    }
+    else
+    {
+        photos = getIndex()->getPhotos(&from, &to);
+    }
+
+    m_photoView.update(photos);
 
     m_mainWindow->updateProgress(75, 100, "");
     updateDateButtons();

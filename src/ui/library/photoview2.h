@@ -9,6 +9,7 @@
 #include "widgets/tagview.h"
 
 class Library;
+class Index;
 
 struct PhotoIcon
 {
@@ -28,7 +29,7 @@ struct PhotoIcon
 class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 {
  private:
-    Library* m_library;
+    Index* m_index;
 
     std::vector<PhotoIcon*> m_photos;
     std::vector<PhotoIcon*>::iterator m_photoCursor;
@@ -50,6 +51,9 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     Glib::RefPtr<Gtk::Adjustment> getScrollAdjustment();
     int getScrollHeight() const;
 
+    sigc::signal<void, Photo*> m_cursorChangedSignal;
+    sigc::signal<void, Photo*> m_activatePhotoSignal;
+
     void moveCursor(PhotoIcon* icon);
     void moveCursor(std::vector<PhotoIcon*>::iterator pos);
     void moveCursor(int a, bool select);
@@ -63,10 +67,10 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     bool onPopupMenu();
 
  public:
-    PhotoView2(Library* library);
+    PhotoView2(Index* index);
     virtual ~PhotoView2();
 
-    void update(std::vector<Tag*> tags, time_t from, time_t to);
+    void update(std::vector<Photo*> photos);
 
     void clearSelection();
     std::vector<Photo*> getSelectedPhotos();
@@ -83,6 +87,10 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     virtual bool on_key_press_event(GdkEventKey* event);
 
     void rename();
+
+    sigc::signal<void, Photo*>& signal_cursor_changed();
+    sigc::signal<void, Photo*>& signal_activate_photo();
+
 };
 
 #endif
