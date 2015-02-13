@@ -46,6 +46,7 @@ PhotoView2::PhotoView2(Index* index)
 
 PhotoView2::~PhotoView2()
 {
+    clearPhotos();
 }
 
 void PhotoView2::update(vector<Photo*> photos)
@@ -86,6 +87,7 @@ void PhotoView2::update(vector<Photo*> photos)
                     break;
             }
         }
+        delete orientation;
 
         icon->pixbuf = Gdk::Pixbuf::create_from_data(
             thumb->getData(),
