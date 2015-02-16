@@ -3,6 +3,8 @@
 #include "mainwindow.h"
 #include "uiutils.h"
 
+#include <algorithm>
+
 #include <fotofing/index.h>
 
 using namespace std;
@@ -16,6 +18,9 @@ PhotoView2::PhotoView2(Index* index)
     m_padding = 20;
     m_margin = 0;
     m_titleHeight = 20;
+
+    m_sortBy = PHOTOVIEW_SORT_TIMESTAMP;
+    m_sortDir = true;
 
     set_can_focus(true);
     set_vexpand(true);
@@ -49,6 +54,44 @@ PhotoView2::~PhotoView2()
     clearPhotos();
 }
 
+static bool sortPhotoIcons(PhotoIcon* l, PhotoIcon* r)
+{
+    switch (l->photoView->getSortBy())
+    {
+        case PHOTOVIEW_SORT_TITLE:
+        {
+            bool lHasTitle = l->title != l->photo->getId().substr(0, 6) + "...";
+            bool rHasTitle = r->title != r->photo->getId().substr(0, 6) + "...";
+            if (lHasTitle != rHasTitle)
+            {
+                return lHasTitle;
+            }
+            else if (l->photoView->getSortDir())
+            {
+                return l->title < r->title;
+            }
+            else
+            {
+                return l->title > r->title;
+            }
+        } break;
+
+        case PHOTOVIEW_SORT_TIMESTAMP:
+        default:
+            if (l->photoView->getSortDir())
+            {
+                return l->photo->getTimestamp() < r->photo->getTimestamp();
+            }
+            else
+            {
+                return l->photo->getTimestamp() > r->photo->getTimestamp();
+            }
+            break;
+
+
+    }
+}
+
 void PhotoView2::update(vector<Photo*> photos)
 {
     clearPhotos();
@@ -59,6 +102,7 @@ void PhotoView2::update(vector<Photo*> photos)
     for (it = photos.begin(); it != photos.end(); it++)
     {
         PhotoIcon* icon = new PhotoIcon();
+        icon->photoView = this;
         icon->photo = *it;
         icon->selected = false;
 
@@ -106,7 +150,31 @@ void PhotoView2::update(vector<Photo*> photos)
         m_photos.push_back(icon);
     }
 
+    sort();
+
     queue_resize();
+}
+
+void PhotoView2::setSort(PhotoViewSort sortBy, bool direction)
+{
+    if (sortBy == m_sortBy && direction == m_sortDir)
+    {
+        // No point!
+        return;
+    }
+
+    m_sortBy = sortBy;
+    m_sortDir = direction;
+
+    sort();
+
+    // All of the icons positions will require recalculating
+    queue_resize();
+}
+
+void PhotoView2::sort()
+{
+    std::sort(m_photos.begin(), m_photos.end(), sortPhotoIcons);
 }
 
 Gtk::SizeRequestMode PhotoView2::get_request_mode_vfunc() const
@@ -295,15 +363,15 @@ bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
             gradient->add_color_stop_rgb(1, 0.06, 0.06, 0.06);
         }
 
-        cr->set_source (gradient);
 
         cr->rectangle(
             icon->x,
             icon->y,
             icon->width - 1,
             icon->height - 1);
+
+        cr->set_source (gradient);
         cr->fill_preserve();
-        cr->stroke();
 
         Cairo::RefPtr<Cairo::LinearGradient> borderGradient;
         borderGradient = Cairo::LinearGradient::create(
@@ -329,13 +397,8 @@ bool PhotoView2::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
             borderGradient->add_color_stop_rgb(1, 0.0, 0.0, 0.0);
         }
 
+        cr->set_line_width(2.0);
         cr->set_source(borderGradient);
-
-        cr->rectangle(
-            icon->x,
-            icon->y,
-            icon->width - 1,
-            icon->height - 1);
         cr->stroke();
 
         cr->set_source_rgb(0.02, 0.02, 0.02);

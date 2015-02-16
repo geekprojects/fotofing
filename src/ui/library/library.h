@@ -50,11 +50,19 @@ class Library : public Tab, public IndexClient
     void onDeleteTags(std::vector<Tag*> tags);
 
     // Thumbnail View
-Gtk::ScrolledWindow m_photoViewScroll;
-PhotoView2 m_photoView;
+    Gtk::VBox m_photoViewBox;
+    Gtk::HBox m_photoViewControlBox;
+    Gtk::RadioToolButton m_photoViewSortAsc;
+    Gtk::RadioToolButton m_photoViewSortDesc;
+    Gtk::ComboBoxText m_photoViewSort;
+    Gtk::ScrolledWindow m_photoViewScroll;
+    PhotoView2 m_photoView;
+
+    void onSortChanged();
 
     /* *** Photo detail panel *** */
     PhotoDetails m_photoDetails;
+
 
     void createMenu();
 

@@ -81,8 +81,35 @@ Library::Library(MainWindow* mainWindow) :
     m_photoViewScroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_photoViewScroll.add(m_photoView);
 
+    //m_photoViewSortDir.set_relief(Gtk::RELIEF_NONE);
+    m_photoViewSortAsc.set_icon_name("view-sort-ascending");
+    m_photoViewSortAsc.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &Library::onSortChanged));
+
+    m_photoViewSortDesc.set_icon_name("view-sort-descending");
+    m_photoViewSortDesc.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &Library::onSortChanged));
+    Gtk::RadioButton::Group group = m_photoViewSortAsc.get_group();
+    m_photoViewSortDesc.set_group(group);
+
+    m_photoViewSort.append("Timestamp");
+    m_photoViewSort.append("Title");
+    m_photoViewSort.set_active(0);
+    m_photoViewSort.signal_changed().connect(sigc::mem_fun(
+        *this,
+        &Library::onSortChanged));
+
+    m_photoViewControlBox.pack_start(m_photoViewSortAsc, Gtk::PACK_SHRINK);
+    m_photoViewControlBox.pack_start(m_photoViewSortDesc, Gtk::PACK_SHRINK);
+    m_photoViewControlBox.pack_start(m_photoViewSort, Gtk::PACK_SHRINK);
+
+    m_photoViewBox.pack_start(m_photoViewScroll, Gtk::PACK_EXPAND_WIDGET);
+    m_photoViewBox.pack_start(m_photoViewControlBox, Gtk::PACK_SHRINK);
+
     m_hBox.pack_start(m_tagFrame, Gtk::PACK_SHRINK);
-    m_hBox.pack_start(m_photoViewScroll, Gtk::PACK_EXPAND_WIDGET);
+    m_hBox.pack_start(m_photoViewBox, Gtk::PACK_EXPAND_WIDGET);
     m_hBox.pack_start(m_photoDetails, Gtk::PACK_SHRINK);
 
     pack_start(m_toolbarBox, Gtk::PACK_SHRINK);
@@ -383,5 +410,25 @@ void Library::scanProgress(
 Index* Library::getIndex()
 {
     return m_mainWindow->getIndex();
+}
+
+void Library::onSortChanged()
+{
+    bool dir = m_photoViewSortAsc.get_active();
+    printf("Library::onSortChanged: dir=%d\n", dir);
+
+    int byInt = m_photoViewSort.get_active_row_number();
+    printf("Library::onSortChanged: by=%d\n", byInt);
+    PhotoViewSort by = PHOTOVIEW_SORT_TIMESTAMP;
+    if (byInt == 0)
+    {
+        by = PHOTOVIEW_SORT_TIMESTAMP;
+    }
+    else if (byInt == 1)
+    {
+        by = PHOTOVIEW_SORT_TITLE;
+    }
+
+    m_photoView.setSort(by, dir);
 }
 

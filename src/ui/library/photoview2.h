@@ -10,9 +10,17 @@
 
 class Library;
 class Index;
+class PhotoView2;
+
+enum PhotoViewSort
+{
+    PHOTOVIEW_SORT_TIMESTAMP,
+    PHOTOVIEW_SORT_TITLE,
+};
 
 struct PhotoIcon
 {
+    PhotoView2* photoView;
     int x;
     int y;
     int width;
@@ -41,6 +49,9 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 
     int m_maxThumbWidth;
 
+    PhotoViewSort m_sortBy;
+    bool m_sortDir;
+
     Gtk::Menu m_popupMenu;
 
     void clearPhotos();
@@ -62,6 +73,8 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
     void scrollToCursor();
     void scrollToIcon(PhotoIcon* icon);
 
+    void sort();
+
  protected:
 
     bool onPopupMenu();
@@ -74,6 +87,10 @@ class PhotoView2 : public Gtk::DrawingArea, public Gtk::Scrollable
 
     void clearSelection();
     std::vector<Photo*> getSelectedPhotos();
+
+    void setSort(PhotoViewSort sortBy, bool direction);
+    PhotoViewSort getSortBy() { return m_sortBy; }
+    bool getSortDir() { return m_sortDir; }
 
     virtual Gtk::SizeRequestMode get_request_mode_vfunc() const;
     virtual void get_preferred_height_for_width_vfunc(
