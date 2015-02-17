@@ -21,7 +21,6 @@ class Workflow;
 class IndexClient
 {
  protected:
-    Index* m_index;
 
  public:
     virtual ~IndexClient() {}

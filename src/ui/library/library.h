@@ -1,12 +1,15 @@
 #ifndef __FOTOFING_UI_LIBRARY_H_
 #define __FOTOFING_UI_LIBRARY_H_
 
+#include <fotofing/index.h>
+
 #include "tab.h"
 #include "photodetails.h"
 #include "photoview.h"
 #include "widgets/tagview.h"
 
 class MainWindow;
+class PhotoView;
 
 class Library : public Tab, public IndexClient
 {
@@ -47,10 +50,19 @@ class Library : public Tab, public IndexClient
     void onDeleteTags(std::vector<Tag*> tags);
 
     // Thumbnail View
+    Gtk::VBox m_photoViewBox;
+    Gtk::HBox m_photoViewControlBox;
+    Gtk::RadioToolButton m_photoViewSortAsc;
+    Gtk::RadioToolButton m_photoViewSortDesc;
+    Gtk::ComboBoxText m_photoViewSort;
+    Gtk::ScrolledWindow m_photoViewScroll;
     PhotoView m_photoView;
+
+    void onSortChanged();
 
     /* *** Photo detail panel *** */
     PhotoDetails m_photoDetails;
+
 
     void createMenu();
 

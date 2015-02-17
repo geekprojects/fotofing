@@ -111,8 +111,6 @@ bool EditPreview::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
     const int width = allocation.get_width();
     const int height = allocation.get_height();
 
-    Cairo::RefPtr<Cairo::Surface> surface = cr->get_group_target();
-
     Cairo::RefPtr<Cairo::ImageSurface> cairoSurface;
     cairoSurface = Cairo::ImageSurface::create(
         m_rendered->getData(),

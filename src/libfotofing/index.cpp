@@ -663,7 +663,9 @@ bool Index::scanSources(IndexClient* client)
     vector<Source*>::iterator it;
     for (it = sources.begin(); it != sources.end(); it++)
     {
-        (*it)->scan(this, client);
+        Source* source = *it;
+        source->scan(this, client);
+        delete source;
     }
     return true;
 }

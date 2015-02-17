@@ -16,6 +16,8 @@
 class MainWindow : public FotofingWindow
 {
  private:
+    Index* m_index;
+
     /* Library Tab */
     Library m_library;
 

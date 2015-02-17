@@ -14,7 +14,7 @@ Library::Library(MainWindow* mainWindow) :
     m_tabLabel("Library"),
     m_dateSeparator("-"),
     m_tagSearchButton("Search"),
-    m_photoView(this),
+    m_photoView(mainWindow->getIndex()),
     m_photoDetails(this)
 {
     m_mainWindow = mainWindow;
@@ -72,8 +72,43 @@ Library::Library(MainWindow* mainWindow) :
     m_tagBox.pack_start(m_tagSearchButton, Gtk::PACK_SHRINK);
     m_tagFrame.add(m_tagBox);
 
+    m_photoView.signal_cursor_changed().connect(sigc::mem_fun(
+        *this,
+        &Library::displayDetails));
+    m_photoView.signal_activate_photo().connect(sigc::mem_fun(
+        m_mainWindow,
+        &MainWindow::editPhoto));
+    m_photoViewScroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
+    m_photoViewScroll.add(m_photoView);
+
+    m_photoViewSortAsc.set_icon_name("view-sort-ascending");
+    m_photoViewSortAsc.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &Library::onSortChanged));
+
+    m_photoViewSortDesc.set_icon_name("view-sort-descending");
+    m_photoViewSortDesc.signal_clicked().connect(sigc::mem_fun(
+        *this,
+        &Library::onSortChanged));
+    Gtk::RadioButton::Group group = m_photoViewSortAsc.get_group();
+    m_photoViewSortDesc.set_group(group);
+
+    m_photoViewSort.append("Timestamp");
+    m_photoViewSort.append("Title");
+    m_photoViewSort.set_active(0);
+    m_photoViewSort.signal_changed().connect(sigc::mem_fun(
+        *this,
+        &Library::onSortChanged));
+
+    m_photoViewControlBox.pack_start(m_photoViewSortAsc, Gtk::PACK_SHRINK);
+    m_photoViewControlBox.pack_start(m_photoViewSortDesc, Gtk::PACK_SHRINK);
+    m_photoViewControlBox.pack_start(m_photoViewSort, Gtk::PACK_SHRINK);
+
+    m_photoViewBox.pack_start(m_photoViewScroll, Gtk::PACK_EXPAND_WIDGET);
+    m_photoViewBox.pack_start(m_photoViewControlBox, Gtk::PACK_SHRINK);
+
     m_hBox.pack_start(m_tagFrame, Gtk::PACK_SHRINK);
-    m_hBox.pack_start(m_photoView, Gtk::PACK_EXPAND_WIDGET);
+    m_hBox.pack_start(m_photoViewBox, Gtk::PACK_EXPAND_WIDGET);
     m_hBox.pack_start(m_photoDetails, Gtk::PACK_SHRINK);
 
     pack_start(m_toolbarBox, Gtk::PACK_SHRINK);
@@ -93,7 +128,38 @@ void Library::update()
     m_mainWindow->startProgress();
 
     vector<Tag*> tags = m_allTagsView.getSelectedTags();
-    m_photoView.update(tags, m_fromDate, m_toDate);
+
+    time_t from = m_fromDate;
+    time_t to = m_toDate;
+
+    vector<Photo*> photos;
+    if (tags.size() > 0)
+    {
+        vector<string> tagStrings;
+        vector<Tag*>::iterator it;
+        for (it = tags.begin(); it != tags.end(); it++)
+        {
+            tagStrings.push_back((*it)->getTagName());
+        }
+        photos = getIndex()->getPhotos(tagStrings, &from, &to);
+    }
+    else
+    {
+        photos = getIndex()->getPhotos(&from, &to);
+    }
+
+    m_photoView.update(photos);
+
+    char message[1024];
+    if (photos.size() == 1)
+    {
+        sprintf(message, "Displaying %lu photo", photos.size());
+    }
+    else
+    {
+        sprintf(message, "Displaying %lu photos", photos.size());
+    }
+    getMainWindow()->setStatusMessage(message);
 
     m_mainWindow->updateProgress(75, 100, "");
     updateDateButtons();
@@ -343,5 +409,25 @@ void Library::scanProgress(
 Index* Library::getIndex()
 {
     return m_mainWindow->getIndex();
+}
+
+void Library::onSortChanged()
+{
+    bool dir = m_photoViewSortAsc.get_active();
+    printf("Library::onSortChanged: dir=%d\n", dir);
+
+    int byInt = m_photoViewSort.get_active_row_number();
+    printf("Library::onSortChanged: by=%d\n", byInt);
+    PhotoViewSort by = PHOTOVIEW_SORT_TIMESTAMP;
+    if (byInt == 0)
+    {
+        by = PHOTOVIEW_SORT_TIMESTAMP;
+    }
+    else if (byInt == 1)
+    {
+        by = PHOTOVIEW_SORT_TITLE;
+    }
+
+    m_photoView.setSort(by, dir);
 }
 
