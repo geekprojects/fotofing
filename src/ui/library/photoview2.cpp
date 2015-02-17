@@ -22,6 +22,8 @@ PhotoView2::PhotoView2(Index* index)
     m_sortBy = PHOTOVIEW_SORT_TIMESTAMP;
     m_sortDir = true;
 
+    m_photoCursor = m_photos.end();
+
     set_can_focus(true);
     set_vexpand(true);
     set_vscroll_policy(Gtk::SCROLL_NATURAL);
@@ -87,8 +89,6 @@ static bool sortPhotoIcons(PhotoIcon* l, PhotoIcon* r)
                 return l->photo->getTimestamp() > r->photo->getTimestamp();
             }
             break;
-
-
     }
 }
 
@@ -149,6 +149,7 @@ void PhotoView2::update(vector<Photo*> photos)
 
         m_photos.push_back(icon);
     }
+    m_photoCursor = m_photos.end();
 
     sort();
 
@@ -166,15 +167,29 @@ void PhotoView2::setSort(PhotoViewSort sortBy, bool direction)
     m_sortBy = sortBy;
     m_sortDir = direction;
 
-    sort();
+    if (m_photos.size() > 0)
+    {
+        sort();
 
-    // All of the icons positions will require recalculating
-    queue_resize();
+        // All of the icons positions will require recalculating
+        queue_resize();
+    }
 }
 
 void PhotoView2::sort()
 {
+    // This will invalidate our cursor!
+    PhotoIcon* cursor = NULL;
+    if (!(m_photoCursor == m_photos.end()))
+    {
+        cursor = (*m_photoCursor);
+    }
     std::sort(m_photos.begin(), m_photos.end(), sortPhotoIcons);
+
+    if (cursor != NULL)
+    {
+        moveCursor(cursor);
+    }
 }
 
 Gtk::SizeRequestMode PhotoView2::get_request_mode_vfunc() const

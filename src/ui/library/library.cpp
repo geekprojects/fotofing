@@ -81,7 +81,6 @@ Library::Library(MainWindow* mainWindow) :
     m_photoViewScroll.set_policy(Gtk::POLICY_NEVER, Gtk::POLICY_AUTOMATIC);
     m_photoViewScroll.add(m_photoView);
 
-    //m_photoViewSortDir.set_relief(Gtk::RELIEF_NONE);
     m_photoViewSortAsc.set_icon_name("view-sort-ascending");
     m_photoViewSortAsc.signal_clicked().connect(sigc::mem_fun(
         *this,
