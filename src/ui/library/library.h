@@ -5,7 +5,7 @@
 
 #include "tab.h"
 #include "photodetails.h"
-#include "photoview2.h"
+#include "photoview.h"
 #include "widgets/tagview.h"
 
 class MainWindow;
@@ -56,7 +56,7 @@ class Library : public Tab, public IndexClient
     Gtk::RadioToolButton m_photoViewSortDesc;
     Gtk::ComboBoxText m_photoViewSort;
     Gtk::ScrolledWindow m_photoViewScroll;
-    PhotoView2 m_photoView;
+    PhotoView m_photoView;
 
     void onSortChanged();
 

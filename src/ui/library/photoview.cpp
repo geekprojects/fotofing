@@ -1,314 +1,880 @@
 
-#include "photoview.h"
+#include "library/photoview.h"
 #include "mainwindow.h"
 #include "uiutils.h"
 
-#include <sys/wait.h>
+#include <algorithm>
+
+#include <fotofing/index.h>
 
 using namespace std;
 using namespace Geek::Gfx;
 
-PhotoView::PhotoView(Library* library)
+PhotoView::PhotoView(Index* index)
 {
-    m_library = library;
+    m_index = index;
+    override_background_color(Gdk::RGBA("#101010"));
 
-    m_model = Gtk::ListStore::create(m_photoColumns);
-    m_model->set_default_sort_func(sigc::mem_fun(
-        *this,
-        &PhotoView::onIconViewSort));
-    m_model->set_sort_column(
-        Gtk::TreeSortable::DEFAULT_SORT_COLUMN_ID,
-        Gtk::SORT_DESCENDING);
+    m_padding = 20;
+    m_margin = 0;
+    m_titleHeight = 20;
 
-    m_iconView.set_model(m_model);
-    m_iconView.set_selection_mode(Gtk::SELECTION_MULTIPLE);
+    m_sortBy = PHOTOVIEW_SORT_TIMESTAMP;
+    m_sortDir = true;
 
-    m_iconView.set_text_column(m_photoColumns.display_name);
-    m_iconView.set_pixbuf_column(m_photoColumns.pixbuf);
+    m_photoCursor = m_photos.end();
 
-    m_iconView.set_item_width(10);
-    m_iconView.grab_focus();
+    set_can_focus(true);
+    set_vexpand(true);
+    set_vscroll_policy(Gtk::SCROLL_NATURAL);
 
-    m_iconView.set_activate_on_single_click(false);
-    m_iconView.signal_item_activated().connect(sigc::mem_fun(
-        *this,
-        &PhotoView::onIconViewItemActivated));
-    m_iconView.signal_selection_changed().connect(sigc::mem_fun(
-        *this,
-        &PhotoView::onIconViewSelectionChanged));
+    set_events(Gdk::BUTTON_PRESS_MASK | Gdk::KEY_PRESS_MASK);
 
     // Add context menu
     Gtk::MenuItem* item = Gtk::manage(new Gtk::MenuItem("_Add Tag", true));
+/*
     item->signal_activate().connect(sigc::mem_fun(
         *this,
         &PhotoView::addTag));
+*/
     m_popupMenu.append(*item);
     item = Gtk::manage(new Gtk::MenuItem("_Rename", true));
     item->signal_activate().connect(sigc::mem_fun(
         *this,
         &PhotoView::rename));
     m_popupMenu.append(*item);
-
-    m_popupMenu.accelerate(m_iconView);
+    //m_popupMenu.accelerate(this);
     m_popupMenu.show_all();
 
-    m_iconView.signal_button_press_event().connect(sigc::mem_fun(
+    signal_popup_menu().connect(sigc::mem_fun(
         *this,
-        &PhotoView::onButtonPress), false);
-
-    add(m_iconView);
+        &PhotoView::onPopupMenu));
 }
 
 PhotoView::~PhotoView()
 {
-    freePhotos();
+    clearPhotos();
 }
 
-void PhotoView::update(std::vector<Tag*> tags, time_t from, time_t to)
+static bool sortPhotoIcons(PhotoIcon* l, PhotoIcon* r)
 {
-    m_model->clear();
-
-    freePhotos();
-
-    if (tags.size() > 0)
+    switch (l->photoView->getSortBy())
     {
-        vector<string> tagStrings;
-        vector<Tag*>::iterator it;
-        for (it = tags.begin(); it != tags.end(); it++)
+        case PHOTOVIEW_SORT_TITLE:
         {
-            tagStrings.push_back((*it)->getTagName());
-        }
-        m_photos = m_library->getIndex()->getPhotos(tagStrings, &from, &to);
-    }
-    else
-    {
-        m_photos = m_library->getIndex()->getPhotos(&from, &to);
-    }
+            bool lHasTitle = l->title != l->photo->getId().substr(0, 6) + "...";
+            bool rHasTitle = r->title != r->photo->getId().substr(0, 6) + "...";
+            if (lHasTitle != rHasTitle)
+            {
+                return lHasTitle;
+            }
+            else if (l->photoView->getSortDir())
+            {
+                return l->title < r->title;
+            }
+            else
+            {
+                return l->title > r->title;
+            }
+        } break;
 
-    unsigned int max = 500;
-    unsigned int i;
+        case PHOTOVIEW_SORT_TIMESTAMP:
+        default:
+            if (l->photoView->getSortDir())
+            {
+                return l->photo->getTimestamp() < r->photo->getTimestamp();
+            }
+            else
+            {
+                return l->photo->getTimestamp() > r->photo->getTimestamp();
+            }
+            break;
+    }
+}
+
+void PhotoView::update(vector<Photo*> photos)
+{
+    clearPhotos();
+
+    m_maxThumbWidth = 0;
+
     vector<Photo*>::iterator it;
-    for (it = m_photos.begin(), i = 0; it != m_photos.end() && i < max; it++, i++)
+    for (it = photos.begin(); it != photos.end(); it++)
     {
-        Photo* photo = *it;
-        Surface* thumbnail = photo->getThumbnail();
+        PhotoIcon* icon = new PhotoIcon();
+        icon->photoView = this;
+        icon->photo = *it;
+        icon->selected = false;
 
-        Glib::RefPtr<Gdk::Pixbuf> pixbuf = Gdk::Pixbuf::create_from_data(
-            thumbnail->getData(),
-            Gdk::COLORSPACE_RGB,
-            true,
-            8,
-            thumbnail->getWidth(),
-            thumbnail->getHeight() - 1,
-            thumbnail->getWidth() * 4);
+        string title = m_index->getProperty(icon->photo->getId(), "Title");
+        if (title == "")
+        {
+            title = icon->photo->getId().substr(0, 6) + "...";
+        }
+        icon->title = title;
 
-        TagData* orientation = m_library->getIndex()->getTagData(
-            photo->getId(),
+        Surface* thumb = icon->photo->getThumbnail();
+
+        // Rotate thumbnail if necessary
+        TagData* orientation = m_index->getTagData(
+            icon->photo->getId(),
             "Photo/Orientation");
         if (orientation->type == SQLITE_INTEGER)
         {
             switch (orientation->data.i)
             {
                 case 6:
-                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_CLOCKWISE);
+                    thumb->rotate(90);
                     break;
                 case 8:
-                    pixbuf = pixbuf->rotate_simple(Gdk::PIXBUF_ROTATE_COUNTERCLOCKWISE);
+                    thumb->rotate(270);
                     break;
             }
         }
         delete orientation;
 
-        string title = m_library->getIndex()->getProperty(
-            photo->getId(),
-            "Title");
+        icon->pixbuf = Gdk::Pixbuf::create_from_data(
+            thumb->getData(),
+            Gdk::COLORSPACE_RGB,
+            true,
+            8,
+            thumb->getWidth(),
+            thumb->getHeight() - 1,
+            thumb->getWidth() * 4);
 
-        string displayName = title;
-        if (displayName == "")
+        if (thumb->getWidth() > m_maxThumbWidth)
         {
-            displayName = photo->getId().substr(0, 6) + "...";
+            m_maxThumbWidth = thumb->getWidth();
         }
 
-        Gtk::TreeModel::iterator iter = m_model->append();
-        Gtk::TreeModel::Row row = *iter;
-        row[m_photoColumns.display_name] = displayName;
-        row[m_photoColumns.pixbuf] = pixbuf;
-        row[m_photoColumns.photo] = photo;
+        m_photos.push_back(icon);
     }
+    m_photoCursor = m_photos.end();
 
-    char message[1024];
-    if (i < m_photos.size())
-    {
-        sprintf(message, "Displaying %d of %lu photos", i, m_photos.size());
-    }
-    else
-    {
-        if (i == 1)
-        {
-            sprintf(message, "Displaying %lu photo", m_photos.size());
-        }
-        else
-        {
-            sprintf(message, "Displaying %lu photos", m_photos.size());
-        }
-    }
-    m_library->getMainWindow()->setStatusMessage(message);
+    sort();
+
+    queue_resize();
 }
 
-void PhotoView::selectAll()
+void PhotoView::setSort(PhotoViewSort sortBy, bool direction)
 {
-    m_iconView.select_all();
+    if (sortBy == m_sortBy && direction == m_sortDir)
+    {
+        // No point!
+        return;
+    }
+
+    m_sortBy = sortBy;
+    m_sortDir = direction;
+
+    if (m_photos.size() > 0)
+    {
+        sort();
+
+        // All of the icons positions will require recalculating
+        queue_resize();
+    }
 }
 
-void PhotoView::onIconViewItemActivated(const Gtk::TreeModel::Path& path)
+void PhotoView::sort()
 {
-    Photo* photo = getPhotoFromPath(path);
-    m_library->displayDetails(photo);
-
-    vector<File*> files = m_library->getIndex()->getFiles(photo->getId());
-    if (files.size() > 0)
+    // This will invalidate our cursor!
+    PhotoIcon* cursor = NULL;
+    if (!(m_photoCursor == m_photos.end()))
     {
-        m_library->getMainWindow()->editPhoto(photo);
-#if 0
-        pid_t childPid = fork();
-        if (childPid == 0)
-        {
-            const char* argv[] =
-            {
-                "/usr/bin/qiv",
-                "--fullscreen",
-                "--maxpect",
-                "--autorotate",
-                "--browse",
-                files.at(0)->getPath().c_str(),
-                (const char*)NULL
-            };
-            execvp(argv[0], (char**)argv);
-            printf("PhotoView::onIconViewItemActivated: Failed to show image\n");
+        cursor = (*m_photoCursor);
+    }
+    std::sort(m_photos.begin(), m_photos.end(), sortPhotoIcons);
 
-            exit(0);
-        }
-        else
+    if (cursor != NULL)
+    {
+        moveCursor(cursor);
+    }
+}
+
+Gtk::SizeRequestMode PhotoView::get_request_mode_vfunc() const
+{
+    return Gtk::SIZE_REQUEST_HEIGHT_FOR_WIDTH;
+}
+
+/*
+ * Figure out our height given a width. This involves taking the width
+ * and seeing how many photos we can fit on a row, then finding out how
+ * many rows we need, and their heights
+ */
+void PhotoView::get_preferred_height_for_width_vfunc(
+    int width,
+    int& minimum_height,
+    int& natural_height) const
+{
+    int iconWidth = m_maxThumbWidth + (m_padding * 2) + m_margin;
+
+    int maxCols = width / iconWidth;
+
+    int rows = width / maxCols;
+    if (width % maxCols > 0)
+    {
+        rows++;
+    }
+
+    int row = 0;
+
+    printf(
+        "PhotoView::get_preferred_height_for_width: maxCols=%d (%d / %d)\n",
+        maxCols,
+        width,
+        iconWidth);
+
+
+    int y = m_margin;
+    vector<PhotoIcon*>::const_iterator it;
+    for (it = m_photos.begin();
+        it != m_photos.end();)
+    {
+        int col = 0;
+
+        int maxThumbHeight = 0;
+        for (col = 0; it != m_photos.end() && col < maxCols; it++, col++)
         {
-            pid_t tpid;
-            do
+            PhotoIcon* icon = *it;
+            Surface* thumb = icon->photo->getThumbnail();
+
+            if (thumb->getHeight() > maxThumbHeight)
             {
-                int status;
-                tpid = wait(&status);
+                maxThumbHeight = thumb->getHeight();
             }
-            while (tpid != childPid);
         }
+        y += maxThumbHeight + m_titleHeight + (m_padding * 2) + m_margin;
+    }
+    printf("PhotoView::get_preferred_height_for_width: y=%d\n", y);
+    minimum_height = y;
+    natural_height = y;
+}
+
+/*
+ * We give each photo a position once we have a size. This saves
+ * us having to do it too often.
+ */
+void PhotoView::on_size_allocate(Gtk::Allocation& allocation)
+{
+    Gtk::DrawingArea::on_size_allocate(allocation);
+
+    const int width = allocation.get_width();
+    const int height = allocation.get_height();
+    int iconWidth = m_maxThumbWidth + (m_padding * 2) + m_margin;
+
+    m_columns = width / iconWidth;
+
+    int rows = width / m_columns;
+    if (width % m_columns > 0)
+    {
+        rows++;
+    }
+
+    int row = 0;
+
+    printf(
+        "PhotoView::on_size_allocate: width=%d, height=%d\n",
+        width,
+        height);
+    printf(
+        "PhotoView::on_size_allocate: m_columns=%d (%d / %d)\n",
+        m_columns,
+        width,
+        iconWidth);
+    printf(
+        "PhotoView::on_size_allocate: rows=%d\n",
+        rows);
+
+    int y = m_margin;
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end();)
+    {
+        int col = 0;
+        int x = m_margin;
+        int maxThumbHeight = 0;
+
+        vector<PhotoIcon*> iconRow;
+        for (col = 0; it != m_photos.end() && col < m_columns; it++, col++)
+        {
+            PhotoIcon* icon = *it;
+            Surface* thumb = icon->photo->getThumbnail();
+
+            icon->x = x;
+            icon->y = y;
+            icon->width = m_padding + m_maxThumbWidth + m_padding;
+            x += icon->width;
+            x += m_margin;
+
+            if (thumb->getHeight() > maxThumbHeight)
+            {
+                maxThumbHeight = thumb->getHeight();
+            }
+            iconRow.push_back(icon);
+        }
+
+        vector<PhotoIcon*>::iterator rowIt;
+        for (rowIt = iconRow.begin(); rowIt != iconRow.end(); rowIt++)
+        {
+            PhotoIcon* icon = *rowIt;
+            icon->height = m_padding + maxThumbHeight + m_titleHeight + m_padding;
+            icon->maxRowThumbHeight = maxThumbHeight;
+        }
+
+        row++;
+        x = 0;
+        y += maxThumbHeight + m_titleHeight + (m_padding * 2) + m_margin;
+    }
+}
+
+bool PhotoView::on_draw(const Cairo::RefPtr<Cairo::Context>& cr)
+{
+    double clipX1;
+    double clipY1;
+    double clipX2;
+    double clipY2;
+
+    cr->get_clip_extents(clipX1, clipY1, clipX2, clipY2);
+#if 0
+    printf("PhotoView::on_draw: clipY1=%0.2f\n", clipY1);
 #endif
-    }
-}
 
-void PhotoView::onIconViewSelectionChanged()
-{
-    vector<Gtk::TreePath> selected = m_iconView.get_selected_items();
-    if (selected.size() > 0)
-    {
-        m_library->displayDetails(getPhotoFromPath(selected.at(0)));
-    }
-}
+    int skipped = 0;
 
-int PhotoView::onIconViewSort(const Gtk::TreeModel::iterator& a, const Gtk::TreeModel::iterator& b)
-{
-    Gtk::TreeModel::Row row_a = *a;
-    Gtk::TreeModel::Row row_b = *b;
-    Photo* photoa = (row_a[m_photoColumns.photo]);
-    Photo* photob = (row_b[m_photoColumns.photo]);
-
-    if (photoa == NULL)
-    {
-        return true;
-    }
-    else if (photob == NULL)
-    {
-        return false;
-    }
-
-    return photoa->getTimestamp() - photob->getTimestamp();
-}
-
-bool PhotoView::onButtonPress(GdkEventButton* event)
-{
-    bool res = false;
-
-    //res = m_iconView.on_button_press_event(event);
-
-    if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
-    {
-        m_popupMenu.popup(event->button, event->time);
-    }
-
-    return res;
-}
-
-Photo* PhotoView::getPhotoFromPath(Gtk::TreePath path)
-{
-    Gtk::TreeModel::iterator iter = m_model->get_iter(path);
-    if (iter)
-    {
-        Gtk::TreeModel::Row row = *iter;
-        return row[m_photoColumns.photo];
-    }
-    return NULL;
-}
-
-void PhotoView::freePhotos()
-{
-    vector<Photo*>::iterator it;
+    vector<PhotoIcon*>::iterator it;
     for (it = m_photos.begin(); it != m_photos.end(); it++)
     {
-        delete *it;
+        PhotoIcon* icon = *it;
+        Surface* thumb = icon->photo->getThumbnail();
+
+        // Check that the icon is actually viewable
+        if ((icon->y < clipY1 - icon->height) ||
+            (icon->y > clipY2 + icon->height))
+        {
+            skipped++;
+            continue;
+        }
+
+        int photoX = icon->x + ((icon->width / 2) - (thumb->getWidth() / 2));
+        int photoY = icon->y + ((icon->height / 2) - (thumb->getHeight() / 2));
+
+        cr->set_line_width(2.0);
+
+        // Create the linear gradient diagonal
+        Cairo::RefPtr<Cairo::LinearGradient> gradient;
+        gradient = Cairo::LinearGradient::create(
+            icon->x,
+            icon->y + 20,
+            icon->x,
+            icon->y + icon->height);
+        if (icon->selected)
+        {
+            gradient->add_color_stop_rgb(0, 0.5, 0.5, 0.5);
+            gradient->add_color_stop_rgb(1, 0.3, 0.3, 0.3);
+        }
+        else
+        {
+            gradient->add_color_stop_rgb(0, 0.1, 0.1, 0.1);
+            gradient->add_color_stop_rgb(1, 0.06, 0.06, 0.06);
+        }
+
+
+        cr->rectangle(
+            icon->x,
+            icon->y,
+            icon->width - 1,
+            icon->height - 1);
+
+        cr->set_source (gradient);
+        cr->fill_preserve();
+
+        Cairo::RefPtr<Cairo::LinearGradient> borderGradient;
+        borderGradient = Cairo::LinearGradient::create(
+            icon->x,
+            icon->y,
+            icon->x,
+            icon->y + icon->height);
+
+        if (it == m_photoCursor)
+        {
+            borderGradient->add_color_stop_rgb(0, 0.6, 0.6, 0.6);
+            borderGradient->add_color_stop_rgb(1, 0.3, 0.3, 0.3);
+        }
+        else if (icon->selected)
+        {
+
+            borderGradient->add_color_stop_rgb(0, 0.3, 0.3, 0.3);
+            borderGradient->add_color_stop_rgb(1, 0.1, 0.1, 0.1);
+        }
+        else
+        {
+            borderGradient->add_color_stop_rgb(0, 0.06, 0.06, 0.06);
+            borderGradient->add_color_stop_rgb(1, 0.0, 0.0, 0.0);
+        }
+
+        cr->set_line_width(2.0);
+        cr->set_source(borderGradient);
+        cr->stroke();
+
+        cr->set_source_rgb(0.02, 0.02, 0.02);
+
+        // Border around the photo itself
+        cr->rectangle(
+            photoX + 3,
+            photoY + 3,
+            thumb->getWidth() - 2,
+            thumb->getHeight() - 2);
+        cr->fill_preserve();
+        cr->stroke();
+
+        Glib::RefPtr<Pango::Layout> layout = create_pango_layout(icon->title);
+
+        int text_width;
+        int text_height;
+        layout->get_pixel_size(text_width, text_height);
+
+        int textX = icon->x + ((icon->width / 2) - (text_width / 2));
+        int textY = icon->y + m_padding + (text_height / 2) + icon->maxRowThumbHeight + 5;
+
+        cr->set_source_rgb(0, 0, 0);
+        cr->move_to(textX + 1, textY + 1);
+        layout->show_in_cairo_context(cr);
+
+        cr->set_source_rgb(1, 1, 1);
+        cr->move_to(textX, textY);
+        layout->show_in_cairo_context(cr);
+
+        Gdk::Cairo::set_source_pixbuf(
+            cr,
+            icon->pixbuf,
+            photoX,
+            photoY);
+        cr->paint();
     }
-    m_photos.clear();
+#if 0
+    printf("PhotoView::on_draw: Skipped=%d\n", skipped);
+#endif
+
+    return true;
+}
+
+bool PhotoView::on_button_press_event(GdkEventButton* event)
+{
+#if 0
+    printf("PhotoView::on_button_press_event: x=%0.2f, y=%0.2f\n", event->x, event->y);
+#endif
+
+    vector<PhotoIcon*>::iterator prevCursor = m_photoCursor;
+
+    grab_focus();
+
+    PhotoIcon* selected = NULL;
+
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        if (event->x >= icon->x &&
+            event->y >= icon->y &&
+            event->x < icon->x + icon->width  &&
+            event->y < icon->y + icon->height)
+        {
+            selected = icon;
+            m_photoCursor = it;
+            break;
+        }
+    }
+
+    if (selected != NULL)
+    {
+        if (event->type == GDK_BUTTON_PRESS)
+        {
+            if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
+            {
+                clearSelection();
+            }
+            else if (event->state & GDK_CONTROL_MASK &&
+                prevCursor != m_photos.end())
+            {
+                vector<PhotoIcon*>::iterator start;
+                vector<PhotoIcon*>::iterator end;
+                if (prevCursor < m_photoCursor)
+                {
+                    start = prevCursor;
+                    end = m_photoCursor;
+                }
+                else
+                {
+                    start = m_photoCursor;
+                    end = prevCursor;
+                }
+                for (it = start; it != end; it++)
+                {
+                    (*it)->selected = true;
+                }
+            }
+
+            moveCursor(selected);
+
+            if ((event->type == GDK_BUTTON_PRESS) && (event->button == 3))
+            {
+                printf("PhotoView::on_button_press_event: Context menu!\n");
+                m_popupMenu.popup(event->button, event->time);
+            }
+        }
+        else if (event->type == GDK_2BUTTON_PRESS)
+        {
+            printf("PhotoView::on_button_press_event: Double click!\n");
+            m_activatePhotoSignal.emit(selected->photo);
+        }
+
+   }
+
+    return true;
+}
+
+bool PhotoView::on_key_press_event(GdkEventKey* event)
+{
+    switch (event->keyval)
+    {
+        case GDK_KEY_Left:
+        case GDK_KEY_Right:
+        case GDK_KEY_Up:
+        case GDK_KEY_Home:
+        case GDK_KEY_End:
+        case GDK_KEY_Down:
+        case GDK_KEY_Page_Up:
+        case GDK_KEY_Page_Down:
+            if (!(event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK)))
+            {
+                clearSelection();
+            }
+    }
+
+    bool selectAll = (event->state & (GDK_SHIFT_MASK | GDK_CONTROL_MASK));
+
+    switch (event->keyval)
+    {
+        case GDK_KEY_Left:
+            moveCursor(-1, selectAll);
+            break;
+
+        case GDK_KEY_Right:
+            moveCursor(1, selectAll);
+            break;
+
+        case GDK_KEY_Up:
+            moveCursor(-m_columns, selectAll);
+            break;
+
+        case GDK_KEY_Home:
+            moveCursor(m_photos.begin());
+            break;
+
+        case GDK_KEY_End:
+            moveCursor(m_photos.end() - 1);
+            break;
+
+        case GDK_KEY_Down:
+            moveCursor(m_columns, selectAll);
+            break;
+
+        case GDK_KEY_Page_Up:
+            movePage(-1, selectAll);
+            break;
+
+        case GDK_KEY_Page_Down:
+            movePage(1, selectAll);
+            break;
+
+        case GDK_KEY_Return:
+            m_activatePhotoSignal.emit((*m_photoCursor)->photo);
+            break;
+        default:
+            printf(
+                "PhotoView::on_key_press_event: Unhandled key=0x%x\n",
+                event->keyval);
+    }
+    return true;
 }
 
 vector<Photo*> PhotoView::getSelectedPhotos()
 {
-    vector<Photo*> photos;
-    vector<Gtk::TreePath> selected = m_iconView.get_selected_items();
-    vector<Gtk::TreePath>::iterator it;
+    vector<Photo*> results;
 
-    for (it = selected.begin(); it != selected.end(); it++)
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
     {
-        photos.push_back(getPhotoFromPath(*it));
+        PhotoIcon* icon = *it;
+        if (icon->selected)
+        {
+            results.push_back(icon->photo);
+        }
     }
 
-    return photos;
-}
-
-void PhotoView::addTag()
-{
+    return results;
 }
 
 void PhotoView::rename()
 {
-    vector<Photo*> photos = getSelectedPhotos();
-    if (photos.size() == 1)
+    if (m_photoCursor == m_photos.end())
     {
-        Photo* photo = photos.at(0);
+        return;
+    }
 
-        string title = m_library->getIndex()->getProperty(
-            photo->getId(),
-            "Title");
+    Photo* photo = (*m_photoCursor)->photo;
 
-        bool res;
-        res = UIUtils::promptString(
-            *m_library->getMainWindow(),
-            "Photo Title",
-            "Please give this photo a title",
-            title,
-            title);
-        if (res)
+    string title = m_index->getProperty(photo->getId(), "Title");
+
+    bool res;
+    res = UIUtils::promptString(
+        *((Gtk::Window*)get_toplevel()),
+        "Photo Title",
+        "Please give this photo a title",
+        title,
+        title);
+    if (res)
+    {
+        m_index->setProperty(photo->getId(), "Title", title);
+        m_cursorChangedSignal.emit(photo);
+
+        (*m_photoCursor)->title = title;
+        queue_draw();
+    }
+}
+
+bool PhotoView::onPopupMenu()
+{
+printf("PhotoView::onPopupMenu: Called!\n");
+    return true;
+}
+
+void PhotoView::clearPhotos()
+{
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        delete icon->photo;
+        delete icon;
+    }
+    m_photos.clear();
+    m_photoCursor = m_photos.end();
+}
+
+void PhotoView::clearSelection()
+{
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        icon->selected = false;
+    }
+}
+
+PhotoIcon* PhotoView::getIcon(double x, double y)
+{
+    PhotoIcon* selected = NULL;
+
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        PhotoIcon* icon = *it;
+        if (x >= icon->x &&
+            y >= icon->y &&
+            x < icon->x + icon->width  &&
+            y < icon->y + icon->height)
         {
-            m_library->getIndex()->setProperty(
-                photo->getId(),
-                "Title",
-                title);
-            m_library->update();
+            selected = icon;
+            break;
         }
     }
+    return selected;
+}
+
+Gtk::Viewport* PhotoView::getViewport() const
+{
+    const Gtk::Container* parent = get_parent();
+    if (parent == NULL || !GTK_IS_VIEWPORT(parent->gobj()))
+    {
+        printf("PhotoView::getViewport: Parent is not a viewport! (%p)\n", parent);
+        return NULL;
+    }
+    return (Gtk::Viewport*)parent;
+
+}
+
+Glib::RefPtr<Gtk::Adjustment> PhotoView::getScrollAdjustment()
+{
+    Gtk::Viewport* parent = getViewport();
+    return parent->get_vadjustment();
+}
+
+int PhotoView::getScrollHeight() const
+{
+    Gtk::Viewport* parent = getViewport();
+
+    Gtk::Allocation allocation = parent->get_allocation();
+    return allocation.get_height();
+}
+
+void PhotoView::moveCursor(PhotoIcon* icon)
+{
+    vector<PhotoIcon*>::iterator it;
+    for (it = m_photos.begin(); it != m_photos.end(); it++)
+    {
+        if (*it == icon)
+        {
+            moveCursor(it);
+            return;
+        }
+    }
+}
+
+void PhotoView::moveCursor(vector<PhotoIcon*>::iterator pos)
+{
+    m_photoCursor = pos;
+    updateCursor();
+}
+
+void PhotoView::moveCursor(int a, bool select)
+{
+    if (m_photoCursor == m_photos.end())
+    {
+        return;
+    }
+
+    int i;
+    if (a > 0)
+    {
+        for (
+            i = 1;
+            i <= a && (m_photoCursor + 1) != m_photos.end();
+            i++, m_photoCursor++)
+        {
+            if (select)
+            {
+                (*m_photoCursor)->selected = true;
+            }
+        }
+    }
+    else
+    {
+        for (
+            i = 1;
+            i <= -a && (m_photoCursor) != m_photos.begin();
+            i++, m_photoCursor--)
+        {
+            if (select)
+            {
+                (*m_photoCursor)->selected = true;
+            }
+        }
+    }
+
+    updateCursor();
+}
+
+void PhotoView::movePage(int a, bool selectPage)
+{
+    if (m_photoCursor == m_photos.end())
+    {
+        return;
+    }
+
+    Glib::RefPtr<Gtk::Adjustment> adj = getScrollAdjustment();
+    int y = adj->get_value();
+    int height = getScrollHeight();
+    int currentX = (*m_photoCursor)->x;
+    int currentY = (*m_photoCursor)->y;
+    int currentHeight = (*m_photoCursor)->height;
+
+    if (a > 0)
+    {
+        for ( ; (m_photoCursor + 1) != m_photos.end(); m_photoCursor++)
+        {
+            PhotoIcon* icon = *m_photoCursor;
+
+            if (selectPage)
+            {
+                icon->selected = true;
+            }
+
+            if (icon->y + icon->height >= currentY + currentHeight + height &&
+                icon->x >= currentX)
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        for ( ; (m_photoCursor) != m_photos.begin(); m_photoCursor--)
+        {
+            PhotoIcon* icon = *m_photoCursor;
+
+            if (selectPage)
+            {
+                icon->selected = true;
+            }
+
+            if (icon->y + icon->height < currentY - height &&
+                icon->x <= currentX)
+            {
+                break;
+            }
+        }
+    }
+
+    updateCursor();
+}
+
+void PhotoView::updateCursor()
+{
+    (*m_photoCursor)->selected = true;
+    m_cursorChangedSignal.emit((*m_photoCursor)->photo);
+    scrollToCursor();
+    queue_draw();
+}
+
+void PhotoView::scrollToCursor()
+{
+    if (m_photoCursor == m_photos.end())
+    {
+        // No where to scroll to!
+        return;
+    }
+    scrollToIcon(*m_photoCursor);
+}
+
+void PhotoView::scrollToIcon(PhotoIcon* icon)
+{
+    Glib::RefPtr<Gtk::Adjustment> adj = getScrollAdjustment();
+    int y = adj->get_value();
+
+    int height = getScrollHeight();
+
+#if 0
+    printf("PhotoView::scrollToCursor: height=%d\n", height);
+#endif
+
+    if (y + height < icon->y + icon->height)
+    {
+        adj->set_value((icon->y + icon->height) - height);
+    }
+    else if (y > icon->y)
+    {
+        adj->set_value(icon->y);
+    }
+}
+
+sigc::signal<void, Photo*>& PhotoView::signal_cursor_changed()
+{
+    return m_cursorChangedSignal;
+}
+
+sigc::signal<void, Photo*>& PhotoView::signal_activate_photo()
+{
+    return m_activatePhotoSignal;
 }
 
